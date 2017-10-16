@@ -226,8 +226,8 @@
               (b (point-marker))
               (marker-list (tui-marker-list-create (list a b)))
               (nodes (tui-marker-list-markers-in-range marker-list a b)))
-        (expect (first nodes) :to-be a)
-        (expect (second nodes) :to-be b))))
+        (expect (cl-first nodes) :to-be a)
+        (expect (cl-second nodes) :to-be b))))
   (it "returns non-adjacent nodes"
     (with-temp-buffer
       (-let* ((a (prog1 (point-marker)

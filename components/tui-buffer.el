@@ -46,7 +46,7 @@
           ;;(switch-to-buffer buffer) ;; TODO: make configurable?
           (setf (tui-node-marker-list component) marker-list)
           (setq start (tui-marker-list-insert marker-list (point-marker)))
-          (setq end (second (tui-marker-list-split-node marker-list start)))
+          (setq end (cl-second (tui-marker-list-split-node marker-list start)))
           (cl-call-next-method component start end parent marker-list)))))
   :render
   (lambda ()

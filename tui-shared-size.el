@@ -29,7 +29,7 @@
 
 (cl-defmethod tui-recalculate-size ((shared-size tui-shared-size))
   (let* ((element-sizes (tui-shared-size-element-sizes shared-size))
-         (pixel-unit (listp (first element-sizes)))
+         (pixel-unit (listp (cl-first element-sizes)))
          (new-size (when element-sizes
                      (apply #'max (if pixel-unit
                                       (mapcar #'car element-sizes)

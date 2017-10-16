@@ -240,6 +240,4 @@ unit is assumed have a unit of characters.  When a list of length
 
 (provide 'tui-layout)
 
-(provide 'tui-layout)
-
 ;;; tui-layout.el ends here

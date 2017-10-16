@@ -41,7 +41,7 @@
         content
         (mapc #'tui-recalculate-size column-sizes)
         ;;(buffer-substring-no-properties (point-min) (point-max))))
-        ;;(oref (first column-sizes) :element-sizes)))
+        ;;(oref (cl-first column-sizes) :element-sizes)))
         ;; (message "width: %S" (tui-visible-width (nth 0 (nth 0 content-components))))
         ;; (message "width: %S" (tui-visible-width (nth 1 (nth 0 content-components))))
         ;; (message "width: %S" (tui-visible-width (nth 2 (nth 0 content-components))))

@@ -82,8 +82,8 @@
   (tui--set-parent node parent marker-list)
 
   (unless end (setq end start))
-  (assert (tui-marker-list-node-p start) t "Mount point is a tui-marker-list-node")
-  (assert (tui-marker-list-node-p end) t "Mount point is a tui-marker-list-node")
+  (cl-assert (tui-marker-list-node-p start) t "Mount point is a tui-marker-list-node")
+  (cl-assert (tui-marker-list-node-p end) t "Mount point is a tui-marker-list-node")
   (when (eq start end)
     (-let* (((start-division end-division) (tui--split-division node start)))
       (setq start start-division)
@@ -101,7 +101,7 @@
   ;; (when parent
   ;;   (tui--apply-inherited-text-props start end parent))
   (setf (tui-node-mounted node) t)
-  ;; (assert (or (< start end)
+  ;; (cl-assert (or (< start end)
   ;;               (eq start end)) t "Segment endpoints should be ordered if not represented by the same marker.")
   node)
 
@@ -133,7 +133,7 @@
 
 (cl-defmethod tui--insert ((text-node tui-text-node))
   "Insert content of TEXT-NODE."
-  (assert (tui-text-node-mounted text-node) t "Can only insert nodes once they have been mounted.")
+  (cl-assert (tui-text-node-mounted text-node) t "Can only insert nodes once they have been mounted.")
   ;; "Open" markers, so insertion takes place between them
   ;;(tui--with-open-node text-node
   (save-current-buffer
@@ -153,25 +153,25 @@
 
 (cl-defmethod tui--insert ((element tui-element))
   "Insert content of ELEMENT."
-  (assert (tui-element-mounted element) t "Can only insert nodes once they have been mounted.")
+  (cl-assert (tui-element-mounted element) t "Can only insert nodes once they have been mounted.")
   ;; FIXME: need a safer way of doing this? (to avoid improperly relocated markers)
   ;;(delete-region start end)
   ;; Invisible elements don't get inserted
   ;; CLEANUP: confusing
-  ;; (assert (not (and (tui-invisible-p element)
+  ;; (cl-assert (not (and (tui-invisible-p element)
   ;;                   (> (tui-length element) 0))) t "Shouldn't be trying to insert an invisible element that has currently viisble content.")
   (unless (tui-invisible-p element)
     (-when-let* ((children (tui-child-nodes element)))
-      (if (eq (tui-node-mounted (first children)) t)
+      (if (eq (tui-node-mounted (cl-first children)) t)
           (mapcar #'tui--insert children)
         (let* ((marker-list (tui-node-marker-list element))
-               (subdivisions (rest (tui-marker-list-split-node marker-list (tui--start-division element) (* (length children) 2))))
+               (subdivisions (cl-rest (tui-marker-list-split-node marker-list (tui--start-division element) (* (length children) 2))))
                (i 0))
           (tui--update-node-index-positions children)
           (cl-loop for child in children
                    for (left-division right-division) on subdivisions by #'cddr
                    do
-                   (assert (tui-marker-list--nodes-adjacent-p left-division right-division) t "We should be looking at adjacent divisions")
+                   (cl-assert (tui-marker-list--nodes-adjacent-p left-division right-division) t "We should be looking at adjacent divisions")
                    (push (list 'mount child left-division right-division element) tui--update-queue))
           (setq i (+ i 1)))))
     ;;(tui--apply-text-props element)
@@ -243,7 +243,7 @@ COMPONENT should be handled by the calling method."
   "Get the element at POS.  Search ancestors for element of type TYPE when TYPE is non-nil."
   (unless pos (setq pos (point)))
   (if type
-      (first (tui-ancestor-elements-at pos type))
+      (cl-first (tui-ancestor-elements-at pos type))
     (get-text-property pos 'tui-element)))
 
 (cl-defmethod tui--get-string ((node tui-node))
@@ -311,19 +311,21 @@ COMPONENT should be handled by the calling method."
   "Return the segment for NODE formatted as a cons cell (START . END)."
   (-let* ((start (tui-node-start node))
           (end (tui-node-end node)))
-    (assert (tui-marker-list-node-p start) "Start of segment must be a tui-marker-list-node.")
-    (assert (tui-marker-list-node-p end) "End of segment must be a tui-marker-list-node.")
+    (cl-assert (tui-marker-list-node-p start) "Start of segment must be a tui-marker-list-node.")
+    (cl-assert (tui-marker-list-node-p end) "End of segment must be a tui-marker-list-node.")
     (tui-marker-list-open-segment (tui-node-marker-list node) start end)))
 
 (defun tui-start (node)
-  "Return a marker denoting the start of NODE."
+  "Return a marker denoting the start of NODE.  Returns nil if NODE is not mounted."
   ;; TODO: defensively return copies of markers?
-  (tui-marker-list-node-marker (tui-node-start node)))
+  (when (tui-node-mounted node)
+    (tui-marker-list-node-marker (tui-node-start node))))
 
 (defun tui-end (node)
-  "Return a marker denoting the end of NODE."
+  "Return a marker denoting the end of NODE.  Returns nil if NODE is not mounted."
   ;; TODO: defensively return copies of markers?
-  (tui-marker-list-node-marker (tui-node-end node)))
+  (when (tui-node-mounted node)
+    (tui-marker-list-node-marker (tui-node-end node))))
 
 (defun tui--start-division (node)
   "Return division denoting the start of NODE."
@@ -359,7 +361,7 @@ COMPONENT should be handled by the calling method."
 ;; (cl-defmethod tui--set-segment ((node tui-node) start-node end-node)
 ;;   "Set NODE buffer segment to START-NODE and END-NODE."
 ;;   ;; (when (and start-node end-node)
-;;   ;;   (assert (<= start-node end-node) t "Segment should be ordered."))
+;;   ;;   (cl-assert (<= start-node end-node) t "Segment should be ordered."))
 ;;   (tui--set-start node start-node)
 ;;   (tui--set-end node end-node))
 
@@ -528,18 +530,18 @@ In case NODE is already mounted, this function removes NODE from
 existing parent and moves it to new location in PARENT.
 
 Returns NODE."
-  (assert (tui--object-of-class-p parent 'tui-element) t "Nodes can only be inserted into elements.")
+  (cl-assert (tui--object-of-class-p parent 'tui-element) t "Nodes can only be inserted into elements.")
   (unless (tui-node-p node)
     (setq node (tui--normalize-node node)))
   (if (tui-node-mounted node) ;; TODO: special case with unmounted NODE, but with parent `(tui-parent node)'
       (tui-move-subtree node parent index)
     (-let* ((content (tui-element-content parent))
             (target-division (car (tui--separating-divisions parent index)))
-            ((target-start target-end) (rest (tui-marker-list-split-node (tui-node-marker-list parent)
-                                                                      target-division 2))))
+            ((target-start target-end) (cl-rest (tui-marker-list-split-node (tui-node-marker-list parent)
+                                                                         target-division 2))))
       ;; (if (eq node node-after-target)
       ;;     (display-warning 'comp (format "Node %S already at index %d" (tui--object-class node) index) :debug tui-log-buffer-name)
-      (assert (not (null target-division)) t "Target marker for insertion not found.")
+      (cl-assert (not (null target-division)) t "Target marker for insertion not found.")
       (setf (tui-element-content parent) (-insert-at index node content))
       (tui--update-node-index-positions (tui-child-nodes parent))
       (tui--mount node target-start target-end parent)))
@@ -560,7 +562,7 @@ Return pair of divisions within ELEMENT at INDEX corresponding to be used for in
             (tui--end-division element)))
      ((eq index 0)
       (cons (tui--start-division element)
-            (tui--start-division (first content))))
+            (tui--start-division (cl-first content))))
      ((< index content-length)
       (cons (tui--end-division (nth (- index 1) content))
             (tui--start-division (nth index content))))
@@ -579,7 +581,7 @@ Return pair of divisions within ELEMENT at INDEX corresponding to be used for in
 
 (cl-defmethod tui-replace-with ((old-child tui-node) new-child)
   "Replace OLD-CHILD node with NEW-CHILD node."
-  (assert (tui-parent old-child) t "Target must be a child node.")
+  (cl-assert (tui-parent old-child) t "Target must be a child node.")
   (tui-replace-node old-child new-child))
 
 (defun tui-remove (node)
@@ -597,7 +599,7 @@ Return pair of divisions within ELEMENT at INDEX corresponding to be used for in
 
 (defun tui-remove-child (node child)
   "Remove CHILD node of NODE."
-  (assert (eq (tui-parent child) node) t "Node is not a child of specified node.")
+  (cl-assert (eq (tui-parent child) node) t "Node is not a child of specified node.")
   (tui-remove child))
 
 (defun tui-root-node (&optional thing)
@@ -841,30 +843,30 @@ form.
 (defun tui-valid-element-p (element &optional invisible-context)
   "Return t if ELEMENT is a valid `tui-element'.
 Optional argument INVISIBLE-CONTEXT track whether the this node is within an invisible section of the content tree."
-  (and (not (assert (tui-element-p element) t "Element should be a tui-element."))
+  (and (not (cl-assert (tui-element-p element) t "Element should be a tui-element."))
        (or (not (tui-node-mounted element))
            (tui--object-of-class-p element 'tui-buffer) ;; CLEANUP: is this exclusion necessary?
            (-let* (((start . end) (tui-segment element))
                    (children (tui-child-nodes element))
                    (-compare-fn #'eq))
-             (and (not (assert (or (not start)
-                                   (and (markerp start)
-                                        (marker-buffer end)
-                                        (marker-position end))) t "When set, start marker should be a marker object that points somewhere."))
-                  (not (assert (or (not end)
-                                   (and (markerp end)
-                                        (marker-buffer start)
-                                        (marker-position start))) t "When set, end marker should be a marker object that points somewhere."))
-                  (not (assert (listp children) t "Children should be represented by a list"))
+             (and (not (cl-assert (or (not start)
+                                      (and (markerp start)
+                                           (marker-buffer end)
+                                           (marker-position end))) t "When set, start marker should be a marker object that points somewhere."))
+                  (not (cl-assert (or (not end)
+                                      (and (markerp end)
+                                           (marker-buffer start)
+                                           (marker-position start))) t "When set, end marker should be a marker object that points somewhere."))
+                  (not (cl-assert (listp children) t "Children should be represented by a list"))
                   ;; all children are adjacent with consolidated markers
                   (or invisible-context
                       (tui-invisible-p element)
                       (-all-p
                        (lambda (child)
-                         (not (assert (and (>= (tui-start child) start)
-                                           (<= (tui-start child) end)
-                                           (>= (tui-end child) start)
-                                           (<= (tui-end child) end)) t "Internal child markers should exist within the parent's segment")))
+                         (not (cl-assert (and (>= (tui-start child) start)
+                                              (<= (tui-start child) end)
+                                              (>= (tui-end child) start)
+                                              (<= (tui-end child) end)) t "Internal child markers should exist within the parent's segment")))
                        children)))))
        ;; All child nodes are valid as well
        (-all-p

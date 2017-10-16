@@ -8,6 +8,7 @@
 ;;   -'display overlay property
 ;;   -delete overflow (and store as a property)
 
+(eval-when-compile (require 'cl))
 (require 'tui-core)
 (require 'tui-shared-size)
 (require 'tui-layout)

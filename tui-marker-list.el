@@ -13,13 +13,13 @@
 
 ;;; Code:
 
-(defstruct tui-marker-list
+(cl-defstruct tui-marker-list
   "Object for maintaining a list of ordered markers within a tui content tree."
   marker-table
   first
   last)
 
-(defstruct
+(cl-defstruct
     (tui-marker-list-node
      (:constructor nil)
      (:constructor tui-marker-list-node-create (marker &optional data)))
@@ -66,7 +66,7 @@
 
 (defun tui-marker-list-node--insert-first (marker-list new-node)
   "Insert NEW-NODE first in MARKER-LIST."
-  ;;(assert (tui-marker-list-node-p new-node))
+  ;;(cl-assert (tui-marker-list-node-p new-node))
   (let ((first-node (tui-marker-list-first marker-list)))
     (setf (tui-marker-list-first marker-list) new-node)
     (if first-node
@@ -78,7 +78,7 @@
 
 (defun tui-marker-list-node--insert-last (marker-list new-node)
   "Insert NEW-NODE last in MARKER-LIST."
-  ;;(assert (tui-marker-list-node-p new-node))
+  ;;(cl-assert (tui-marker-list-node-p new-node))
   (let ((last-node (tui-marker-list-last marker-list)))
     (setf (tui-marker-list-last marker-list) new-node)
     (if last-node
@@ -90,8 +90,8 @@
 
 (defun tui-marker-list-node--insert-before (marker-list new-node node)
   "Insert NEW-NODE before NODE in MARKER-LIST.  Return NEW-NODE."
-  ;;(assert (tui-marker-list-node-p new-node))
-  ;;(assert (tui-marker-list-node-p node))
+  ;;(cl-assert (tui-marker-list-node-p new-node))
+  ;;(cl-assert (tui-marker-list-node-p node))
   ;; TODO: check and possibly extract from its current position in the list
   (let ((previous-node (tui-marker-list-node-previous node))
         (initial-length (tui-marker-list-length marker-list)))
@@ -101,15 +101,15 @@
         (setf (tui-marker-list-node-next previous-node) new-node)
       (setf (tui-marker-list-first marker-list) new-node))
     (setf (tui-marker-list-node-previous new-node) previous-node)
-    ;;(assert (= (tui-marker-list-length marker-list) (+ initial-length 1)) t "List length increases by one with an insertion.")
-    ;;(assert (tui-marker-list-valid-p marker-list) t "List is valid after an insertion.")
+    ;;(cl-assert (= (tui-marker-list-length marker-list) (+ initial-length 1)) t "List length increases by one with an insertion.")
+    ;;(cl-assert (tui-marker-list-valid-p marker-list) t "List is valid after an insertion.")
     new-node))
 
 (defun tui-marker-list-node--insert-after (marker-list new-node node)
   "Insert NEW-NODE after NODE in MARKER-LIST.  Return NEW-NODE."
-  ;; (assert (tui-marker-list-node-p new-node))
-  ;; (assert (tui-marker-list-node-p node))
-  ;; (assert (member* node (tui-marker-list--all-nodes marker-list) :test #'eq))
+  ;; (cl-assert (tui-marker-list-node-p new-node))
+  ;; (cl-assert (tui-marker-list-node-p node))
+  ;; (cl-assert (member* node (tui-marker-list--all-nodes marker-list) :test #'eq))
   ;; TODO: check and possibly extract from its current position in the list
   (let ((next-node (tui-marker-list-node-next node))
         (initial-length (tui-marker-list-length marker-list)))
@@ -119,8 +119,8 @@
         (setf (tui-marker-list-node-previous next-node) new-node)
       (setf (tui-marker-list-last marker-list) new-node))
     (setf (tui-marker-list-node-next new-node) next-node)
-    ;;(assert (= (tui-marker-list-length marker-list) (+ initial-length 1)) t "List length increases by one with an insertion.")
-    ;;(assert (tui-marker-list-valid-p marker-list) t "List is valid after an insertion.")
+    ;;(cl-assert (= (tui-marker-list-length marker-list) (+ initial-length 1)) t "List length increases by one with an insertion.")
+    ;;(cl-assert (tui-marker-list-valid-p marker-list) t "List is valid after an insertion.")
     new-node))
 
 (defun tui-marker-list-copy (marker-list)
@@ -232,10 +232,10 @@ Set marker data to DATA."
         t ;; an empty marker list is valid
       (and
        ;; all markers point to the same buffer
-       (let ((buffer (marker-buffer (first markers))))
+       (let ((buffer (marker-buffer (cl-first markers))))
          (-all-p (lambda (marker)
                    (eq (marker-buffer marker) buffer))
-                 (rest markers)))
+                 (cl-rest markers)))
        ;; markers are ordered
        (-reduce
         (lambda (a b)
@@ -245,16 +245,16 @@ Set marker data to DATA."
         markers)
        ;; each pair of adjacent nodes references each other
        (cl-loop for left in nodes
-                for right in (rest nodes)
+                for right in (cl-rest nodes)
                 do
-                (assert (eq (tui-marker-list-node-next left) right) t "Node refers to the next node in the list")
-                (assert (eq (tui-marker-list-node-previous right) left) t "Node refers to the previous node in the list")
+                (cl-assert (eq (tui-marker-list-node-next left) right) t "Node refers to the next node in the list")
+                (cl-assert (eq (tui-marker-list-node-previous right) left) t "Node refers to the previous node in the list")
                 finally return t)
-       (not (assert (null (tui-marker-list-node-previous (first nodes))) t "First node has no previous node"))
-       (not (assert (null (tui-marker-list-node-next (-last-item nodes))) t "Last node has no next node"))
-       (not (assert (eq (tui-marker-list-first marker-list)
-                        (first nodes)) t "List contains references to the first item"))
-       (not (assert (eq (tui-marker-list-last marker-list)
+       (not (cl-assert (null (tui-marker-list-node-previous (cl-first nodes))) t "First node has no previous node"))
+       (not (cl-assert (null (tui-marker-list-node-next (-last-item nodes))) t "Last node has no next node"))
+       (not (cl-assert (eq (tui-marker-list-first marker-list)
+                        (cl-first nodes)) t "List contains references to the first item"))
+       (not (cl-assert (eq (tui-marker-list-last marker-list)
                         (-last-item nodes)) t "List contains references to the last item"))))))
 
 (defun tui-marker-list-buffer (marker-list)
@@ -402,12 +402,12 @@ nodes."
               (new-node (tui-marker-list-node-create new-marker)))
         (tui-marker-list-node--insert-after marker-list new-node split-node)
         (puthash new-marker new-node (tui-marker-list-marker-table marker-list))
-        ;;(assert (tui-marker-list--nodes-adjacent-p split-node new-node) t "Adjacent split elements should be adjacent.")
+        ;;(cl-assert (tui-marker-list--nodes-adjacent-p split-node new-node) t "Adjacent split elements should be adjacent.")
         (push new-node new-nodes)))
-    (assert (= (+ number length-before-split) (tui-marker-list-length marker-list)) t "Split should create an additional node.")
+    (cl-assert (= (+ number length-before-split) (tui-marker-list-length marker-list)) t "Split should create an additional node.")
     (cons node
           new-nodes)))
-;;(assert (tui-marker-list-valid-p marker-list) t "List is valid after a split.")
+;;(cl-assert (tui-marker-list-valid-p marker-list) t "List is valid after a split.")
 
 
 (defun tui-marker-list--nodes-adjacent-p (left right)
@@ -458,7 +458,7 @@ have nothing between them after the move."
         ;; Update node references
         (when internal-nodes
           (let* ((last-internal-node (-last-item internal-nodes))
-                 (first-internal-node (first internal-nodes))
+                 (first-internal-node (cl-first internal-nodes))
                  (source-previous-node (tui-marker-list-node-previous first-internal-node))
                  (source-next-node (tui-marker-list-node-next last-internal-node)))
             ;; front of target

@@ -42,7 +42,7 @@
       (save-current-buffer
         (save-excursion
           (let (content)
-            (tui--goto (tui-start (first children)))
+            (tui--goto (tui-start (cl-first children)))
             (setq content (buffer-substring (point-min) (point-max)))
             (when parent
               (tui--goto (tui-start parent)))

@@ -21,12 +21,12 @@
     (let ((patches (tui--diff (tui-create-element 'tui-div nil "foo")
                            (tui-create-element 'tui-heading nil "bar"))))
       (expect (length patches) :to-equal 1)
-      (expect (car (first patches))
+      (expect (car (cl-first patches))
               :to-equal 'replace))
     (let ((patches (tui--diff (tui-heading "foo")
                            (tui-heading "bar"))))
       (expect (length patches) :to-equal 1)
-      (expect (car (first patches))
+      (expect (car (cl-first patches))
               :to-equal 'update-props))))
 
 (describe "tui-patch"

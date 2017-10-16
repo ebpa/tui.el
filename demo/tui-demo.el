@@ -4,6 +4,7 @@
 ;;; Commentary:
 ;; 
 
+(eval-when-compile (require 'cl))
 (require 'tui-core)
 
 ;;; Code:

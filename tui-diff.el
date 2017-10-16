@@ -10,8 +10,8 @@
 
 (defun tui--diff (old-node new-node)
   "Compute a \"diff\" between OLD-NODE and NEW-NODE and return a list of patches that should be applied to the content tree."
-  (assert (or (null old-node) (tui--object-of-class-p old-node 'tui-node)) t "Diff must be applied to `tui-node's.")
-  (assert (or (null new-node) (tui--object-of-class-p old-node 'tui-node)) t "Diff must be applied to `tui-node's.")
+  (cl-assert (or (null old-node) (tui--object-of-class-p old-node 'tui-node)) t "Diff must be applied to `tui-node's.")
+  (cl-assert (or (null new-node) (tui--object-of-class-p old-node 'tui-node)) t "Diff must be applied to `tui-node's.")
   (cond
    ((and new-node
          (not old-node))
@@ -44,11 +44,11 @@
         (new-keys (tui--keyed-elements new-list))
         diff)
     (while (or old-list new-list)
-      (-let* ((old-item (first old-list))
+      (-let* ((old-item (cl-first old-list))
               (old-class (tui--object-class old-item))
               (old-key (tui--get-key old-item))
               ((old-key-new-index . old-key-new-item) (gethash old-key new-keys))
-              (new-item (first new-list))
+              (new-item (cl-first new-list))
               (new-class (tui--object-class new-item))
               (new-key (tui--get-key new-item))
               ((new-key-old-index . new-key-old-item) (gethash new-key old-keys)))
@@ -62,7 +62,7 @@
           (pop old-list)
           (pop new-list)
           (setq index-offset (+ 1 index-offset))
-          ;; (tui--diff-list-1 (rest old-list) (rest new-list) element (+ index-offset 1))
+          ;; (tui--diff-list-1 (cl-rest old-list) (cl-rest new-list) element (+ index-offset 1))
           )
          ;; remove
          ((and old-item
@@ -74,7 +74,7 @@
           (setq diff (append diff
                              (list (list 'remove old-item))))
           (pop old-list)
-          ;; (tui--diff-list-1 (rest old-list) new-list element index-offset)
+          ;; (tui--diff-list-1 (cl-rest old-list) new-list element index-offset)
           )
          ;; reorder (insert)
          ((and new-key ;; new item has a key that is not currently first
@@ -99,7 +99,7 @@
           (pop old-list)
           (pop new-list)
           (setq index-offset (+ 1 index-offset))
-          ;; (tui--diff-list-1 (rest old-list) (rest new-list) element (+ index-offset 1))
+          ;; (tui--diff-list-1 (cl-rest old-list) (cl-rest new-list) element (+ index-offset 1))
           ))))
     diff))
 
@@ -131,8 +131,8 @@ Returns the outcome of that reconciliation process."
 
 (defun tui--reconcile-content (old-content new-content parent-element)
   "Reconcile OLD-CONTENT and NEW-CONTENT within PARENT-ELEMENT."
-  (assert (tui--list-content-p old-content) t "Content tree is a list")
-  (assert (tui--list-content-p new-content) t "Content tree is a list")
+  (cl-assert (tui--list-content-p old-content) t "Content tree is a list")
+  (cl-assert (tui--list-content-p new-content) t "Content tree is a list")
   (let ((diff (tui--diff-list old-content new-content parent-element)))
     (setf tui--update-queue
           (append diff

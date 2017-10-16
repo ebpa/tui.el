@@ -9,8 +9,7 @@
 ;;; Code:
 
 (tui-define-component tui-buffer
-  ;; TODO: major/minor modes
-  ;; TODO intercept quit command to at least call :component-will-unmount (add to kill-buffer-hook?)
+  ;; TODO: suppoort both major and minor modes
   :documentation "Component representing a buffer."
   :prop-documentation
   (:buffer "Buffer or buffer name to use or create."
@@ -34,14 +33,16 @@
       (with-current-buffer (get-buffer-create buffer)
         (let ((inhibit-read-only t))
           (erase-buffer)
-          (when keymap
-            (use-local-map (copy-keymap keymap)))
           ;; TODO
           ;; (when revert-props-function
           ;;   (setq-local revert-buffer-function (lambda (ignore-auto noconfirm)
           ;;                                        (listgrid-refresh-grid))))
           (if mode
               (funcall mode))
+          (when keymap
+            (let* ((keymap (copy-keymap keymap)))
+              (set-keymap-parent keymap (current-local-map))
+              (use-local-map keymap)))
           ;;(switch-to-buffer buffer) ;; TODO: make configurable?
           (setf (tui-node-marker-list component) marker-list)
           (setq start (tui-marker-list-insert marker-list (point-marker)))

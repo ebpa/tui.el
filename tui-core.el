@@ -216,11 +216,12 @@ COMPONENT should be handled by the calling method."
           (inhibit-read-only t))
     (save-current-buffer
       (save-excursion
-        (tui--goto (tui-start node))
-        (delete-region (tui-marker-list-node-marker start)
-                       (tui-marker-list-node-marker end))
-        ;;(tui--consolidate-markers node)
-        (tui-marker-list-delete-node-segment (tui-node-marker-list node) start end)))))
+        (when (tui-node-mounted node)
+          (tui--goto (tui-start node))
+          (delete-region (tui-marker-list-node-marker start)
+                         (tui-marker-list-node-marker end))
+          ;;(tui--consolidate-markers node)
+          (tui-marker-list-delete-node-segment (tui-node-marker-list node) start end))))))
 
 (cl-defmethod tui--unmount ((element tui-element))
   "Internal use only.  Unmount COMPONENT, but leave unmounted

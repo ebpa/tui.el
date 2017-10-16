@@ -61,8 +61,8 @@
 (defun tui-marker-list-set-marker-data (marker-list marker data)
   "Set data associated with MARKER in MARKER-LIST to DATA."
   (if-let* ((node (tui-marker-list--marker-node marker-list marker)))
-      (setf (tui-marker-list-node-data node) data)
-    (error "Marker not found in marker list")))
+           (setf (tui-marker-list-node-data node) data)
+           (error "Marker not found in marker list")))
 
 (defun tui-marker-list-node--insert-first (marker-list new-node)
   "Insert NEW-NODE first in MARKER-LIST."
@@ -142,7 +142,9 @@ Returns nil if MARKER-LIST is empty."
 (defun tui-marker-list--resolve-new-marker (marker-list marker)
   "Internal helper function to resolve MARKER to a distinct marker within MARKER-LIST."
   (let ((buffer (tui-marker-list-buffer marker-list)))
-    (unless (and buffer (eq buffer (marker-buffer)))
+    (unless (or (not buffer)
+                (numberp marker)
+                (eq buffer (marker-buffer marker)))
       (error "Marker must refer to the same buffer"))
     (when (numberp marker)
       (when (> marker (point-max))
@@ -391,21 +393,22 @@ Same as `tui-marker-list-split-marker', but accepts and returns
 nodes."
   ;; OPTIMIZE: it may be possible to choose an efficient direction of split to limit the number of affected elements
   (unless number (setq number 1))
-  (let ((extra-nodes (when (> number 0)
-                       (-let* ((length-before-split (tui-marker-list-length marker-list))
-                               (existing-marker (tui-marker-list-node-marker node))
-                               (new-marker (copy-marker existing-marker))
-                               (new-node (tui-marker-list-node-create new-marker)))
-                         ;; (when (eq length-before-split 4)
-                         ;;   (edebug))
-                         (tui-marker-list-node--insert-after marker-list new-node node)
-                         (puthash new-marker new-node (tui-marker-list-marker-table marker-list))
-                         (assert (tui-marker-list--nodes-adjacent-p node new-node) t "Adjacent split elements should be adjacent.")
-                         (assert (= (+ 1 length-before-split) (tui-marker-list-length marker-list)) t "Split should create an additional node.")
-                         (tui-marker-list-split-node marker-list new-node (- number 1))))))
-    ;;(assert (tui-marker-list-valid-p marker-list) t "List is valid after a split.")
+  (let* ((split-node node)
+         (length-before-split (tui-marker-list-length marker-list))
+         new-nodes)
+    (dotimes (i number)
+      (-let* ((existing-marker (tui-marker-list-node-marker split-node))
+              (new-marker (copy-marker existing-marker))
+              (new-node (tui-marker-list-node-create new-marker)))
+        (tui-marker-list-node--insert-after marker-list new-node split-node)
+        (puthash new-marker new-node (tui-marker-list-marker-table marker-list))
+        ;;(assert (tui-marker-list--nodes-adjacent-p split-node new-node) t "Adjacent split elements should be adjacent.")
+        (push new-node new-nodes)))
+    (assert (= (+ number length-before-split) (tui-marker-list-length marker-list)) t "Split should create an additional node.")
     (cons node
-          extra-nodes)))
+          new-nodes)))
+;;(assert (tui-marker-list-valid-p marker-list) t "List is valid after a split.")
+
 
 (defun tui-marker-list--nodes-adjacent-p (left right)
   "Return t if LEFT is immediately before RIGHT."

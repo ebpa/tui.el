@@ -1189,7 +1189,8 @@ Lifecycle signatures:
                             (s-join "\n"
                                     (cl-loop for (key docstring) on prop-documentation by #'cddr
                                              collect
-                                             (format "\t%S\t\t%s\n" key docstring))))))
+                                             (format "\t%S\t\t%s\n" key docstring))))
+                  ""))
        (let (children props)
          ;; Parse keyword key-value pairs permitting shorthand children (omitted :children)
          (while (keywordp (car args))

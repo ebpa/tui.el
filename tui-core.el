@@ -65,7 +65,7 @@
   "Empty default method"
   nil)
 
-(cl-defmethod tui-component-will-unmount ((component tui-component) prev-props prev-state)
+(cl-defmethod tui-component-will-unmount ((component tui-component))
   "Empty default method"
   nil)
 
@@ -233,7 +233,7 @@ COMPONENT should be handled by the calling method."
   "Internal use only.  Unmount COMPONENT, but leave unmounted
 component in its current context.  Replacement/removal of
 COMPONENT should be handled by the calling method."
-  (tui--funcall #'tui-component-will-unmount component (tui--get-props component) (tui--get-state component))
+  (tui--funcall #'tui-component-will-unmount component)
   (cl-call-next-method))
 
 
@@ -1177,9 +1177,9 @@ Lifecycle signatures:
              (funcall ,component-did-update next-props next-state)))
 
      ,(if component-will-unmount
-          `(cl-defmethod tui-component-will-unmount ((component ,name) prev-props prev-state)
+          `(cl-defmethod tui-component-will-unmount ((component ,name))
              ""
-             (funcall ,component-will-unmount prev-props prev-state)))
+             (funcall ,component-will-unmount)))
 
      (defun ,name (&rest args)
        ,(format "%s%s"

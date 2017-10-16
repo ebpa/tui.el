@@ -39,6 +39,7 @@
 (require 'tui-link "components/tui-link.el")
 (require 'tui-ol "components/tui-ol.el")
 (require 'tui-span "components/tui-span.el")
+(require 'tui-timer "components/tui-timer.el")
 
 ;; Layout
 (require 'tui-absolute "layout/tui-absolute.el")

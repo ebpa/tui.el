@@ -17,6 +17,8 @@
 (tui-define-component tui-link
   :documentation
   "A basic link control"
+  :prop-documentation
+  (:target "Marker, function, or filename.")
   :render
   (lambda ()
     (tui-div

@@ -535,7 +535,7 @@ Returns NODE."
     (-let* ((content (tui-element-content parent))
             (target-division (car (tui--separating-divisions parent index)))
             ((target-start target-end) (rest (tui-marker-list-split-node (tui-node-marker-list parent)
-                                                                     target-division 2))))
+                                                                      target-division 2))))
       ;; (if (eq node node-after-target)
       ;;     (display-warning 'comp (format "Node %S already at index %d" (tui--object-class node) index) :debug tui-log-buffer-name)
       (assert (not (null target-division)) t "Target marker for insertion not found.")
@@ -589,9 +589,9 @@ Return pair of divisions within ELEMENT at INDEX corresponding to be used for in
       (remhash node tui--element-parent-table)
       (setf (tui-node-content parent) (remove node (tui-element-content parent)))
       (tui-marker-list-remove-node (tui-node-marker-list node)
-                               (tui-node-start node))
+                                (tui-node-start node))
       (tui-marker-list-remove-node (tui-node-marker-list node)
-                               (tui-node-end node))
+                                (tui-node-end node))
       (tui--update-node-index-positions (tui-child-nodes parent)))))
 
 (defun tui-remove-child (node child)
@@ -1269,6 +1269,10 @@ tui-element."
         (let* ((node (tui--make-root-node node))
                (marker-list (tui-node-marker-list node)))
           (tui--mount node (tui-marker-list-insert marker-list (point-marker)))
+          (with-current-buffer (if (tui-buffer-p node)
+                                   (plist-get (tui--get-props node) :buffer)
+                                 (current-buffer))
+            (push node tui--content-trees))
           (tui--process-update-queue)
           ;;(tui-valid-content-tree-p node)
           node)))))
@@ -1308,6 +1312,15 @@ tui-element."
 (defun tui--node-height (node)
   "Return the height of NODE in its content tree.  The root element has a height of 1."
   (length (tui-ancestor-elements node)))
+
+(defvar-local tui--content-trees nil "Content trees local to the current buffer")
+
+(defun tui--unmount-buffer-content ()
+  ""
+  (mapc #'tui--unmount tui--content-trees)
+  (setq tui--content-trees nil))
+
+(add-hook 'kill-buffer-hook #'tui--unmount-buffer-content)
 
 (provide 'tui-core)
 

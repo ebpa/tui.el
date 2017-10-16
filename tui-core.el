@@ -765,10 +765,11 @@ form.
   ;; OPTIMIZE: can preserve (cache) the content of the segment to potentially avoid re-render when made visible
   (interactive)
   ;;(display-warning 'tui-diff (format "HIDE %S" (tui--object-class element)) :debug tui-log-buffer-name)
-  (-when-let* ((inhibit-read-only t)
+  (setf (tui-element-invisible element) t)
+  (-when-let* ((mounted (tui-element-mounted element))
+               (inhibit-read-only t)
                ((start . end) (tui-segment element))
                (marker-tree (tui-element-marker-list element)))
-    (setf (tui-element-invisible element) t)
     (delete-region start end))
   ;;(tui-valid-content-tree-p element)
   element)
@@ -776,7 +777,8 @@ form.
 (defun tui--show-element (element)
   "Show ELEMENT and its subtree."
   (setf (tui-element-invisible element) nil)
-  (tui--insert element)
+  (when (tui-element-mounted element)
+    (tui--insert element))
   ;;(tui-valid-content-tree-p element)
   element)
 

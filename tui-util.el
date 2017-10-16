@@ -89,6 +89,9 @@ If the optional OBJECT is a buffer, START and END are buffer
 positions.  If OBJECT is a string, START and END are 0-based
 indices into it.  When OBJECT is nil, properties are applied to
 the current buffer."
+  (when (and (not object)
+             (markerp start))
+    (setq object (marker-buffer start)))
   (let (prop-end prop-start)
     ;; (message "-safe-propertize\n")
     (cl-loop for (key value) on properties by #'cddr
@@ -104,7 +107,7 @@ the current buffer."
                                                  start))
                               end)
                            (setq prop-end (next-single-property-change prop-start key object end)))
-                 (let ((existing-value (get-text-property prop-start key)))
+                 (let ((existing-value (get-text-property prop-start key object)))
                    (when (or replace-behavior
                              (not existing-value))
                      ;;(message "putting property %S at %S-%S" key prop-start prop-end)

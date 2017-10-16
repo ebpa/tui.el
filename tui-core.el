@@ -882,11 +882,12 @@ Optional argument INVISIBLE-CONTEXT track whether the this node is within an inv
 (cl-defmethod tui--apply-text-props ((element tui-element))
   ""
   (-let* (((start . end) (tui-segment element))
-          ((replace push append safe) (tui--get-grouped-text-props element)))
-    (tui-put-text-properties start end replace nil t)
-    (tui-put-text-properties start end push nil 'push)
-    (tui-put-text-properties start end append nil 'append)
-    (tui-put-text-properties start end safe nil nil)
+          ((replace push append safe) (tui--get-grouped-text-props element))
+          (buffer (marker-buffer start)))
+    (tui-put-text-properties start end replace buffer t)
+    (tui-put-text-properties start end push buffer 'push)
+    (tui-put-text-properties start end append buffer 'append)
+    (tui-put-text-properties start end safe buffer nil)
     ;; (if (and (eq (tui--object-class element) 'tui-div)
     ;;          safe))
     ))
@@ -901,11 +902,12 @@ Applyes text properties to region between START and END inherited from ELEMENT.
 
 Optional argument OBJECT is a string to which the properties be applied.  START and END should indicate positions within that string."
   (-let* (((start . end) (tui-segment element))
-          ((replace push append safe) (tui--get-inherited-grouped-text-props element)))
-    (tui-put-text-properties start end replace nil t)
-    (tui-put-text-properties start end push nil 'push)
-    (tui-put-text-properties start end append nil 'append)
-    (tui-put-text-properties start end safe nil nil)))
+          ((replace push append safe) (tui--get-inherited-grouped-text-props element))
+          (buffer (marker-buffer start)))
+    (tui-put-text-properties start end replace buffer t)
+    (tui-put-text-properties start end push buffer 'push)
+    (tui-put-text-properties start end append buffer 'append)
+    (tui-put-text-properties start end safe buffer nil)))
 
 (cl-defmethod tui-length ((node tui-node))
   "Return the length (number of characters) of NODE."

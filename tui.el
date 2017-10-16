@@ -38,12 +38,7 @@
 (require 'tui-line "components/tui-line.el")
 (require 'tui-link "components/tui-link.el")
 (require 'tui-ol "components/tui-ol.el")
-(require 'tui-overlay "components/tui-overlay.el")
-(require 'tui-popup "components/tui-popup.el")
-(require 'tui-prefix-lines "components/tui-prefix-lines.el")
-(require 'tui-proplist "components/tui-proplist.el")
 (require 'tui-span "components/tui-span.el")
-(require 'tui-tree "components/tui-tree.el")
 
 ;; Layout
 (require 'tui-absolute "layout/tui-absolute.el")

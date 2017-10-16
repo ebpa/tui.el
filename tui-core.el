@@ -1100,7 +1100,18 @@ A and B overlap, for example, if one is a parent of the other.  Coincident point
                                      render
                                      component-did-update
                                      component-will-unmount)
-  "Macro for defining `tui-component' types."
+  "Macro for defining `tui-component' types.
+
+Lifecycle signatures:
+(component-will-mount)
+(mount)
+(component-did-mount)
+(component-will-receive-props next-props)
+(should-component-update next-props next-state)
+(component-will-update next-props next-state)
+(render)
+(component-did-update prev-props prev-state)
+(component-will-unmount)"
   (declare (indent defun)) ;; TODO: support an optional docstring as the third parameter (as an alternative to the keyword form)
   `(progn
      (cl-defstruct (,name (:include tui-component)

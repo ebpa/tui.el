@@ -1225,7 +1225,7 @@ Very basic now; simply apply updates until the queue is empty."
         (inhibit-read-only t))
     (while tui--update-queue
       (tui--apply-update (pop tui--update-queue)))
-    (run-hooks tui-update-hook)))
+    (run-hooks 'tui-update-hook)))
 
 (defun tui--apply-update (update)
   "Apply UPDATE to corresponding content tree."

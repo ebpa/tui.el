@@ -72,7 +72,7 @@
      #'tui-absolute--copy-contents
      instances)))
 
-(add-hook 'tui-update-hook 'tui-absolute--update-all)
+(add-hook 'tui-update-hook #'tui-absolute--update-all)
 
 (provide 'tui-absolute)
 

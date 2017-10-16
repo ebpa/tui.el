@@ -150,47 +150,18 @@ To simplify styling, text properties may be applied to elements using the keywor
 :org:pin:  t
 :END:
 
-*** (tui-icon &key icon-set icon-name)
-:PROPERTIES:
-:ID:       28129231-313b-4fb7-8e30-8f8ee605464c
-:END:
-*** (tui-buffer &key buffer children)
-:PROPERTIES:
-:ID:       c2dec965-bda2-4114-8687-57f14de16193
-:END:
-*** (tui-line &key children)
-:PROPERTIES:
-:ID:       8b9a0e87-5bf5-42b5-8d1f-45a280d194d6
-:END:
-*** (tui-fixed-width &key children)
-:PROPERTIES:
-:ID:       6a5de432-1c7b-40cd-8b3f-a97429bfc62a
-:END:
-*** (tui-div &key children)
-:PROPERTIES:
-:ID:       011191bd-60fa-4c7f-b9c9-caf43efe387a
-:END:
-*** (tui-span &key children)
-:PROPERTIES:
-:ID:       922bbb67-d924-4544-b6a8-c67d00a07688
-:END:
-*** (tui-expander &key header initially-expanded children)
-:PROPERTIES:
-:ID:       52baf6f6-6300-43fe-89a2-8083ac2866f5
-:END:
-*** (tui-link &key target children)
-:PROPERTIES:
-:ID:       0d2a7d38-dbca-41bf-8abc-f2add5c0d345
-:END:
-*** (tui-heading &key children)
-:PROPERTIES:
-:ID:       de3dcc60-8c2b-491a-9915-d47676a3c5af
-:END:
-*** (tui-section &key children)
-:PROPERTIES:
-:ID:       59f79997-734a-4227-a2dc-d5c67ef1de80
-:END:
-
+*** HTML-like components
+| (tui-div &key children)     |
+| (tui-heading &key children) |
+| (tui-section &key children) |
+| (tui-span &key children)    |
+*** Other components
+| (tui-link &key target children)                        |
+| (tui-icon &key icon-set icon-name)                     |
+| (tui-buffer &key buffer children)                      |
+| (tui-line &key children)                               |
+| (tui-fixed-width &key children)                        |
+| (tui-expander &key header initially-expanded children) |
 
 ** Future Work
 :PROPERTIES:

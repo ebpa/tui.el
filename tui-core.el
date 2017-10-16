@@ -212,7 +212,8 @@
 component in its current context.  Replacement/removal of
 COMPONENT should be handled by the calling method."
   (-let* (((start . end) (tui-segment--nodes node))
-          (parent (tui-parent node)))
+          (parent (tui-parent node))
+          (inhibit-read-only t))
     (save-current-buffer
       (save-excursion
         (tui--goto (tui-start node))

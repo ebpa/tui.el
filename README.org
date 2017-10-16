@@ -208,19 +208,10 @@ Things I'm currently working on:
 :ID:       6a69022c-a3cd-49e5-bcea-b0ba6cf8c399
 :END:
 
-If you feel inspired by this little library, contact me on [[https://twitter.com/ebanders][Twitter]] and let me know!  The door is wide open for collaboration!  
-
-If you have ideas for components
-
-It is a great opportunity to explore the inner-workings of Emacs and test the limits of Emacs' many features.
-
-Open an issue 
-
-
-
-
+If you feel inspired by this little library, contact me on [[https://twitter.com/ebanders][Twitter]] and let me know!  The door is wide open for collaboration!  If you have ideas for components I'd love to hear them.
 
 *** Ideas
+Here are a few things I have in mind in case you're looking for an excuse to explore Emacs' many features:
 
 **** org-agenda
 There are a lot of opportunities for customizing the org-mode agenda view that could be made possible with components designed for org-mode.  [[https://github.com/alphapapa/org-super-agenda][Org-super-agenda]] offers striking examples of grouping agenda content into meaningful elements.

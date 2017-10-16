@@ -33,12 +33,13 @@
 (defun tui-segment-visible-width (start end)
   "Return the number of visible characters between START and END."
   (let ((count 0))
-    (cl-loop for pos from (marker-position start)
-             while (< pos (marker-position end))
-             do
-             (when (not (invisible-p pos))
-               (cl-incf count)))
-    count))
+    (with-current-buffer (marker-buffer start)
+      (cl-loop for pos from (marker-position start)
+               while (< pos (marker-position end))
+               do
+               (when (not (invisible-p pos))
+                 (cl-incf count)))
+      count)))
 
 (defun tui-region-pixel-width ()
   "Display and return the width (in pixels) of the current region."

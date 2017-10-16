@@ -13,7 +13,7 @@
 #+COMMENT: [[http://melpa.org/#/tui][file:http://melpa.org/packages/tui-badge.svg]]
 #+COMMENT: [[http://stable.melpa.org/#/tui][file:http://stable.melpa.org/packages/tui-badge.svg]]
 #+COMMENT: [[https://travis-ci.org/ebpa/tui][file:https://travis-ci.org/ebpa/tui.svg]]
-#+COMMENT: [[https://coveralls.io/github/ebpa/tui?branch=develop][file:https://coveralls.io/repos/ebpa/tui/badge.svg?branch=develop&service=github]]
+[[https://coveralls.io/github/ebpa/tui?branch=master][file:https://coveralls.io/repos/ebpa/tui/badge.svg?branch=master&service=github]]
 
 ** Introduction
 :PROPERTIES:

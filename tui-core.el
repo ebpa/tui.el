@@ -661,7 +661,7 @@ form.
     (tui--normalize-element node))
    ((and (featurep 'collections-collection)
          (tui--object-of-class-p node 'collections-collection))
-    (collections-collection-to-list node))
+    (tui--normalize-element (collections-collection-to-list node)))
    ((or (stringp node)
         (numberp node))
     (tui-text-node-create :content node))

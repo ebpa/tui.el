@@ -6,6 +6,7 @@
 
 (eval-when-compile (require 'cl))
 (require 'tui-core)
+(require 'tui-tic-tac-toe "demo/tui-tic-tac-toe.el")
 
 ;;; Code:
 

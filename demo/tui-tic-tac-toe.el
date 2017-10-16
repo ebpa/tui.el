@@ -6,7 +6,7 @@
 ;;; Commentary:
 ;; 
 
-(require 'tui)
+(require 'tui-core)
 
 ;; Design (for monospaced fonts)
 
@@ -131,6 +131,7 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
                  (list :history (cl-subseq history 0 (+ 1 turn-number))
                        :x-is-next (= (% turn-number 2) 0)))))
 
+;;;###autoload
 (defun tui-tic-tac-toe-insert-game ()
   "Render Tic-Tac-Toe game at point."
   (interactive)

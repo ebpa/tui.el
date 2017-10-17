@@ -1,4 +1,4 @@
-(require 'buttercup)
+(require 'tui-test-helper "test/tui-test-helper.el")
 (require 'tui-marker-list)
 
 (describe "tui-marker-list-create"

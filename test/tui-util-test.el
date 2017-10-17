@@ -1,4 +1,4 @@
-(require 'buttercup)
+(require 'tui-test-helper "test/tui-test-helper.el")
 
 (describe "tui-put-text-properties"
   (describe "inheritance rules"

@@ -1,4 +1,4 @@
-(require 'buttercup)
+(require 'tui-test-helper "test/tui-test-helper.el")
 
 (describe "tui-link"
   (it "supports markers as targets")

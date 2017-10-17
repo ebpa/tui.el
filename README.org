@@ -10,10 +10,11 @@
 
 #+COMMENT: Badges
 [[http://www.gnu.org/licenses/gpl-3.0.txt][file:https://img.shields.io/badge/license-GPL_3-green.svg]]
+[[https://travis-ci.org/ebpa/tui][file:https://travis-ci.org/ebpa/tui.svg]]
+[[https://coveralls.io/github/ebpa/tui?branch=master][file:https://coveralls.io/repos/ebpa/tui/badge.svg?branch=master&service=github]]
 #+COMMENT: [[http://melpa.org/#/tui][file:http://melpa.org/packages/tui-badge.svg]]
 #+COMMENT: [[http://stable.melpa.org/#/tui][file:http://stable.melpa.org/packages/tui-badge.svg]]
-#+COMMENT: [[https://travis-ci.org/ebpa/tui][file:https://travis-ci.org/ebpa/tui.svg]]
-[[https://coveralls.io/github/ebpa/tui?branch=master][file:https://coveralls.io/repos/ebpa/tui/badge.svg?branch=master&service=github]]
+
 
 ** Introduction
 :PROPERTIES:

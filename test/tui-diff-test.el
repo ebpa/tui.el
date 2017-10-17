@@ -1,4 +1,4 @@
-(require 'buttercup)
+(require 'tui-test-helper "test/tui-test-helper.el")
 (require 'tui)
 ;; (require 'tui-div)
 (require 'tui-heading "components/tui-heading.el")

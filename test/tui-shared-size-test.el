@@ -1,4 +1,4 @@
-(require 'buttercup)
+(require 'tui-test-helper "test/tui-test-helper.el")
 (require 'tui-shared-size)
 (require 'tui-fixed-width "components/tui-fixed-width.el")
 (require 'tui-line "components/tui-line.el")

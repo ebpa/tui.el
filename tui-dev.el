@@ -89,6 +89,16 @@
    (tui-element-outline
     :element node)))
 
+(defun tui-find-definition (&optional type)
+  "Find the definition of TYPE or an element at POINT."
+  (interactive)
+  (unless type (setq type (completing-read "Type: " (mapcar (lambda (element)
+                                                              (tui--object-class element))
+                                                       (tui-ancestor-elements-at (point)))
+                                           nil t)))
+  (when type
+    (find-function (intern (s-chop-prefix "cl-struct-" type)))))
+
 (provide 'tui-dev)
 
 ;;; tui-dev.el ends here

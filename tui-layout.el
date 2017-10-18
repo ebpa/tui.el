@@ -6,6 +6,8 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
+
 (cl-defmethod tui-height ((element tui-element))
   "Returns the total width of COMPONENT (not just visible characters)."
   (-let* (((start . end) (tui-segment element)))

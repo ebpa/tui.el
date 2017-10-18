@@ -184,28 +184,24 @@
 (cl-defmethod tui--update ((element tui-element))
   "Update displayed element."
   (save-excursion
-    (-let* ((inhibit-read-only t))
-      (let* ((props (tui--get-props element))
-             (old-content (tui-element-content element))
-             (new-content (tui--normalize-content (plist-get props :children)))) ;; condition-case -> tui-error-placeholder-string element
-        (tui--reconcile-content old-content new-content element)
-        ;; TODO: (force-window-update (current-buffer))?
-        (set-buffer-modified-p nil)
-        ;;(tui-valid-element-p element) ;; CLEANUP: better method for recursive assertions?
-        ))))
+    (let* ((props (tui--get-props element))
+           (old-content (tui-element-content element))
+           (new-content (tui--normalize-content (plist-get props :children)))) ;; condition-case -> tui-error-placeholder-string element
+      (tui--reconcile-content old-content new-content element)
+      ;; TODO: (force-window-update (current-buffer))?
+      ;;(tui-valid-element-p element) ;; CLEANUP: better method for recursive assertions?
+      )))
 
 (cl-defmethod tui--update ((component tui-component))
   "Update displayed component."
   (save-current-buffer
     (save-excursion
-      (-let* ((inhibit-read-only t))
-        (let* ((old-content (tui-component-content component))
-               (new-content (tui--normalize-content (tui--funcall #'tui-render component)))) ;; condition-case -> tui-error-placeholder-string element
-          (tui--reconcile-content old-content new-content component)
-          ;; TODO: (force-window-update (current-buffer))?
-          (set-buffer-modified-p nil)
-          ;;(tui-valid-element-p component) ;; CLEANUP: better method for recursive assertions?
-          ))))) ;; TODO: restore original modification status
+      (let* ((old-content (tui-component-content component))
+             (new-content (tui--normalize-content (tui--funcall #'tui-render component)))) ;; condition-case -> tui-error-placeholder-string element
+        (tui--reconcile-content old-content new-content component)
+        ;; TODO: (force-window-update (current-buffer))?
+        ;;(tui-valid-element-p component) ;; CLEANUP: better method for recursive assertions?
+        )))) ;; TODO: restore original modification status
 
 (cl-defmethod tui--unmount ((node tui-node))
   "Internal use only.  Unmount COMPONENT, but leave unmounted

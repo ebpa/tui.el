@@ -94,7 +94,8 @@
   ;;(cl-assert (tui-marker-list-node-p node))
   ;; TODO: check and possibly extract from its current position in the list
   (let ((previous-node (tui-marker-list-node-previous node))
-        (initial-length (tui-marker-list-length marker-list)))
+        ;; (initial-length (tui-marker-list-length marker-list))
+        )
     (setf (tui-marker-list-node-next new-node) node)
     (setf (tui-marker-list-node-previous node) new-node)
     (if previous-node
@@ -112,7 +113,8 @@
   ;; (cl-assert (member* node (tui-marker-list--all-nodes marker-list) :test #'eq))
   ;; TODO: check and possibly extract from its current position in the list
   (let ((next-node (tui-marker-list-node-next node))
-        (initial-length (tui-marker-list-length marker-list)))
+        ;; (initial-length (tui-marker-list-length marker-list))
+        )
     (setf (tui-marker-list-node-previous new-node) node)
     (setf (tui-marker-list-node-next node) new-node)
     (if next-node
@@ -394,7 +396,7 @@ nodes."
   ;; OPTIMIZE: it may be possible to choose an efficient direction of split to limit the number of affected elements
   (unless number (setq number 1))
   (let* ((split-node node)
-         (length-before-split (tui-marker-list-length marker-list))
+         ;; (length-before-split (tui-marker-list-length marker-list))
          new-nodes)
     (dotimes (i number)
       (-let* ((existing-marker (tui-marker-list-node-marker split-node))
@@ -404,7 +406,7 @@ nodes."
         (puthash new-marker new-node (tui-marker-list-marker-table marker-list))
         ;;(cl-assert (tui-marker-list--nodes-adjacent-p split-node new-node) t "Adjacent split elements should be adjacent.")
         (push new-node new-nodes)))
-    (cl-assert (= (+ number length-before-split) (tui-marker-list-length marker-list)) t "Split should create an additional node.")
+    ;; (cl-assert (= (+ number length-before-split) (tui-marker-list-length marker-list)) t "Split should create an additional node.")
     (cons node
           new-nodes)))
 ;;(cl-assert (tui-marker-list-valid-p marker-list) t "List is valid after a split.")

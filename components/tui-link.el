@@ -21,13 +21,18 @@
   (:target "Marker, function, or filename.")
   :render
   (lambda ()
-    (tui-div
-     :text-props `(font-lock-ignore t
-                            face org-link
-                            tui-link ,component
-                            keymap ,tui-link-keymap)
-     :children
-     (plist-get (tui-get-props) :children))))
+    (let* ((props (tui-get-props))
+           (face (if (plist-member props :face)
+                     (plist-get props :face)
+                   'org-link))
+           (text-props (append `(keymap ,tui-link-keymap
+                                    font-lock-ignore t)
+                           (when face
+                             `(face ,face)))))
+      (tui-span
+       :text-props text-props
+       :children
+       (plist-get (tui-get-props) :children)))))
 
 ;; TODO: reconcile this with tui-link-follow-link ?
 (defun tui-link-follow-link-click (event)
@@ -39,9 +44,12 @@
   "Follow link at POS or current point."
   (interactive)
   (unless pos (setq pos (point)))
-  (-when-let* ((component (get-text-property pos 'tui-link))
+  (-when-let* ((component (tui-get-element-at pos 'tui-link))
                (target (plist-get (tui--get-props component) :target)))
     (cond
+     ((and (stringp target)
+           (s-starts-with-p "http" target))
+      (browse-url target))
      ((markerp target)
       (switch-to-buffer (marker-buffer target))
       (goto-char target)
@@ -49,7 +57,8 @@
         (org-show-entry)))
      ((functionp target)
       (funcall target))
-     ((eq (car target) 'file)
+     ((and (listp target)
+           (eq (car target) 'file))
       (find-file (cdr target))))))
 
 (provide 'tui-link)

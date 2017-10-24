@@ -64,7 +64,17 @@ This is in contrast to merely setting it to 0.
                                      (cdr b)))))
          (difference (-difference new-list old-list)))
     (cl-loop for (key . value) in difference
-          append (list key value))))
+             append (list key value))))
+
+(defun tui--text-prop-changes (old-props new-props)
+  "Return :text-props* values that are different between old-props and new-props."
+  (cl-loop for (key value) on (tui--plist-changes old-props new-props) by #'cddr
+           if (member key '(:text-props
+                            :text-props-push
+                            :text-props-append
+                            :text-props-replace
+                            :text-props-safe))
+           collect key))
 
 (defun tui-put-text-property (start end key value &optional object replace-behavior)
   "Same as `tui-put-text-properties', but only set a single key-value pair."

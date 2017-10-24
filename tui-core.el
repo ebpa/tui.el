@@ -793,32 +793,59 @@ form.
 
 (defun tui--get-grouped-text-props (element)
   "Return calculated text props applied to the children of ELEMENT."
-  ;; TODO: ensure precedence within text property categories?
-  ;; TODO: complex behaviors (ex: between push and safe)?
   (let* ((props (tui--get-props element))
          (replace (plist-get props :text-props-replace))
          (push (plist-get props :text-props-push))
          (append (plist-get props :text-props-append))
          (safe (append (list 'tui-element element)
                        (or (plist-get props :text-props-safe)
-                           (plist-get props :text-props)))))
+                           (plist-get props :text-props))))
+         grouped-props)
     (list replace push append safe)))
 
-(cl-defun tui--merge-grouped-text-props ((this-replace this-push this-append this-safe)
-                                      (other-replace other-push other-append other-safe))
+(cl-defun tui--merge-grouped-text-props (text-props (replace push append safe))
   "Internal function to combine multiple grouped text property descriptions."
-  ;; (cl-loop for (key value) in this-replace by #'cddr
-  ;;          do
-  ;;          (setq other-replace (tui--plist-delete other-replace key))
-  ;;          (setq other-push (tui--plist-delete other-push key))
-  ;;          (setq other-append (tui--plist-delete other-append key))
-  ;;          (setq other-safe (tui--plist-safe other-push key)))
-  ;; TODO: incomplete; need to finish defining the desired behavior (can assume that provided groups have precedence rules applied)
-  (list
-   (append this-replace other-replace)
-   (append this-push other-push)
-   (append this-append other-append)
-   (append this-safe other-safe)))
+  (let* ((prop-table (make-hash-table))
+         (miss (make-symbol "miss"))
+         text-props)
+    (cl-loop for (key value) in text-props by #'cddr
+             do
+             (puthash key value prop-table))
+    (cl-loop for (key value) in safe by #'cddr
+             for existing-value = (gethash key prop-table miss)
+             do
+             (if (eq existing-value miss)
+                 (puthash key value prop-table)))
+    (cl-loop for (key value) in push by #'cddr
+             for existing-value = (gethash key prop-table miss)
+             do
+             (cond
+              ((eq existing-value miss)
+               (puthash key value prop-table))
+              ((listp existing-value)
+               (puthash key (cons value existing-value) prop-table))
+              (t
+               (puthash key (cons value (list existing-value)) prop-table))))
+    (cl-loop for (key value) in append by #'cddr
+             for existing-value = (gethash key prop-table miss)
+             do
+             (cond
+              ((eq existing-value miss)
+               (puthash key value prop-table))
+              ((listp existing-value)
+               (puthash key (append existing-value
+                                    (list value))
+                        prop-table))
+              (t
+               (puthash key (cond existing-value (list value)) prop-table))))
+    (cl-loop for (key value) in replace by #'cddr
+             do
+             (puthash key value prop-table))
+    (maphash (lambda (key value)
+               (push value text-props)
+               (push key text-props))
+             prop-table)
+    text-props))
 
 (defun tui--get-inherited-grouped-text-props (node)
   "Return a list of text properties inherited from NODE and NODE's parent elements."
@@ -827,27 +854,37 @@ form.
     (or (gethash node tui--inheritited-text-props)
         (puthash node
                  (tui--merge-grouped-text-props
-                  (tui--get-grouped-text-props node)
-                  (tui--get-inherited-grouped-text-props (tui-parent node)))
+                  (tui--get-inherited-grouped-text-props (tui-parent node))
+                  (tui--get-grouped-text-props node))
                  tui--inheritited-text-props))))
 
+(defun tui--clear-cached-text-props (node)
+  "Clear cache text props for node and all of its descendents."
+  (let ((nodes (list node)))
+    (while nodes
+      (let ((node (pop nodes)))
+        (remhash node tui--inheritited-text-props)
+        (remhash node tui--grouped-text-props)
+        (setf nodes (append (tui-child-nodes node)
+                            nodes))))))
 
-(cl-defmethod tui--apply-text-props ((element tui-element))
-  ""
-  (-let* (((start . end) (tui-segment element))
-          ((replace push append safe) (tui--get-grouped-text-props element))
-          (buffer (marker-buffer start)))
-    (tui-put-text-properties start end replace buffer t)
-    (tui-put-text-properties start end push buffer 'push)
-    (tui-put-text-properties start end append buffer 'append)
-    (tui-put-text-properties start end safe buffer nil)
-    ;; (if (and (eq (tui--object-class element) 'tui-div)
-    ;;          safe))
-    ))
+;; (cl-defmethod tui--apply-text-props ((node tui-node))
+;;   ""
+;;   nil)
 
-(cl-defmethod tui--apply-text-props ((node tui-node))
-  ""
-  nil)
+;; (cl-defmethod tui--apply-text-props ((element tui-element))
+;;   ""
+;;   (-let* (((start . end) (tui-segment element))
+;;           ((replace push append safe) (tui--get-grouped-text-props element))
+;;           (buffer (marker-buffer start)))
+;;     (when replace
+;;       (tui-put-text-properties start end replace buffer t))
+;;     (when push
+;;       (tui-put-text-properties start end push buffer 'push))
+;;     (when append
+;;       (tui-put-text-properties start end append buffer 'append))
+;;     (when safe
+;;       (tui-put-text-properties start end safe buffer nil))))
 
 (defun tui--apply-inherited-text-props (start end element &optional object)
   "Internal function to apply inherited text properties.
@@ -855,12 +892,9 @@ Applyes text properties to region between START and END inherited from ELEMENT.
 
 Optional argument OBJECT is a string to which the properties be applied.  START and END should indicate positions within that string."
   (-let* (((start . end) (tui-segment element))
-          ((replace push append safe) (tui--get-inherited-grouped-text-props element))
+          (text-props (tui--get-inherited-grouped-text-props element))
           (buffer (marker-buffer start)))
-    (tui-put-text-properties start end replace buffer t)
-    (tui-put-text-properties start end push buffer 'push)
-    (tui-put-text-properties start end append buffer 'append)
-    (tui-put-text-properties start end safe buffer nil)))
+    (set-text-properties start end text-props buffer)))
 
 (cl-defmethod tui-length ((node tui-node))
   "Return the length (number of characters) of NODE."

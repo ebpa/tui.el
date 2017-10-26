@@ -5,8 +5,8 @@
 
 ;;; Code:
 
-(setq log-warning-minimum-level :warning)
-(setq warning-minimum-level :warning)
+(setq log-warning-minimum-level :debug)
+(setq warning-minimum-level :debug)
 
 (defvar tui-log-buffer-name "*Tui Log*")
 

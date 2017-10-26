@@ -33,7 +33,6 @@
                         (:constructor tui-element-create (&key props invisible
                                                             &aux (id (tui--new-id)))))
   props
-  dirty-p ;; "Whether this component is pending update."
   invisible) ;; "Indicates whether the content element should be ignored when rendering."
 
 ;;;; Component

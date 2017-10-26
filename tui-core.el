@@ -191,7 +191,16 @@
     (save-excursion
       (let* ((old-content (tui-component-content component))
              (new-content (tui--normalize-content (tui--funcall #'tui-render component)))) ;; condition-case -> tui-error-placeholder-string element
+        (tui--funcall #'tui-component-will-update component next-props next-state)
         (tui--reconcile-content old-content new-content component)
+
+        
+        (when (tui--text-prop-changes prev-props next-props)
+          (tui--clear-cached-text-props component)
+          (tui--mark-subtree-dirty component))
+        (setf (tui-component-props component) next-props)
+        (push `(component-did-update ,component ,prev-props ,prev-state) tui--update-queue)
+        (tui--update component)))))
         ;; TODO: (force-window-update (current-buffer))?
         ;;(tui-valid-element-p component) ;; CLEANUP: better method for recursive assertions?
         ;; TODO: restore original modification status
@@ -226,7 +235,6 @@ component in its current context.  Replacement/removal of
 COMPONENT should be handled by the calling method."
   (tui--funcall #'tui-component-will-unmount component)
   (cl-call-next-method))
-
 
 ;;; Layout / Visibility Helpers
 
@@ -411,18 +419,17 @@ COMPONENT should be handled by the calling method."
     (tui--funcall #'tui-component-will-receive-props component next-props)
     (let ((next-state (tui--get-state component)))
       (when (tui--funcall #'tui-should-component-update component next-props next-state)
-        (tui--funcall #'tui-component-will-update component next-props next-state)
-        (setf (tui-component-props component) next-props)
-        (push `((component-did-update ,component ,prev-props ,prev-state)) tui--update-queue)
-        (tui--update component)
-        ;; (tui--funcall #'tui-component-did-update component prev-props prev-state)
-        ))))
+        (call-next-method)
+        (tui--mark-dirty component)))))
 
 (cl-defmethod tui--set-props ((element tui-element) next-props)
   "Internal use only."
   (display-warning 'comp (format "SET-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
   (let ((prev-props (tui--get-props element)))
     (setf (tui-element-props element) next-props)
+    (when (tui--text-prop-changes prev-props next-props)
+      (tui--clear-cached-text-props component)
+      (tui--mark-subtree-dirty element))
     (tui--update element)))
 
 (defun tui--set-state (component next-state &optional no-update)
@@ -1242,6 +1249,8 @@ Very basic now; simply apply updates until the queue is empty."
          (if invisible
              (tui-hide-element component)
            (tui--show-element component)))))
+    (`(component-did-update ,component ,new-props ,new-state)
+     (tui--funcall #'tui-component-did-update component new-props new-state))
     (_
      (error "Unknown update format: %S" (first update)))))
 
@@ -1273,9 +1282,7 @@ tui-element."
         (let* ((node (tui--make-root-node node))
                (marker-list (tui-node-marker-list node)))
           (tui--mount node (tui-marker-list-insert marker-list (point-marker)))
-          (with-current-buffer (if (tui-buffer-p node)
-                                   (plist-get (tui--get-props node) :buffer)
-                                 (current-buffer))
+          (unless (tui-buffer-p node)
             (push node tui--content-trees))
           (tui--process-update-queue)
           ;;(tui-valid-content-tree-p node)
@@ -1325,6 +1332,25 @@ tui-element."
   (setq tui--content-trees nil))
 
 (add-hook 'kill-buffer-hook #'tui--unmount-buffer-content)
+
+;; (cl-defmethod tui--mark-subtree-dirty ((node tui-node))
+;;   ""
+;;   (let* ((nodes (list node)))
+;;     (while nodes
+;;       (let* ((node (pop nodes))
+;;              (children (tui-child-nodes node)))
+;;         (when children
+;;           (push children nodes))
+;;         (setf (tui-node-dirty-p node) t)))))
+
+;; (defmacro tui--mark-clean (node)
+;;   "Mark NODE clean."
+;;   `(setf (tui-node-dirty-p ,node) nil))
+
+;; (cl-defmethod tui--dirty-subtrees ((node tui-node))
+;;   "Return a list of descendents of NODE that require re-rendering."
+
+;;   )
 
 (provide 'tui-core)
 

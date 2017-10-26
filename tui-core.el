@@ -1320,7 +1320,7 @@ tui-element."
 (defvar-local tui--content-trees nil "Content trees local to the current buffer")
 
 (defun tui--unmount-buffer-content ()
-  ""
+  "Unmount all content trees in the current buffer."
   (mapc #'tui--unmount tui--content-trees)
   (setq tui--content-trees nil))
 

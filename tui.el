@@ -38,6 +38,7 @@
 (require 'tui-line "components/tui-line.el")
 (require 'tui-link "components/tui-link.el")
 (require 'tui-ol "components/tui-ol.el")
+(require 'tui-ul "components/tui-ul.el")
 (require 'tui-span "components/tui-span.el")
 (require 'tui-timer "components/tui-timer.el")
 (require 'tui-listview "containers/tui-listview.el")

@@ -32,6 +32,8 @@
            start end)
       (with-current-buffer (get-buffer-create buffer)
         (let ((inhibit-read-only t))
+          (tui--unmount-buffer-content)
+          (push component tui--content-trees)
           (erase-buffer)
           ;; TODO
           ;; (when revert-props-function

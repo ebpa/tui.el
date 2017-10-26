@@ -1241,7 +1241,9 @@ Very basic now; simply apply updates until the queue is empty."
        (when (not (eq (plist-get old-props :invisible) invisible))
          (if invisible
              (tui-hide-element component)
-           (tui--show-element component)))))))
+           (tui--show-element component)))))
+    (_
+     (error "Unknown update format: %S" (first update)))))
 
 (defun tui-render-element (node &optional target)
   "Primary function for rendering content to a buffer.

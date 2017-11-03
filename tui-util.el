@@ -235,6 +235,44 @@ Optional argument INVISIBLE-CONTEXT track whether the this node is within an inv
         (% target-index num-columns)
       (+ num-columns (% target-index num-columns)))))
 
+(defmacro tui-let (symbol-args &rest body)
+  "Convenience form for destructuring state and prop values.
+
+For use in any context where `tui-get-props' and `tui-get-state' are defined."
+  (declare (debug ((&rest symbolp)
+                   body))
+           (indent 1))
+  (let ((props (make-symbol "props"))
+        (state (make-symbol "state"))
+        prop-vars state-vars)
+    (while (member (car symbol-args) '(&props &state))
+      (let* ((var-count (or (-find-index (lambda (item)
+                                           (member item '(&props &state)))
+                                         (rest symbol-args))
+                            (length (rest symbol-args)))))
+        (pcase (pop symbol-args)
+          ('&props
+           (setq prop-vars (append prop-vars
+                                   (-take var-count symbol-args))))
+          ('&state
+           (setq state-vars (append state-vars
+                                    (-take var-count symbol-args)))))
+        (setq symbol-args (nthcdr var-count symbol-args))))
+    ;;`(,(length prop-vars) ,(length state-vars))))
+    ;; (when symbol-args
+    ;;   (error "Expecting &props or &state keyword"))
+    `(let* ,(append (when prop-vars
+                      `((,props (tui-get-props))))
+                    (when state-vars
+                      `((,state (tui-get-state))))
+                    (mapcar (lambda (var)
+                              `(,var (plist-get ,props ,(intern (concat ":" (symbol-name var))))))
+                            prop-vars)
+                    (mapcar (lambda (var)
+                              `(,var (plist-get ,state ,(intern (concat ":" (symbol-name var))))))
+                            state-vars))
+       ,@body)))
+
 (provide 'tui-util)
 
 ;;; tui-util.el ends here

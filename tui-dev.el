@@ -99,6 +99,8 @@
   (when type
     (find-function (intern (s-chop-prefix "cl-struct-" type)))))
 
+(put 'tui-wip 'invisible t)
+
 (defun tui-toggle-wip ()
   "Hide/show ``work in progress'' UI elements."
   (interactive)

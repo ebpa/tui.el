@@ -19,12 +19,14 @@ This is in contrast to merely setting it to 0.
       (setq plist (cddr plist)))
     p))
 
-(defun tui--plist-merge (a b)
-  "Merge plists A and B."
+(defun tui--plist-merge (a b &rest rest)
+  ""
   (let* ((merged (cl-copy-seq a)))
     (cl-loop for (key val) on b by 'cddr
              do (setq merged (plist-put merged key val)))
-    merged))
+    (if rest
+        (apply #'tui--plist-merge merged rest)
+      merged)))
 
 (defun tui-map-subtree (fn node)
   "Apply FN to all elements in the subtree of NODE."

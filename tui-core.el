@@ -379,100 +379,119 @@ render ()
 component-did-update (prev-props prev-state)
 component-will-unmount ()"
   (declare (indent defun)) ;; TODO: support an optional docstring as the third parameter (as an alternative to the keyword form)
-  `(progn
-     (cl-defstruct (,name (:include tui-component)
-                          (:constructor nil)
-                          (:constructor ,(intern (format "%s-create" (symbol-name name)))
-                                        (&key props invisible
-                                              &aux (id (tui--new-id))))))
-     (remhash ',name tui--default-props-table)
-     ,(if get-default-props
-          `(cl-defmethod tui-get-default-props ((component ,name))
-             ""
-             (let ((class (tui--object-class component)))
-               (cl-copy-seq
-                (let* ((cache-value (gethash class tui--default-props-table 'miss)))
-                  (if (eq cache-value 'miss)
-                      (puthash class (funcall ,get-default-props) tui--default-props-table)
-                    cache-value))))))
+  (tui--check-key-value-documentation prop-documentation)
+  (tui--check-key-value-documentation state-documentation)
+  (let* ((prop-names (delq nil
+                           (cl-loop for (prop-keyword docstring) on prop-documentation by #'cddr
+                                    collect
+                                    (intern (substring (symbol-name prop-keyword) 1))))))
+    `(progn
+       (cl-defstruct (,name (:include tui-component)
+                            (:constructor nil)
+                            (:constructor ,(intern (format "%s-create" (symbol-name name)))
+                                          (&key props invisible
+                                                &aux (id (tui--new-id))))))
+       (remhash ',name tui--default-props-table)
+       ,(if get-default-props
+            `(cl-defmethod tui-get-default-props ((component ,name))
+               ""
+               (let ((class (tui--object-class component)))
+                 (cl-copy-seq
+                  (let* ((cache-value (gethash class tui--default-props-table 'miss)))
+                    (if (eq cache-value 'miss)
+                        (puthash class (funcall ,get-default-props) tui--default-props-table)
+                      cache-value))))))
 
-     ,(if get-initial-state
-          `(cl-defmethod tui-get-initial-state ((component ,name))
-             ""
-             (funcall ,get-initial-state)))
+       ,(if get-initial-state
+            `(cl-defmethod tui-get-initial-state ((component ,name))
+               ""
+               (funcall ,get-initial-state)))
 
-     ,(if component-will-mount
-          `(cl-defmethod tui-component-will-mount ((component ,name))
-             ""
-             (funcall ,component-will-mount)))
+       ,(if component-will-mount
+            `(cl-defmethod tui-component-will-mount ((component ,name))
+               ""
+               (funcall ,component-will-mount)))
 
-     ,(if mount
-          `(cl-defmethod tui--mount ((component ,name) start &optional end parent)
-             ""
-             (funcall ,mount component start end parent)))
-     
-     ,(if component-did-mount
-          `(cl-defmethod tui-component-did-mount ((component ,name))
-             ""
-             (funcall ,component-did-mount)))
+       ,(if mount
+            `(cl-defmethod tui--mount ((component ,name) start &optional end parent)
+               ""
+               (funcall ,mount component start end parent)))
+       
+       ,(if component-did-mount
+            `(cl-defmethod tui-component-did-mount ((component ,name))
+               ""
+               (funcall ,component-did-mount)))
 
-     ,(if component-will-receive-props
-          `(cl-defmethod tui-component-will-receive-props ((component ,name) next-props)
-             ""
-             (funcall ,component-will-receive-props next-props)))
+       ,(if component-will-receive-props
+            `(cl-defmethod tui-component-will-receive-props ((component ,name) next-props)
+               ""
+               (funcall ,component-will-receive-props next-props)))
 
-     ,(if should-component-update
-          `(cl-defmethod tui-should-component-update ((component ,name) next-props next-state)
-             ""
-             (funcall ,should-component-update next-props next-state)))
+       ,(if should-component-update
+            `(cl-defmethod tui-should-component-update ((component ,name) next-props next-state)
+               ""
+               (funcall ,should-component-update next-props next-state)))
 
-     ,(if component-will-update
-          `(cl-defmethod tui-component-will-update ((component ,name) next-props next-state)
-             ""
-             (funcall ,component-will-update next-props next-state)))
+       ,(if component-will-update
+            `(cl-defmethod tui-component-will-update ((component ,name) next-props next-state)
+               ""
+               (funcall ,component-will-update next-props next-state)))
 
-     ,(if render
-          `(cl-defmethod tui-render ((component ,name))
-             ""
-             (funcall ,render)))
+       ,(if render
+            `(cl-defmethod tui-render ((component ,name))
+               ""
+               (funcall ,render)))
 
-     ,(if component-did-update
-          `(cl-defmethod tui-component-did-update ((component ,name) next-props next-state)
-             ""
-             (funcall ,component-did-update next-props next-state)))
+       ,(if component-did-update
+            `(cl-defmethod tui-component-did-update ((component ,name) next-props next-state)
+               ""
+               (funcall ,component-did-update next-props next-state)))
 
-     ,(if component-will-unmount
-          `(cl-defmethod tui-component-will-unmount ((component ,name))
-             ""
-             (funcall ,component-will-unmount)))
-
-     (defun ,name (&rest args)
-       ,(format "%s%s"
-                documentation
-                (if prop-documentation
-                    (format "\n\nValid parameters include:\n%s"
-                            (s-join "\n"
-                                    (cl-loop for (key docstring) on prop-documentation by #'cddr
-                                             collect
-                                             (format "\t%S\t\t%s\n" key docstring))))
-                  ""))
-       (let (children props)
-         ;; Parse keyword key-value pairs permitting shorthand children (omitted :children)
-         (while (keywordp (car args))
-           (-let* (((prop value) (-take 2 args)))
-             (setq args (cddr args))
-             (if (eq prop :children)
-                 (setq children value)
-               (setq props (append (list prop value)
-                                   props)))))
-         (when args
-           (setq children args))
-         (unless (listp children)
-           (setq children (list children))) ;; TODO: also issue a warning?
-         (let ((component (funcall #'tui-create-element ',name props children)))
-           (when tui-live-reloading
-             (tui--register-instance component))
-           component)))))
+       ,(if component-will-unmount
+            `(cl-defmethod tui-component-will-unmount ((component ,name))
+               ""
+               (funcall ,component-will-unmount)))
+       (cl-defun ,name ,(append
+                         '(&rest args)
+                         (apply #'append
+                                (mapcar
+                                 (lambda (prop-name)
+                                   `(&key ,prop-name))
+                                 prop-names))
+                         '(&allow-other-keys))
+         ,(format "%s%s"
+                  documentation
+                  (if prop-documentation
+                      (format "\n\nValid parameters include:\n%s"
+                              (s-join "\n"
+                                      (cl-loop for (key docstring) on prop-documentation by #'cddr
+                                               collect
+                                               (format "\t%S\t\t%s\n" key docstring))))
+                    "")
+                  (if state-documentation
+                      (format "\n\nInternal State variables:\n%s"
+                              (s-join "\n"
+                                      (cl-loop for (key docstring) on state-documentation by #'cddr
+                                               collect
+                                               (format "\t%S\t\t%s\n" key docstring))))
+                    ""))
+         (let (children props)
+           ;; Parse keyword key-value pairs permitting shorthand children (omitted :children)
+           (while (keywordp (car args))
+             (-let* (((prop value) (-take 2 args)))
+               (setq args (cddr args))
+               (if (eq prop :children)
+                   (setq children value)
+                 (setq props (append (list prop value)
+                                     props)))))
+           (when args
+             (setq children args))
+           (unless (listp children)
+             (setq children (list children))) ;; TODO: also issue a warning?
+           (let ((component (funcall #'tui-create-element ',name props children)))
+             (when tui-live-reloading
+               (tui--register-instance component))
+             component))))))
 
 (defun tui-force-update (component)
   "Force COMPONENT to re-render."

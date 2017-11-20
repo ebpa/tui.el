@@ -154,12 +154,7 @@
 (cl-defmethod tui--insert ((element tui-element))
   "Insert content of ELEMENT."
   (cl-assert (tui-element-mounted element) t "Can only insert nodes once they have been mounted.")
-  ;; FIXME: need a safer way of doing this? (to avoid improperly relocated markers)
-  ;;(delete-region start end)
   ;; Invisible elements don't get inserted
-  ;; CLEANUP: confusing
-  ;; (cl-assert (not (and (tui-invisible-p element)
-  ;;                   (> (tui-length element) 0))) t "Shouldn't be trying to insert an invisible element that has currently viisble content.")
   (unless (tui-invisible-p element)
     (-when-let* ((children (tui-child-nodes element)))
       (if (eq (tui-node-mounted (cl-first children)) t)
@@ -173,9 +168,7 @@
                    do
                    (cl-assert (tui-marker-list--nodes-adjacent-p left-division right-division) t "We should be looking at adjacent divisions")
                    (push (list 'mount child left-division right-division element) tui--update-queue))
-          (setq i (+ i 1)))))
-    ;;(tui--apply-text-props element)
-    ))
+          (setq i (+ i 1)))))))
 
 (cl-defmethod tui--update ((text-node tui-text-node))
   "Update displayed element."
@@ -201,7 +194,8 @@
         (tui--reconcile-content old-content new-content component)
         ;; TODO: (force-window-update (current-buffer))?
         ;;(tui-valid-element-p component) ;; CLEANUP: better method for recursive assertions?
-        )))) ;; TODO: restore original modification status
+        ;; TODO: restore original modification status
+        ))))
 
 (cl-defmethod tui--unmount ((node tui-node))
   "Internal use only.  Unmount COMPONENT, but leave unmounted
@@ -411,7 +405,7 @@ COMPONENT should be handled by the calling method."
 
 (cl-defmethod tui--set-props ((component tui-component) next-props)
   "Internal use only."
-  ;;(display-warning 'comp (format "SET-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
+  (display-warning 'comp (format "SET-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
   (let ((prev-props (tui--get-props component))
         (prev-state (tui--get-state component)))
     (tui--funcall #'tui-component-will-receive-props component next-props)
@@ -438,7 +432,7 @@ Do not call this directly; use `tui-set-state'.
 
 Sets the current state of COMPONENT to NEXT-STATE.  Does not
 cause the component to update when NO-UPDATE is truthy."
-  ;;(display-warning 'comp (format "SET-STATE %S" (tui--object-class component)) :debug tui-log-buffer-name)
+  (display-warning 'comp (format "SET-STATE %S" (tui--object-class component)) :debug tui-log-buffer-name)
   (let ((prev-state (tui-component-state component)))
     (when (not (equal prev-state next-state))
       (setf (tui-component-state component) next-state)
@@ -763,7 +757,7 @@ form.
   "Hide ELEMENT and its subtree."
   ;; OPTIMIZE: can preserve (cache) the content of the segment to potentially avoid re-render when made visible
   (interactive)
-  ;;(display-warning 'tui-diff (format "HIDE %S" (tui--object-class element)) :debug tui-log-buffer-name)
+  (display-warning 'tui-diff (format "HIDE %S" (tui--object-class element)) :debug tui-log-buffer-name)
   (setf (tui-element-invisible element) t)
   (-when-let* ((mounted (tui-element-mounted element))
                (inhibit-read-only t)
@@ -837,49 +831,6 @@ form.
                   (tui--get-inherited-grouped-text-props (tui-parent node)))
                  tui--inheritited-text-props))))
 
-(defun tui-valid-element-p (element &optional invisible-context)
-  "Return t if ELEMENT is a valid `tui-element'.
-Optional argument INVISIBLE-CONTEXT track whether the this node is within an invisible section of the content tree."
-  (and (not (cl-assert (tui-element-p element) t "Element should be a tui-element."))
-       (or (not (tui-node-mounted element))
-           (tui--object-of-class-p element 'tui-buffer) ;; CLEANUP: is this exclusion necessary?
-           (-let* (((start . end) (tui-segment element))
-                   (children (tui-child-nodes element))
-                   (-compare-fn #'eq))
-             (and (not (cl-assert (or (not start)
-                                      (and (markerp start)
-                                           (marker-buffer end)
-                                           (marker-position end))) t "When set, start marker should be a marker object that points somewhere."))
-                  (not (cl-assert (or (not end)
-                                      (and (markerp end)
-                                           (marker-buffer start)
-                                           (marker-position start))) t "When set, end marker should be a marker object that points somewhere."))
-                  (not (cl-assert (listp children) t "Children should be represented by a list"))
-                  ;; all children are adjacent with consolidated markers
-                  (or invisible-context
-                      (tui-invisible-p element)
-                      (-all-p
-                       (lambda (child)
-                         (not (cl-assert (and (>= (tui-start child) start)
-                                              (<= (tui-start child) end)
-                                              (>= (tui-end child) start)
-                                              (<= (tui-end child) end)) t "Internal child markers should exist within the parent's segment")))
-                       children)))))
-       ;; All child nodes are valid as well
-       (-all-p
-        (lambda (child)
-          (or (and (not (tui-element-p child))
-                   (tui-node-p child))
-              (tui-valid-element-p child (or invisible-context
-                                          (tui-invisible-p element)))))
-        (tui-child-nodes element))))
-
-(defun tui-valid-content-tree-p (node)
-  "Return t if NODE's content tree is valid."
-  ;; CLEANUP: better method for recursive assertions?
-  ;; TODO: restore
-  ;; (tui-valid-element-p (tui-root-node node))
-  )
 
 (cl-defmethod tui--apply-text-props ((element tui-element))
   ""
@@ -1107,15 +1058,15 @@ A and B overlap, for example, if one is a parent of the other.  Coincident point
   "Macro for defining `tui-component' types.
 
 Lifecycle signatures:
-(component-will-mount)
-(mount)
-(component-did-mount)
-(component-will-receive-props next-props)
-(should-component-update next-props next-state)
-(component-will-update next-props next-state)
-(render)
-(component-did-update prev-props prev-state)
-(component-will-unmount)"
+component-will-mount ()
+mount ()
+component-did-mount ()
+component-will-receive-props (next-props)
+should-component-update (next-props next-state)
+component-will-update (next-props next-state)
+render ()
+component-did-update (prev-props prev-state)
+component-will-unmount ()"
   (declare (indent defun)) ;; TODO: support an optional docstring as the third parameter (as an alternative to the keyword form)
   `(progn
      (cl-defstruct (,name (:include tui-component)
@@ -1268,6 +1219,7 @@ Optionally specify TARGET context for rendering NODE.  TARGET may
 be a character position, marker, buffer name, buffer, or another
 tui-element."
   ;; FIXME: temporary measure until there's a mechanism for cleaning up the queue after errors
+  ;; (should probably just examine whether targets in the queue are live and skip those that aren't)
   (setq tui--update-queue nil)
   (save-excursion
     (save-current-buffer

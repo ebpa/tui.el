@@ -8,7 +8,7 @@
 (setq log-warning-minimum-level :warning)
 (setq warning-minimum-level :warning)
 
-(defvar tui-log-buffer-name "*Comp Log*")
+(defvar tui-log-buffer-name "*Tui Log*")
 
 (provide 'tui-log)
 

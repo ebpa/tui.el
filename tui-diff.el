@@ -61,9 +61,7 @@
                         (tui--diff old-item new-item)))
           (pop old-list)
           (pop new-list)
-          (setq index-offset (+ 1 index-offset))
-          ;; (tui--diff-list-1 (cl-rest old-list) (cl-rest new-list) element (+ index-offset 1))
-          )
+          (setq index-offset (+ 1 index-offset)))
          ;; remove
          ((and old-item
                (or (not new-item)
@@ -73,9 +71,7 @@
                      (not (eq old-class new-class)))))
           (setq diff (append diff
                              (list (list 'remove old-item))))
-          (pop old-list)
-          ;; (tui--diff-list-1 (cl-rest old-list) new-list element index-offset)
-          )
+          (pop old-list))
          ;; reorder (insert)
          ((and new-key ;; new item has a key that is not currently first
                new-key-old-item)
@@ -84,13 +80,7 @@
           (setq old-list (cons new-key-old-item
                                (-remove (lambda (elt)
                                           (eq (tui--get-key elt) new-key)) ;; FIXME
-                                        old-list)))
-          ;; (tui--diff-list-1 (cons new-key-old-item
-          ;;                       (-remove (lambda (elt)
-          ;;                                  (eq (tui--get-key elt) new-key)) ;; FIXME
-          ;;                                old-list))
-          ;;                 new-list element index-offset)
-          )
+                                        old-list))))
          ;; insert
          ((and new-item
                (not (eq old-class new-class)))
@@ -98,9 +88,7 @@
                              (list (list 'insert new-item element index-offset))))
           (pop old-list)
           (pop new-list)
-          (setq index-offset (+ 1 index-offset))
-          ;; (tui--diff-list-1 (cl-rest old-list) (cl-rest new-list) element (+ index-offset 1))
-          ))))
+          (setq index-offset (+ 1 index-offset))))))
     diff))
 
 (defun tui--get-key (element)

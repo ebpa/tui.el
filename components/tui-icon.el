@@ -63,7 +63,9 @@ Example:
   :prop-documentation
   (:icon-set (format "One of symbols (%s)" (mapconcat #'symbol-name all-the-icons-font-families ", "))
              :icon-name "Name of the desired icon as a string"
-             :scaling "Explicit scaling factor (a number).  Default value is t- indicating that the icon should be scaled to reside within a single monospaced character.  nil indicates the icon should remain unscaled (preserve its default size).")
+             :scaling "Explicit scaling factor (a number).  Default value is t- indicating that the icon should be scaled to reside within a single monospaced character.  nil indicates the icon should remain unscaled (preserve its default size)."
+             :foreground "Foreground face color to apply to the icon."
+             :background "Background face color to apply to the icon.")
   :get-default-props
   (lambda ()
     '(:scaling t))
@@ -73,20 +75,20 @@ Example:
       (tui-build-icon-dimension-data))
     ;; TODO: improve on scaling algorithm
     ;;   - avoid making tall icons (use fixed-width w<1 and h/w>1)
-    (-let* ((props (tui-get-props))
-            (icon-set (plist-get props :icon-set))
-            (icon-name (plist-get props :icon-name))
-            (scaling (plist-get props :scaling))
-            ((scale-width . scale-height) (gethash (cons icon-set icon-name) tui--all-the-icons-size-data)))
-      (tui-span
-       :text-props `(font-lock-ignore t
-                              face ,(list (append (list :family (funcall (all-the-icons--family-name icon-set)))
-                                                  (when scaling
-                                                    (list :height (* (/ 1 scale-width)
-                                                                     (if (eq scaling t)
-                                                                         1
-                                                                       scaling)))))))
-       (assoc-default icon-name (funcall (all-the-icons--data-name icon-set)))))))
+    (tui-let (&props icon-set icon-name scaling foreground background)
+      (-let* (((scale-width . scale-height) (gethash (cons icon-set icon-name) tui--all-the-icons-size-data)))
+        (tui-span
+         :text-props `(font-lock-face ,(list (append (list :family (funcall (all-the-icons--family-name icon-set)))
+                                                    (when foreground
+                                                      (list :foreground foreground))
+                                                    (when background
+                                                      (list :foreground background))
+                                                    (when scaling
+                                                      (list :height (* (/ 1 scale-width)
+                                                                       (if (eq scaling t)
+                                                                           1
+                                                                         scaling)))))))
+         (assoc-default icon-name (funcall (all-the-icons--data-name icon-set))))))))
 
 (provide 'tui-icon)
 

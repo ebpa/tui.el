@@ -66,12 +66,13 @@ It :width value is nil, the component width is variable."
           (padding-width nil)
           (overflow-length nil))
     (when (and desired-width
-               (not (eq desired-width 'variable)))
+               (not (eq desired-width 'variable))
+               (tui-mounted-p component))
       ;; Shared width; we are only interested in its prescribed width
       (if (tui-shared-size-p desired-width)
           (setq desired-width (tui-size desired-width)))
       (cond
-      ;; TODO: accept complex pixel specifications (https://www.gnu.org/software/emacs/manual/html_node/elisp/Pixel-Specification.html#Pixel-Specification)
+       ;; TODO: accept complex pixel specifications (https://www.gnu.org/software/emacs/manual/html_node/elisp/Pixel-Specification.html#Pixel-Specification)
        ;; TODO: testing of pixel-based widths
        ;; ((and desired-width
        ;;       (listp desired-width))
@@ -100,8 +101,9 @@ It :width value is nil, the component width is variable."
   "Truncate overflow of COMPONENT that overflows LENGTH characters."
   (let* ((content (tui-fixed-width--content component)))
     (when (> (tui-end component) (+ (tui-start component) length))
-      (delete-region (+ (tui-start component) length)
-                     (tui-end component)))))
+      (with-current-buffer (marker-buffer (tui-start component))
+        (delete-region (+ (tui-start component) length)
+                       (tui-end component))))))
 
 (defun tui--set-padding (component width)
   "Internal function to manually update the width of padding nodes."
@@ -124,19 +126,7 @@ It :width value is nil, the component width is variable."
     (delete-region (tui-start padding-node) (tui-end padding-node))
     (insert-and-inherit (propertize (make-string width ? )
                                     'font-lock-ignore t
-                                    'invisible nil
-                                    'display `(space :width ,width)))))
-
-;; TODO
-;; (defun listgrid--guess-alignment (value)
-;;   ""
-;;   (cond
-;;    ((numberp value)
-;;     :right)
-;;    ((stringp value)
-;;     :left)
-;;    (t
-;;     :left)))
+                                    'cursor-intangible t))))
 
 (provide 'tui-fixed-width)
 

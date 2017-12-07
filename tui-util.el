@@ -275,6 +275,14 @@ For use in any context where `tui-get-props' and `tui-get-state' are defined."
                             state-vars))
        ,@body)))
 
+(defun tui-viewport-height ()
+  "Return the height of the containing viewport (in rows)."
+  (window-text-height))
+
+(defun tui-viewport-width ()
+  "Return the width of the containing viewport (in columns)."
+  (window-text-width))
+
 (provide 'tui-util)
 
 ;;; tui-util.el ends here

@@ -9,12 +9,12 @@
                              '(:a 1 :b 4 :c 3))
             :to-equal '(:b 4))))
 
-(describe "tui-diff"
+(describe "tui-reconciler"
   (it "is called on a basic property change"
     (spy-on 'tui--reconcile-content)
     (let ((div (tui-div "foo")))
       (tui-with-rendered-element div
-        (tui--set-props div '(:content "bar"))
+        (tui--set-props div '(:children "bar"))
         (expect 'tui--reconcile-content :to-have-been-called))))
   
   (it "yields basic patches"

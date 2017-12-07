@@ -1,7 +1,7 @@
-;;; tui-fixed-width.el --- Fixed width container
+;;; tui-fixed-width.el --- Constrain contents to a fixed width
 
 ;;; Commentary:
-;; Constrain contents to a fixed width
+;; 
 
 ;; Implementation possibilities
 ;;   -'display text property
@@ -24,18 +24,12 @@ It :width value is nil, the component width is variable."
   :get-default-props
   (lambda ()
     (list :minimum-padding (or tui-fixed-width-minimum-padding
-                               0)))
-  :get-initial-state
-  (lambda ()
-    (list :padding-node (tui-text-node-create)))
+                               0)
+          :align 'left))
   :render
   (lambda ()
-    (let* ((props (tui-get-props))
-           (state (tui-get-state))
-           (content (plist-get props :children))
-           (padding-node (plist-get state :padding-node)))
-      (list content
-            padding-node)))
+    (tui-let (&props children align)
+      (list "" children "")))
   :component-did-mount
   (lambda ()
     (tui-fixed-width--request-width component))
@@ -46,105 +40,92 @@ It :width value is nil, the component width is variable."
 (defun tui-fixed-width--request-width (component)
   "Respond to a change in content size in COMPONENT."
   (lexical-let ((component component)) ;; TODO: is this needed?
-    (-let* ((props (tui-get-props))
-            (desired-width (plist-get props :width)))
+    (-let* (((&plist :width desired-width
+                     :minimum-padding minimum-padding)
+             (tui-get-props)))
       (cond
        ((tui-shared-size-p desired-width)
-        (tui-request-size desired-width (tui-visible-width component) (lambda () (tui-fixed-width--update component))))
+        (tui-request-size desired-width
+                       (+ (tui-length (tui-fixed-width--content component))
+                          minimum-padding)
+                       (lambda () (tui-fixed-width--update component))))
        (desired-width
         (tui-fixed-width--update component))))))
 
-;; TODO: callback?
-;; TODO: max-width and min-width
 (defun tui-fixed-width--update (component)
+  ;; TODO: callback?
+  ;; TODO: max-width and min-width
+  ;; TODO: clean up size calculations involving padding
   "Helper component to constrain content within COMPONENT to a declared width."
   (-let* ((inhibit-read-only t)
-          (props (tui--get-props component))
-          (state (tui--get-state component))
-          (padding-node (plist-get state :padding-node))
-          (desired-width (plist-get props :width))
-          (minimum-padding (plist-get props :minimum-padding))
+          ((&plist :padding-node padding-node)
+           (tui--get-state component))
+          ((&plist :width desired-width
+                   :minimum-padding minimum-padding)
+           (tui--get-props component))
           (padding-width nil)
           (overflow-length nil))
-      (when (and desired-width
-                 (not (eq desired-width 'variable)))
-        ;; Shared width; we are only interested in its prescribed width
-        (if (tui-shared-size-p desired-width)
-            (setq desired-width (tui-size desired-width)))
-        ;; TODO: accept complex pixel specifications (https://www.gnu.org/software/emacs/manual/html_node/elisp/Pixel-Specification.html#Pixel-Specification)
-        (cond
-         ((and desired-width
-               (listp desired-width))
-          (-let* ((current-width (tui-pixel-width component))
-                  (desired-width (car desired-width))
-                  (width-difference (tui--width-difference desired-width current-width)))
-            (cond
-             ((> width-difference 0)
-              (setq padding-width (list width-difference)))
-             ((< width-difference 0)
-              (setq overflow-length (tui--overflow-length (tui-start component) (tui-end component) desired-width))
-              (setq padding-width (list (- desired-width (tui-segment-pixel-width (tui-start component) (- (tui-end component) overflow-length)))))))))
-         ((numberp desired-width)
-          (-let* ((current-width (- (tui-end component) (tui-start component)))
-                  (width-difference (- desired-width current-width)))
-            (cond
-             ((> width-difference 0)
-              (setq padding-width width-difference))
-             ((< width-difference 0)
-              (setq overflow-length (- width-difference))))))
-         ((null desired-width))
-         (t
-          (warn "Unknown width value format")))
-        (when overflow-length
-          (delete-region (- (tui-start padding-node) overflow-length) (tui-start padding-node)))
-        (setq padding-width (tui--add-widths (or padding-width 0) minimum-padding)) ;; TODO: incorporate padding into width (currently just added)
-        (when (and padding-width
-                   (not (listp padding-width)))
-          (tui--with-open-node
-            padding-node
-            (delete-region (tui-start padding-node) (tui-end padding-node))
-            (insert-and-inherit (propertize (make-string padding-width ? )
-                                            'font-lock-ignore t
-                                            'invisible nil
-                                            'display `(space :width ,padding-width))))))))
+    (when (and desired-width
+               (not (eq desired-width 'variable)))
+      ;; Shared width; we are only interested in its prescribed width
+      (if (tui-shared-size-p desired-width)
+          (setq desired-width (tui-size desired-width)))
+      (cond
+      ;; TODO: accept complex pixel specifications (https://www.gnu.org/software/emacs/manual/html_node/elisp/Pixel-Specification.html#Pixel-Specification)
+       ;; TODO: testing of pixel-based widths
+       ;; ((and desired-width
+       ;;       (listp desired-width))
+       ;;  (-let* ((current-width (tui-pixel-width component))
+       ;;          (desired-width (car desired-width))
+       ;;          (width-difference (tui--width-difference desired-width current-width)))
+       ;;    (cond
+       ;;     ((> width-difference 0)
+       ;;      (setq padding-width (list width-difference)))
+       ;;     ((< width-difference 0)
+       ;;      (setq overflow-length (tui--overflow-length (tui-start component) (tui-end component) desired-width))
+       ;;      (setq padding-width (list (- desired-width (tui-segment-pixel-width (tui-start component) (- (tui-end component) overflow-length)))))))))
+       ((numberp desired-width)
+        (let ((content-length (tui-length (tui-fixed-width--content component))))
+          (tui--truncate-overflow component desired-width)
+          (when (< content-length desired-width)
+            (tui--set-padding component (- desired-width content-length)))))
+       ((null desired-width))
+       (t
+        (warn "Unknown width value format"))))))
 
-;; TODO
-;; (tui-define-component listgrid-align-to
-;;   :render
-;;   (lambda ()
-;;     (let* ((props (tui-get-props))
-;;           (pos (plist-get props :pos))
-;;           (children (plist-get props :children)))
-;;       (list
-;;        (propertize " " 'display `(space :align-to ,pos))
-;;        children))))
-  
-;; (defun listgrid--align-to-zero (string)
-;;   "Returns a string that has been aligned to the zero'th column."
-;;   (concat
-;;    (propertize " " 'display `(space :align-to 0))
-;;    string))
+(defun tui-fixed-width--content (component)
+  (second (tui-child-nodes component)))
 
-;; TODO
-;; (defun listgrid--align-to-offset (string offset)
-;;   "Return a recomputed OFFSET based on align-to text properties in STRING."
-;;   ;; find last
-;;   )
+(defun tui--truncate-overflow (component length)
+  "Truncate overflow of COMPONENT that overflows LENGTH characters."
+  (let* ((content (tui-fixed-width--content component)))
+    (when (> (tui-end component) (+ (tui-start component) length))
+      (delete-region (+ (tui-start component) length)
+                     (tui-end component)))))
 
-;; TODO
-;; (defun listgrid--substring-align-to-safe (string from &optional to)
-;;   "Align-to -safe version of `substring'."
-;;   (let ((props (listgrid--text-property-list string)))
-;;     ;; find an align-to larger than
-;;     )
+(defun tui--set-padding (component width)
+  "Internal function to manually update the width of padding nodes."
+  (-let* (((&plist :align align) (tui--get-props component))
+          (child-nodes (tui-child-nodes component)))
+    (if (eq align 'center)
+        (-let* (((left-padding content right-padding) child-nodes))
+          (tui--set-padding-node-width right-padding (/ width 2))
+          (tui--set-padding-node-width left-padding (- width (/ width 2))))
+      (let* ((padding (pcase align
+                        ('left (third child-nodes))
+                        ('right (first child-nodes))
+                        (_ (error "Unexpected alignment value: %S" align)))))
+        (tui--set-padding-node-width padding width)))))
 
-;; (defun listgrid-align-right (string max-length)
-;;   ""
-;;   (concat
-;;    (if (and max-length
-;;             (> max-length (string-width string)))
-;;        (make-string (- max-length (string-width string)) " "))
-;;    string))
+(defun tui--set-padding-node-width (padding-node width)
+  "Internal function to manually update the width of padding nodes."
+  (tui--with-open-node
+    padding-node
+    (delete-region (tui-start padding-node) (tui-end padding-node))
+    (insert-and-inherit (propertize (make-string width ? )
+                                    'font-lock-ignore t
+                                    'invisible nil
+                                    'display `(space :width ,width)))))
 
 ;; TODO
 ;; (defun listgrid--guess-alignment (value)
@@ -156,8 +137,6 @@ It :width value is nil, the component width is variable."
 ;;     :left)
 ;;    (t
 ;;     :left)))
-
-(provide 'tui-fixed-width)
 
 (provide 'tui-fixed-width)
 

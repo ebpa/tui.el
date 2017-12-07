@@ -1,4 +1,4 @@
-;;; tui-layout.el --- Layout/display logic
+;;; tui-layout.el --- Layout / Visibility Helpers
 ;;; Measurement
 
 ;;; Commentary:
@@ -7,6 +7,162 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
+
+(defun tui-get-node-at (&optional pos type)
+  "Get the `tui-node' at POS.  Search ancestors for a node of type TYPE when TYPE is non-nil."
+  (unless pos (setq pos (point)))
+  (if type
+      (cl-first (tui-ancestor-elements-at pos type))
+    (get-text-property pos 'tui-node)))
+
+(defun tui-get-element-at (&optional pos type)
+  "Get the `tui-element' at POS.  Search ancestors for element of type TYPE when TYPE is non-nil."
+  (unless pos (setq pos (point)))
+  (if type
+      (cl-first (tui-ancestor-elements-at pos type))
+    (tui-parent (get-text-property pos 'tui-node))))
+
+(cl-defmethod tui--get-string ((node tui-node))
+  "Return the string representation of ELEMENT's content tree.  Returns nil if ELEMENT is not mounted."
+  (-let* ((start (tui-start node))
+          (end (tui-end node)))
+    (when (and start end)
+      (buffer-substring start end))))
+
+(cl-defmethod tui--get-string (content)
+  "Return the string representation of CONTENT."
+  (if (tui--list-content-p content)
+      (mapconcat #'tui--get-string content)
+    (cond
+     ((null content)
+      "")
+     ((stringp content)
+      content)
+     ((tui--image-p content)
+      (propertize "[image]" 'display content))
+     ((numberp content)
+      (format "%d" content))
+     (t
+      tui-error-placeholder-string))))
+
+(defun tui-invisible-p (element)
+  "Return t if ELEMENT has been marked invisible."
+  (and (tui-element-p element)
+       (tui-element-invisible element)))
+
+;; (defun tui-visible-p (element)
+;;   "Return t if ELEMENT is not marked invisible.  This does not
+;; indicate that ELEMENT is in fact visible.  A parent element may
+;; be marked invisible which would cause ELEMENT to not be visible
+;; to the user even if ELEMENT is not marked invisible."
+;;   (and (tui-element-p element)
+;;        (not (oref element :invisible))))
+
+;;; Segment-related
+
+(defvar tui--marker-node-table
+  (make-hash-table :test #'eq) ;; TODO restore :weakness 'key)
+  "Keep track of elements that start and end at markers.  Values are formatted as cons cells (START-ELEMENTS . END-ELEMENTS).")
+
+(cl-defmethod tui-segment ((node tui-node))
+  "Return markers denoting the start and end of NODE formatted as a cons cell (START . END)."
+  (cons (tui-marker-list-node-marker (tui-node-start node))
+        (tui-marker-list-node-marker (tui-node-end node))))
+
+(cl-defmethod tui-segment--nodes ((node tui-node))
+  "Return marker nodes denoting the start and end of NODE formatted as a cons cell (START . END)."
+  (cons (tui-node-start node) (tui-node-end node)))
+
+(defmacro tui--with-open-node (node &rest body)
+  "\"Open\" segment of NODE and execute BODY.  Ensure that markers are consolidated following evaluation of BODY."
+  (declare (indent defun))
+  `(save-current-buffer
+     (save-excursion
+       (-let* ((node ,node))
+         (tui--open-segment node)
+         (tui--goto (tui-start node))
+         (progn . ,body)))))
+
+(cl-defmethod tui--open-segment ((node tui-node))
+  "Return the segment for NODE formatted as a cons cell (START . END)."
+  (-let* ((start (tui-node-start node))
+          (end (tui-node-end node)))
+    (cl-assert (tui-marker-list-node-p start) "Start of segment must be a tui-marker-list-node.")
+    (cl-assert (tui-marker-list-node-p end) "End of segment must be a tui-marker-list-node.")
+    (tui-marker-list-open-segment (tui-node-marker-list node) start end)))
+
+(defun tui-start (node)
+  "Return a marker denoting the start of NODE.  Returns nil if NODE is not mounted."
+  ;; TODO: defensively return copies of markers?
+  (when (tui-node-mounted node)
+    (tui-marker-list-node-marker (tui-node-start node))))
+
+(defun tui-end (node)
+  "Return a marker denoting the end of NODE.  Returns nil if NODE is not mounted."
+  ;; TODO: defensively return copies of markers?
+  (when (tui-node-mounted node)
+    (tui-marker-list-node-marker (tui-node-end node))))
+
+(defun tui--start-division (node)
+  "Return division denoting the start of NODE."
+  (tui-node-start node))
+
+(defun tui--end-division (node)
+  "Return division denoting the end of NODE."
+  (tui-node-end node))
+
+;;;; Markers and segments
+
+(cl-defmethod tui-markers ((node tui-node))
+  "Return a list of unique markers associated with NODE."
+  (-let* (((start . end) (tui-segment node)))
+    (list (tui-marker-list-node-start start)
+          (tui-marker-list-node-end end))))
+
+;; (cl-defmethod tui-markers ((element tui-element))
+;;   "Return a list of unique markers within the subtree of ELEMENT."
+;;   (-let* (((start . end) (tui-segment element)))
+;;     (tui-marker-list-range (tui-element-marker-list element) start end)))
+
+;; (cl-defmethod tui-child-markers ((element tui-element))
+;;   "Return markers of NODE's children."
+;;   (apply #'append
+;;          (mapcar
+;;           (lambda (child)
+;;             (list (tui-start child) (tui-end child)))
+;;           (tui-child-nodes element))))
+
+;;;; Internal Segment-related
+
+;; (cl-defmethod tui--set-segment ((node tui-node) start-node end-node)
+;;   "Set NODE buffer segment to START-NODE and END-NODE."
+;;   ;; (when (and start-node end-node)
+;;   ;;   (cl-assert (<= start-node end-node) t "Segment should be ordered."))
+;;   (tui--set-start node start-node)
+;;   (tui--set-end node end-node))
+
+(defun tui--elements-starting-at (marker)
+  "Return a list of nodes starting at MARKER."
+  (car (gethash marker tui--marker-node-table)))
+
+(defun tui--incident-node-p (node pos)
+  "Return t if NODE starts or ends at POS."
+  (or (= (tui-start node) pos)
+      (= (tui-end node) pos)))
+
+(cl-defmethod tui--set-markers ((node tui-node) marker)
+  "Internal function to set all segment endpoints in the subtree of NODE to MARKER."
+  (setf (tui-node-start node) marker)
+  (setf (tui-node-end node) marker))
+
+(cl-defmethod tui--set-markers ((element tui-element) marker)
+  "Internal function to set all segment endpoints in the subtree of NODE to MARKER."
+  (mapc (lambda (child)
+          (tui--set-markers child marker))
+        (tui-child-nodes element))
+  (cl-call-next-method))
+
+;;; Size calculation
 
 (cl-defmethod tui-height ((element tui-element))
   "Returns the total width of COMPONENT (not just visible characters)."
@@ -106,46 +262,6 @@
         (when (and start-y end-y)
           (- end-y start-y))))))
 
-(defun tui--window-x-pixel-position (pos)
-  "Calculate the distance of POS relative to the left edge of the screen in pixels."
-  (car (progn (goto-char pos)
-              ;; (unless (pos-visible-in-window-p pos)
-              ;;   (redisplay))
-              (or (window-absolute-pixel-position pos)
-                  (progn (redisplay)
-                         (window-absolute-pixel-position pos))))))
-
-(defun tui--window-y-pixel-position (pos)
-  "Calculate the distance of POS relative to the top edge of the screen in pixels."
-  (cdr (progn (goto-char pos)
-              ;; (unless (pos-visible-in-window-p pos)
-              ;;   (redisplay))
-              (or (window-absolute-pixel-position pos)
-                  (progn (redisplay)
-                         (window-absolute-pixel-position pos))))))
-
-(defun tui-spans-lines-p (start end)
-  "Return t if START and END buffer positions span multiple lines."
-  (not (eq (line-number-at-pos start) (line-number-at-pos end))))
-
-(defun tui--display-position (pos)
-  "Goto POS and ensure that it is visible in the window."
-  (goto-char pos)
-  (redisplay))
-
-(defun tui--pixel-width-to-char-width (pixels)
-  "Convert PIXELS to an approximate number of characters based on `window-font-width'."
-  (when (listp pixels)
-    (setq pixels (car pixels)))
-  (round (/ (* 1.0 pixels)
-            (window-font-width))))
-
-(defun tui--char-width-to-pixel-width (columns)
-  "Convert COLUMNS to an approximate number of pixels based on `window-font-width'."
-  (when (listp columns)
-    (setq columns (car columns)))
-  (* columns (window-font-width)))
-
 (defun tui--add-widths (a b)
   "Add widths A and B.
 
@@ -179,6 +295,18 @@ unit is assumed have a unit of characters.  When a list of length
    (t
     (error "Unexpected (presumably incompatible) pixel values"))))
 
+(defun tui--pixel-width-to-char-width (pixels)
+  "Convert PIXELS to an approximate number of characters based on `window-font-width'."
+  (when (listp pixels)
+    (setq pixels (car pixels)))
+  (round (/ (* 1.0 pixels)
+            (window-font-width))))
+
+(defun tui--char-width-to-pixel-width (columns)
+  "Convert COLUMNS to an approximate number of pixels based on `window-font-width'."
+  (when (listp columns)
+    (setq columns (car columns)))
+  (* columns (window-font-width)))
 
 (defun tui--width-difference (a b)
   "Return nil if A or B is nil."
@@ -203,9 +331,47 @@ unit is assumed have a unit of characters.  When a list of length
      (t
       (error "Unexpected (presumably incompatible) pixel values")))))
 
+(cl-defmethod tui-length ((node tui-node))
+  "Return the length (number of characters) of NODE."
+  (-let* (((start . end) (tui-segment node)))
+    (- end start)))
+(defun tui--node-height (node)
+  "Return the height of NODE in its content tree.  The root element has a height of 1."
+  (length (tui-ancestor-elements node)))
+
+;;; Positioning
+
+(defun tui--window-x-pixel-position (pos)
+  "Calculate the distance of POS relative to the left edge of the screen in pixels."
+  (car (progn (goto-char pos)
+              ;; (unless (pos-visible-in-window-p pos)
+              ;;   (redisplay))
+              (or (window-absolute-pixel-position pos)
+                  (progn (redisplay)
+                         (window-absolute-pixel-position pos))))))
+
+(defun tui--window-y-pixel-position (pos)
+  "Calculate the distance of POS relative to the top edge of the screen in pixels."
+  (cdr (progn (goto-char pos)
+              ;; (unless (pos-visible-in-window-p pos)
+              ;;   (redisplay))
+              (or (window-absolute-pixel-position pos)
+                  (progn (redisplay)
+                         (window-absolute-pixel-position pos))))))
+
+(defun tui-spans-lines-p (start end)
+  "Return t if START and END buffer positions span multiple lines."
+  (not (eq (line-number-at-pos start) (line-number-at-pos end))))
+
+(defun tui--display-position (pos)
+  "Goto POS and ensure that it is visible in the window."
+  (goto-char pos)
+  (redisplay))
+
 (defun tui--overflow-length (start end pixel-width)
-  "Return the number of characters that END has exceeded PIXEL-WIDTH distance from START."
-  ;; CLEANUP: confusing arguments
+  "Return the number of characters that START - END segment has exceeded PIXEL-WIDTH.
+
+Returns a negative or zero number of there is no overflow."
   (let ((check-position end)
         (pixel-boundary (+ (car (window-absolute-pixel-position start)) pixel-width)))
     (while (and (> check-position start)
@@ -239,6 +405,92 @@ unit is assumed have a unit of characters.  When a list of length
   (when (markerp marker)
     (set-buffer (marker-buffer marker)))
   (goto-char marker))
+
+
+;;; Visibility
+
+(defun tui-hide-element (element)
+  "Hide ELEMENT and its subtree."
+  ;; OPTIMIZE: can preserve (cache) the content of the segment to potentially avoid re-render when made visible
+  (interactive)
+  (display-warning 'tui-diff (format "HIDE %S" (tui--object-class element)) :debug tui-log-buffer-name)
+  (setf (tui-element-invisible element) t)
+  (-when-let* ((mounted (tui-element-mounted element))
+               (inhibit-read-only t)
+               ((start . end) (tui-segment element))
+               (marker-tree (tui-element-marker-list element)))
+    (delete-region start end))
+  ;;(tui-valid-content-tree-p element)
+  element)
+
+(defun tui--show-element (element)
+  "Show ELEMENT and its subtree."
+  (setf (tui-element-invisible element) nil)
+  (when (tui-element-mounted element)
+    (tui--insert element))
+  ;;(tui-valid-content-tree-p element)
+  element)
+
+(defmacro tui-preserve-point (node &rest body)
+  "Evaluate BODY preserving the point position relative to start of ancestor NODE."
+  (declare (indent defun))
+  (let ((node-var (make-symbol "node"))
+        (offset-var (make-symbol "offset")))
+    `(let* ((,node-var ,node)
+            (,offset-var (tui--node-internal-offset ,node-var)))
+       ,@body
+       (-when-let* ((start (tui-start ,node-var)))
+         (goto-char (+ start ,offset-var))))))
+
+(defun tui--node-internal-offset (node)
+  "Return the relative offset between the start of ancestor NODE and point.
+Returns nil if NODE is not mounted or is not an ancestor element."
+  (let* ((start (tui-start node))
+         (end (tui-end node)))
+    (when (and start
+               (eq (marker-buffer start)
+                   (current-buffer))
+               (>= (point) start)
+               (<= (point) end))
+      (- (point) start))))
+
+(cl-defun tui-next-element (&optional pos (predicate #'identity))
+  "Return the nearest `tui-element' that starts after POS or point.
+Returns nil if there are no elements following POS in the content tree.
+
+See also `tui-previous-element'."
+  (unless pos (setq pos (point)))
+  (let* ((target-node (tui-get-node-at pos))
+         (current-node target-node)
+         current-node-index parent following-siblings next-element intermediate-element)
+    (while (and (setq parent (tui-parent current-node))
+                (setq current-node-index (tui-node-relative-index current-node))
+                (progn (setq following-siblings (-slice (tui-child-nodes parent) (+ 1 current-node-index)))
+                       (not (setq next-element
+                                  (some (-partial #'tui-first-subtree-node predicate)
+                                        following-siblings)))))
+      (setq current-node parent))
+    (or next-element
+        intermediate-element)))
+
+(cl-defun tui-previous-element (&optional pos (predicate #'identity))
+  "Return the nearest `tui-element' that ends before POS.
+Returns nil if there are no elements preceding POS in the content tree.
+
+See also `tui-next-element'."
+  (unless pos (setq pos (point)))
+  (let* ((target-node (tui-get-node-at pos))
+         (current-node target-node)
+         current-node-index parent preceding-siblings previous-element intermediate-element)
+    (while (and (setq parent (tui-parent current-node))
+                (setq current-node-index (tui-node-relative-index current-node))
+                (progn (setq preceding-siblings (reverse (-take current-node-index (tui-child-nodes parent))))
+                       (not (setq previous-element
+                                  (-some (-partial #'tui-last-subtree-node predicate)
+                                         preceding-siblings)))))
+      (setq current-node parent))
+    (or previous-element
+        intermediate-element)))
 
 (provide 'tui-layout)
 

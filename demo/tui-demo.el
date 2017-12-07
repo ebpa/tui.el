@@ -53,7 +53,7 @@
     (let ((name (plist-get (tui-get-props) :name)))
       (list (hello :name name)
             "\n------------\n"
-            (basic-question)
+            (tui-demo-basic-question)
             "\nmake "
             (basic-counter :start-value 0)
             " widgets!"))))
@@ -64,7 +64,7 @@
 ;;     (define-key map [mouse-1] #'tui-confirmation)
 ;;     map))
 
-(tui-define-component basic-counter
+(tui-define-component tui-demo-basic-counter
   :documentation
   "Basic counter control"
   :get-initial-state

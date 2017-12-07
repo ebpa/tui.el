@@ -1,4 +1,4 @@
-;;; tui-diff.el --- Logic for diffing content trees
+;;; tui-reconciler.el --- Logic for diffing content trees
 
 ;;; Commentary:
 ;; 
@@ -37,7 +37,7 @@
    (t
     (list (list 'replace old-node new-node)))))
 
-(defun tui--diff-list (old-list new-list element &optional index-offset)
+(defun tui--diff-list (old-list new-list parent-element &optional index-offset)
   "Internal function for generating a diff between the content trees.  OLD-LIST is the existing content (child nodes) of ELEMENT and NEW-LIST is the potentially updated content.  INDEX-OFFSET tracks index position for recursive calculation of the DIFF."
   (unless index-offset (setq index-offset 0))
   (let ((old-keys (tui--keyed-elements old-list))
@@ -76,7 +76,7 @@
          ((and new-key ;; new item has a key that is not currently first
                new-key-old-item)
           (setq diff (append diff
-                             (list (list 'insert new-key-old-item element index-offset))))
+                             (list (list 'insert new-key-old-item parent-element index-offset))))
           (setq old-list (cons new-key-old-item
                                (-remove (lambda (elt)
                                           (eq (tui--get-key elt) new-key)) ;; FIXME
@@ -85,7 +85,7 @@
          ((and new-item
                (not (eq old-class new-class)))
           (setq diff (append diff
-                             (list (list 'insert new-item element index-offset))))
+                             (list (list 'insert new-item parent-element index-offset))))
           (pop old-list)
           (pop new-list)
           (setq index-offset (+ 1 index-offset))))))
@@ -132,6 +132,6 @@ Returns the outcome of that reconciliation process."
 ;;   "Reorder items of ELEMENT- moving FROM-INDEX to TO-INDEX."
 ;;   (tui-insert-node (nth from-index (tui-child-nodes element)) element to-index))
 
-(provide 'tui-diff)
+(provide 'tui-reconciler)
 
-;;; tui-diff.el ends here
+;;; tui-reconciler.el ends here

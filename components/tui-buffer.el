@@ -10,6 +10,7 @@
 
 (tui-define-component tui-buffer
   ;; TODO: suppoort both major and minor modes
+  ;; TODO: support inheriting text properties?
   :documentation "Component representing a buffer."
   :prop-documentation
   (:buffer "Buffer or buffer name to use or create."
@@ -21,24 +22,22 @@
     (list :mode 'special-mode))
   :mount
   (lambda (component &optional start end parent)
-    (let* ((props (tui--get-props component))
+    (let* ((props (tui--plist-merge (tui--funcall #'tui-get-default-props component)
+                                 (tui--get-props component)))
            (buffer (or (plist-get props :buffer)
                        (generate-new-buffer "*tui-buffer*")))
            (mode (plist-get props :mode))
            (keymap (plist-get props :keymap))
-           ;; TODO
-           ;; (revert-force-update (plist-get props :revert-props-function))
            (marker-list (tui-marker-list-create))
            start end)
+      (setf (tui-component-props component) props)
       (with-current-buffer (get-buffer-create buffer)
         (let ((inhibit-read-only t))
           (tui--unmount-buffer-content)
           (push component tui--content-trees)
           (erase-buffer)
-          ;; TODO
-          ;; (when revert-props-function
-          ;;   (setq-local revert-buffer-function (lambda (ignore-auto noconfirm)
-          ;;                                        (listgrid-refresh-grid))))
+          (setq-local revert-buffer-function (lambda (ignore-auto noconfirm)
+                                               (tui-force-update-buffer)))
           (if mode
               (funcall mode))
           (when keymap

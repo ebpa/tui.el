@@ -41,7 +41,7 @@
       (-let* ((content (tui-node-content element))
               ((start . end) (tui-segment element)))
         (cond
-         ((tui--object-of-class-p element 'tui-element)
+         ((tui-element-p element)
           (progn
             (format "%s%S (element %S) (%S,%S)\n%s"
                     prefix
@@ -94,10 +94,17 @@
   (interactive)
   (unless type (setq type (completing-read "Type: " (mapcar (lambda (element)
                                                               (tui--object-class element))
-                                                       (tui-ancestor-elements-at (point)))
+                                                            (tui-ancestor-elements-at (point)))
                                            nil t)))
   (when type
     (find-function (intern (s-chop-prefix "cl-struct-" type)))))
+
+(defun tui-toggle-wip ()
+  "Hide/show ``work in progress'' UI elements."
+  (interactive)
+  (if (get 'tui-wip 'invisible)
+      (put 'tui-wip 'invisible nil)
+    (put 'tui-wip 'invisible t)))
 
 (provide 'tui-dev)
 

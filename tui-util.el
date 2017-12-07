@@ -26,14 +26,39 @@ This is in contrast to merely setting it to 0.
              do (setq merged (plist-put merged key val)))
     merged))
 
-(defun tui-map-elements (fn element)
-  ;; CLEANUP; rename to tui-map-subtree?
-  "Apply FN to all elements in the subtree of ELEMENT."
-  (funcall fn element)
-  (when (tui-element-p element)
-    (mapc (lambda (item)
-            (tui-map-elements fn item))
-          (tui-node-content element))))
+(defun tui-map-subtree (fn node)
+  "Apply FN to all elements in the subtree of NODE."
+  (let* ((nodes (list node)))
+    (while nodes
+      (let* ((node (pop nodes)))
+        (funcall fn node)
+        (when (tui-element-p node)
+          (push (tui-child-nodes node) nodes))))))
+
+
+(cl-defun tui-first-subtree-node (predicate node)
+  "Return the first node in the subtree of NODE that satisfies PREDICATE.
+
+See also: `tui-last-subtree-node'."
+  (let* ((nodes (list node))
+         current-node)
+    (while (and (setq current-node (pop nodes))
+                (not (funcall predicate current-node)))
+      (when (tui-element-p current-node)
+        (setq nodes
+              (append (tui-child-nodes current-node)
+                      nodes))))
+    current-node))
+
+(cl-defun tui-last-subtree-node (predicate node)
+  "Return the last node in the subtree of NODE that satisfies PREDICATE.
+
+See also: `tui-first-subtree-node'."
+  (or (-some (lambda (child)
+               (tui-last-subtree-node predicate child))
+             (reverse (tui-child-nodes node)))
+      (when (funcall predicate node)
+        node)))
 
 (defun tui--type (node)
   "Return the NODE's type as a symbol."
@@ -179,11 +204,36 @@ Optional argument INVISIBLE-CONTEXT track whether the this node is within an inv
         (tui-child-nodes element))))
 
 (defun tui-valid-content-tree-p (node)
-  "Return t if NODE's content tree is valid."
+  "Return t if NODE belongs to a valid content tree (it calls `tui-valid-element-p' on the root element)."
   ;; CLEANUP: better method for recursive assertions?
-  ;; TODO: restore
-  ;; (tui-valid-element-p (tui-root-node node))
-  )
+  (tui-valid-element-p (tui-root-node node)))
+
+(defun tui--clean-plist (plist)
+  "Remove degeneracies from plist."
+  (let ((keys (make-hash-table :test #'equal))
+        (miss (make-symbol "miss"))
+        new-plist)
+    (cl-loop for (key value) on plist by #'cddr
+             do
+             (when (eq (gethash key table miss) miss)
+               (puthash key key keys)
+               (push value new-plist)
+               (push key new-plist)))
+    new-plist))
+
+(defun tui--target-row-offset (num-columns current-column-index steps-forward)
+  "Helper function to calculate the row offset for moving STEPS-FORWARD on a grid consisting of NUM-COLUMNS assuming a current position of CURRENT-COLUMN-INDEX."
+  (let ((target-index (+ steps-forward current-column-index)))
+    (if (>= target-index 0)
+        (/ target-index num-columns)
+      (- -1 (/ (abs target-index) num-columns)))))
+
+(defun tui--target-column-index (num-columns current-column-index steps-forward)
+  "Helper function to calculate the target column index for moving STEPS-FORWARD on a grid consisting of NUM-COLUMNS assuming a current position of CURRENT-COLUMN-INDEX."
+  (let ((target-index (+ steps-forward current-column-index)))
+    (if (>= target-index 0)
+        (% target-index num-columns)
+      (+ num-columns (% target-index num-columns)))))
 
 (provide 'tui-util)
 

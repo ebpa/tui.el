@@ -3,11 +3,13 @@
 (require 's)
 (require 'tui)
 
+
 ;; CLEANUP: improve testing focus
 
 (describe "tui-define-component")
 
 (describe "tui-element"
+  
   (it "leaves adjacent non- comp content intact"
     (with-temp-buffer
       (insert "foobaz")
@@ -20,8 +22,6 @@
     (tui-with-rendered-element
       "Hello world!"
       (-let* (((start . end) (tui-segment tui-element)))
-        (expect (markerp start))
-        (expect (markerp end))
         (expect (markerp start))
         (expect (markerp end)))))
 
@@ -213,11 +213,12 @@
           (expect (buffer-string) :to-equal "-foo"))))))
 
 (describe "tui-lowest-common-ancestor"
-  (let* ((a (tui-span "A"))
-         (b (tui-span "B"))
-         (c (tui-div "C" a b)))
-    (tui-with-rendered-element c
-      (expect (tui-lowest-common-ancestor a b) :to-be c))))
+  (it "identifies shared parent"
+    (let* ((a (tui-span "A"))
+           (b (tui-span "B"))
+           (c (tui-div "C" a b)))
+      (tui-with-rendered-element c
+        (expect (tui-lowest-common-ancestor a b) :to-be c)))))
 
 (describe "tui-remove"
   (it "throws an error when target node is not mounted")

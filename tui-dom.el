@@ -75,16 +75,7 @@ Return pair of divisions within ELEMENT at INDEX corresponding to be used for in
 
 (defun tui-remove (node)
   "Remove NODE from its current tree position."
-  (let* ((parent (tui-parent node)))
-    (tui--unmount node)
-    (when parent
-      (remhash node tui--element-parent-table)
-      (setf (tui-node-content parent) (remove node (tui-element-content parent)))
-      (tui-marker-list-remove-node (tui-node-marker-list node)
-                                (tui-node-start node))
-      (tui-marker-list-remove-node (tui-node-marker-list node)
-                                (tui-node-end node))
-      (tui--update-node-index-positions (tui-child-nodes parent)))))
+  (tui--unmount node))
 
 (defun tui-remove-child (node child)
   "Remove CHILD node of NODE."

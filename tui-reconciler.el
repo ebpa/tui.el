@@ -82,8 +82,7 @@
                                           (eq (tui--get-key elt) new-key)) ;; FIXME
                                         old-list))))
          ;; insert
-         ((and new-item
-               (not (eq old-class new-class)))
+         (new-item
           (setq diff (append diff
                              (list (list 'insert new-item parent-element index-offset))))
           (pop old-list)

@@ -240,11 +240,15 @@ COMPONENT should be handled by the calling method."
     (save-current-buffer
       (save-excursion
         (when (tui-node-mounted node)
+          (when parent
+            (remhash node tui--element-parent-table)
+            (setf (tui-node-content parent) (remove node (tui-element-content parent)))
+            (tui--update-node-index-positions (tui-child-nodes parent)))
           (tui--goto (tui-start node))
           (delete-region (tui-marker-list-node-marker start)
                          (tui-marker-list-node-marker end))
-          ;;(tui--consolidate-markers node)
-          (tui-marker-list-delete-node-segment (tui-node-marker-list node) start end))))))
+          (tui-marker-list-delete-node-segment (tui-node-marker-list node) start end)
+          (setf (tui-node-mounted node) nil))))))
 
 (cl-defmethod tui--unmount ((element tui-element))
   "Internal use only.  Unmount COMPONENT, but leave unmounted
@@ -355,6 +359,7 @@ Binds `tui-element' to ELEMENT for evaluation of BODY."
 (cl-defmacro tui-define-component (name &key
                                      documentation
                                      prop-documentation
+                                     state-documentation
                                      get-default-props
                                      get-initial-state
                                      component-will-mount
@@ -544,9 +549,15 @@ tui-element."
           ;;(tui-valid-content-tree-p node)
           node)))))
 
-(cl-defmethod tui-rendered-p ((element tui-node))
+(cl-defmethod tui-rendered-p ((node tui-node))
   "Return t if ELEMENT has been rendered."
-  (and (tui-segment element)
+  (and (tui-segment node)
+       t))
+
+(cl-defmethod tui-mounted-p ((node tui-node))
+  ""
+  (and (tui-node-mounted node)
+       (not (eq (tui-node-mounted node) 'pending))
        t))
 
 ;;;; Internal

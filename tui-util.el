@@ -241,6 +241,7 @@ Optional argument INVISIBLE-CONTEXT track whether the this node is within an inv
   "Convenience form for destructuring state and prop values.
 
 For use in any context where `tui-get-props' and `tui-get-state' are defined."
+  ;; TODO: add an informative error message when used outside an appropriate component lifecycle method
   (declare (debug ((&rest symbolp)
                    body))
            (indent 1))
@@ -282,6 +283,12 @@ For use in any context where `tui-get-props' and `tui-get-state' are defined."
 (defun tui-viewport-width ()
   "Return the width of the containing viewport (in columns)."
   (window-text-width))
+
+(defun tui--check-key-value-documentation (documentation)
+  "Internal function to check the form of DOCUMENTATION."
+  (cl-loop for (prop-keyword docstring) on documentation by #'cddr
+           if (not (keywordp prop-keyword))
+           do (warn "Malformed documentation list")))
 
 (provide 'tui-util)
 

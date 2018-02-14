@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: keyword-get-initial-state
+# key: :gis
+# --
+:get-initial-state
+(lambda ()
+  $0)

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: keyword-component-will-mount
+# key: :cwm
+# --
+:component-will-mount
+(lambda ()
+  $0)

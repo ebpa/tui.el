@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: keyword-component-will-unmount
+# key: :cwun
+# --
+:component-will-unmount
+(lambda ()
+  $0)

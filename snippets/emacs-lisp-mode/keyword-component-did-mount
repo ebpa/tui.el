@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: keyword-component-did-mount
+# key: :cdm
+# --
+:component-did-mount
+(lambda ()
+  $0)

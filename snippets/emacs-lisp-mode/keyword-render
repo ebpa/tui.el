@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: keyword-render
+# key: :r
+# --
+:render
+(lambda ()
+  $0)

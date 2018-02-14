@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: keyword-component-did-update
+# key: :cdu
+# --
+:component-did-update
+(lambda (next-props next-state)
+  $0)

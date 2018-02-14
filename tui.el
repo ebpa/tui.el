@@ -50,6 +50,7 @@
 (require 'tui-dev)
 (require 'tui-reconciler)
 (require 'tui-shared-size)
+(require 'tui-snippets)
 (require 'tui-tabstops)
 (require 'tui-util)
 

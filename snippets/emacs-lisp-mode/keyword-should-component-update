@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: keyword-should-component-update
+# key: :scu
+# --
+:should-component-update
+(lambda (next-props next-state)
+  $0)

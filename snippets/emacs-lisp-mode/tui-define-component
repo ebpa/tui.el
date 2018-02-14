@@ -1,0 +1,10 @@
+#name: tui-define-component
+#key: tuic
+# --
+(tui-define-component ${1:component}
+  :documentation ""
+  :prop-documentation
+  ()
+  :render
+  (lambda ()
+    $0))

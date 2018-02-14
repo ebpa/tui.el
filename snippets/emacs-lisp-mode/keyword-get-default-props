@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: keyword-get-default-props
+# key: :gdp
+# --
+:get-default-props
+(lambda ()
+  $0)

@@ -396,6 +396,12 @@ component-will-unmount ()"
                             (:constructor ,(intern (format "%s-create" (symbol-name name)))
                                           (&key props invisible
                                                 &aux (id (tui--new-id))))))
+       ;; FIXME: this is a rather hacky way of suppressing function creation for component slots
+       (mapc (-lambda ((slot ignore))
+                 (unless (eq slot 'cl-tag-slot)
+                   (setf (symbol-function (intern (concat (symbol-name ',name) "-" (symbol-name slot)))) nil)
+                   (setf (symbol-function (intern (concat (symbol-name ',name) "-" (symbol-name slot) "--cmacro"))) nil)))
+                (cl-struct-slot-info 'tui-component))
        (remhash ',name tui--default-props-table)
        ,(if get-default-props
             `(cl-defmethod tui-get-default-props ((component ,name))

@@ -31,24 +31,8 @@
          (format "%02d:%02d" minutes seconds)))))
   :component-did-mount
   (lambda ()
-    (let* ((timer (add-timeout 1 `(lambda (ignore)
-                                    (tui-force-update ,component))
-                               nil 1)))
-      (push timer tui-timer--timers)
-      (tui--set-state component (plist-put (tui--get-state component) :timer timer))))
-  :component-will-unmount
-  (lambda ()
-    (tui-let (&state timer)
-      (cancel-timer timer)
-      (setq tui-timer--timers (delq timer tui-timer--timers)))))
-
-(defvar tui-timer--timers nil "List of active timers")
-
-(defun tui-timer--cancel-all-timers ()
-  ""
-  (interactive)
-  (mapc #'cancel-timer tui-timer--timers)
-  (setq tui-timer--timers nil))
+    (tui-run-with-timer component 1 1 `(lambda ()
+                                     (tui-force-update ,component)))))
 
 (provide 'tui-timer)
 

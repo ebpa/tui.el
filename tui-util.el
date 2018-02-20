@@ -290,6 +290,15 @@ For use in any context where `tui-get-props' and `tui-get-state' are defined."
            if (not (keywordp prop-keyword))
            do (warn "Malformed documentation list")))
 
+(defun tui--cl-generic-remove-method (name qualifiers specializers)
+  "cl-generic appears to lack an equivalent for common lisp's remove-method, so this should be sufficient for now to help clean up component definitions."
+  (let* ((generic (cl-generic-ensure-function name))
+         (mt (cl--generic-method-table generic))
+         (me (cl--generic-member-method specializers qualifiers mt)))
+    (unless (null me)
+      (setf (cl--generic-method-table generic)
+            (-filter (lambda (x) (not (eq x (car me)))) mt)))))
+
 (provide 'tui-util)
 
 ;;; tui-util.el ends here

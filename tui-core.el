@@ -410,52 +410,63 @@ component-will-unmount ()"
        ,(if get-initial-state
             `(cl-defmethod tui-get-initial-state ((component ,name))
                ""
-               (funcall ,get-initial-state)))
+               (funcall ,get-initial-state))
+          `(tui--cl-generic-remove-method 'tui-get-initial-state nil '(,name)))
 
        ,(if component-will-mount
             `(cl-defmethod tui-component-will-mount ((component ,name))
                ""
-               (funcall ,component-will-mount)))
+               (funcall ,component-will-mount))
+          `(tui--cl-generic-remove-method 'tui-component-will-mount nil '(,name)))
 
        ,(if mount
             `(cl-defmethod tui--mount ((component ,name) start &optional end parent)
                ""
-               (funcall ,mount component start end parent)))
+               (funcall ,mount component start end parent))
+          `(tui--cl-generic-remove-method 'tui--mount nil '(,name)))
        
        ,(if component-did-mount
             `(cl-defmethod tui-component-did-mount ((component ,name))
                ""
-               (funcall ,component-did-mount)))
+               (funcall ,component-did-mount))
+          `(tui--cl-generic-remove-method 'tui-component-did-mount nil '(,name)))
 
        ,(if component-will-receive-props
             `(cl-defmethod tui-component-will-receive-props ((component ,name) next-props)
                ""
-               (funcall ,component-will-receive-props next-props)))
+               (funcall ,component-will-receive-props next-props))
+          `(tui--cl-generic-remove-method 'tui-component-will-receive-props nil '(,name)))
 
        ,(if should-component-update
             `(cl-defmethod tui-should-component-update ((component ,name) next-props next-state)
                ""
-               (funcall ,should-component-update next-props next-state)))
+               (funcall ,should-component-update next-props next-state))
+          `(tui--cl-generic-remove-method 'tui-should-component-update nil '(,name)))
 
        ,(if component-will-update
             `(cl-defmethod tui-component-will-update ((component ,name) next-props next-state)
                ""
-               (funcall ,component-will-update next-props next-state)))
+               (funcall ,component-will-update next-props next-state))
+          `(tui--cl-generic-remove-method 'tui-component-will-update nil '(,name)))
 
        ,(if render
             `(cl-defmethod tui-render ((component ,name))
                ""
-               (funcall ,render)))
+               (funcall ,render))
+          `(tui--cl-generic-remove-method 'tui-render nil '(,name)))
 
        ,(if component-did-update
             `(cl-defmethod tui-component-did-update ((component ,name) next-props next-state)
                ""
-               (funcall ,component-did-update next-props next-state)))
+               (funcall ,component-did-update next-props next-state))
+          `(tui--cl-generic-remove-method 'tui-component-did-update nil '(,name)))
 
        ,(if component-will-unmount
             `(cl-defmethod tui-component-will-unmount ((component ,name))
                ""
-               (funcall ,component-will-unmount)))
+               (funcall ,component-will-unmount))
+          `(tui--cl-generic-remove-method 'tui-component-will-unmount nil '(,name)))
+
        (cl-defun ,name ,(append
                          '(&rest args)
                          (apply #'append

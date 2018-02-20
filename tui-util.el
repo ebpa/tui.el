@@ -1,4 +1,4 @@
-;;; tui-util.el --- Utility functions for tui
+;;; tui-util.el --- Utility functions for tui       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 
@@ -298,6 +298,19 @@ For use in any context where `tui-get-props' and `tui-get-state' are defined."
     (unless (null me)
       (setf (cl--generic-method-table generic)
             (-filter (lambda (x) (not (eq x (car me)))) mt)))))
+
+(defmethod tui-run-with-timer ((component tui-component) secs repeat function &rest args)
+  "Wrapper to `run-with-timer' that automatically cancels a timer when the associated component is unmounted.
+
+When optional argument NO-ERROR it truthy cancel the timer if FUNCTION throws an error."
+  (lexical-let* ((timer (list nil)))
+    (setq timer
+          (apply #'run-with-timer secs repeat
+                 (lambda (&rest args)
+                   (if (not (tui-mounted-p component))
+                       (cancel-timer timer)
+                     (apply function args)))
+                 args))))
 
 (provide 'tui-util)
 

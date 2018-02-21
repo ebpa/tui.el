@@ -84,7 +84,7 @@ Optional argument COLLAPSE-GLYPH - glyph to show when expanded."
   :documentation
   "Expander component enables showing/hiding content below a supplied header."
   :prop-documentation
-  '(:header "Shown regardless of whether expander is expanded or collapsed."
+  (:header "Shown regardless of whether expander is expanded or collapsed."
     :children "Content of the expander shown following the header."
     :initially-expanded "Whether the content of the expander should be initially be shown.")
   ;; TODO :get-default-props

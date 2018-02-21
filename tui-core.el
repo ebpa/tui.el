@@ -462,9 +462,9 @@ component-will-unmount ()"
           `(tui--cl-generic-remove-method 'tui-render nil '(,name)))
 
        ,(if component-did-update
-            `(cl-defmethod tui-component-did-update ((component ,name) next-props next-state)
+            `(cl-defmethod tui-component-did-update ((component ,name) prev-props prev-state)
                ""
-               (funcall ,component-did-update next-props next-state))
+               (funcall ,component-did-update prev-props prev-state))
           `(tui--cl-generic-remove-method 'tui-component-did-update nil '(,name)))
 
        ,(if component-will-unmount

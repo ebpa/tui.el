@@ -374,6 +374,8 @@ Binds `tui-element' to ELEMENT for evaluation of BODY."
   "Macro for defining `tui-component' types.
 
 Lifecycle signatures:
+get-default-props ()
+get-initial-state ()
 component-will-mount ()
 mount ()
 component-did-mount ()

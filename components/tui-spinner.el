@@ -5,11 +5,11 @@
          :delay "seconds to wait after starting the spinner before actually displaying it")
   :component-did-mount
   (lambda ()
-    (require 'spinner)
     (tui-run-with-timer component 1 1 `(lambda ()
                                       (tui-force-update ,component))))
   :get-initial-state
   (lambda ()
+    (require 'spinner)
     (tui-let (&props type fps delay)
       (let* ((spinner (make-spinner type nil fps delay)))
         (spinner-start spinner)

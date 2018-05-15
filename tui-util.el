@@ -299,7 +299,7 @@ For use in any context where `tui-get-props' and `tui-get-state' are defined."
       (setf (cl--generic-method-table generic)
             (-filter (lambda (x) (not (eq x (car me)))) mt)))))
 
-(defmethod tui-run-with-timer ((component tui-component) secs repeat function &rest args)
+(cl-defmethod tui-run-with-timer ((component tui-component) secs repeat function &rest args)
   "Wrapper to `run-with-timer' that automatically cancels a timer when the associated component is unmounted.
 
 When optional argument NO-ERROR it truthy cancel the timer if FUNCTION throws an error."

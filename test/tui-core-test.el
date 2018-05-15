@@ -137,7 +137,7 @@
   (it "prop-controlled visibilities are unchangable?"))
 
 (describe "content tree operations"
-  (describe "insert"
+  (describe "tui-insert-node"
     (it "can insert an element into an empty list"
       (tui-with-rendered-element
         (tui-div)

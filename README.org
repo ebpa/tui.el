@@ -251,6 +251,7 @@ Why not give Emacs some big blocky buttons and sliders, so we can use our pervas
  - *Emacs*
    - shr.el / eww
    - [[https://github.com/alezost/bui.el][bui.el: Buffer interface library for Emacs]]
+   - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Abstract-Display.html#Abstract-Display][ewoc: “Emacs's Widget for Object Collections”]]
  - *Non-Emacs*
    - A good list: [[https://appliedgo.net/tui/][Text-Based User Interfaces · Applied Go]]
    - [[https://github.com/JoelOtter/termloop][GitHub - JoelOtter/termloop: Terminal-based game engine for Go, built on top ...]]

@@ -253,6 +253,7 @@ Why not give Emacs some big blocky buttons and sliders, so we can use our pervas
    - [[https://github.com/alezost/bui.el][bui.el: Buffer interface library for Emacs]]
    - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Abstract-Display.html#Abstract-Display][ewoc: “Emacs's Widget for Object Collections”]]
  - *Non-Emacs*
+   - [[https://en.wikipedia.org/wiki/Ncurses][ncurses]]
    - A good list: [[https://appliedgo.net/tui/][Text-Based User Interfaces · Applied Go]]
    - [[https://github.com/JoelOtter/termloop][GitHub - JoelOtter/termloop: Terminal-based game engine for Go, built on top ...]]
    - [[https://github.com/VladimirMarkelov/clui][GitHub - VladimirMarkelov/clui: Command Line User Interface (Console UI inspi...]]
@@ -266,3 +267,4 @@ Why not give Emacs some big blocky buttons and sliders, so we can use our pervas
    - [[https://github.com/Yomguithereal/react-blessed][GitHub - Yomguithereal/react-blessed: A react renderer for blessed.]]
    - [[https://github.com/vadimdemedes/ink][GitHub - vadimdemedes/ink: 🌈 React for interactive command-line apps]]
    - [[https://github.com/manaflair/mylittledom][GitHub - manaflair/mylittledom: High-level DOM-like terminal interface library]]
+   - [[https://github.com/fdehau/tui-rs][GitHub - fdehau/tui-rs: Build terminal user interfaces and dashboards using Rust]]

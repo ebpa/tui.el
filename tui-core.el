@@ -525,8 +525,8 @@ component-will-unmount ()"
 
 (defun tui-force-update (component)
   "Force COMPONENT to re-render."
-  (let ((new-props (tui--get-props component))
-        (new-state (tui--get-state component)))
+  (let* ((new-props (tui--get-props component))
+         (new-state (tui--get-state component)))
     (tui--funcall 'tui-component-will-update component new-props new-state)
     (push `(component-did-update ,component ,new-props ,new-state) tui--update-queue)
     (tui--update component)

@@ -64,48 +64,46 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
           :x-is-next t))
   :render
   (lambda ()
-    (let* ((state (tui-get-state))
-           (history (plist-get state :history))
-           (step-number (- (length history) 1))
-           (current (nth step-number history))
-           (winner (tui-tic-tac-toe-calculate-winner current))
-           (x-is-next (plist-get state :x-is-next)))
-      (list
-       (tui-absolute
-        :x 2
-        :y 3
-        :width 11
-        :height 9
-        (tui-tic-tac-toe-board
-         :squares current))
-       (tui-absolute
-        :width 20
-        :height 12
-        :x 17
-        :y 2
-        (tui-div
-         (if winner
-             (list "Winner: " winner)
-           (list "Next player: "
-                 (if x-is-next "X" "O")
-                 "        ")))
-        "\n\n"
-        (tui-ol
-         :children
-         (-map-indexed
-          (-lambda (move squares)
-            (let ((desc (if (> move 0)
-                            (format "Go to move #%d" move)
-                          "Go to game start")))
-              (tui-button
-               :action `(lambda (event)
-                          (interactive "e")
-                          (let ((game (tui-get-element-at
-                                       (posn-point (event-start event))
-                                       'tui-tic-tac-toe-game)))
-                            (tui-tic-tac-toe-jump-to game ,move)))
-               desc)))
-          history)))))))
+    (tui-let (&state history x-is-next)
+      (let* ((step-number (- (length history) 1))
+             (current (nth step-number history))
+             (winner (tui-tic-tac-toe-calculate-winner current)))
+        (list
+         (tui-absolute
+          :x 2
+          :y 3
+          :width 11
+          :height 9
+          (tui-tic-tac-toe-board
+           :squares current))
+         (tui-absolute
+          :width 20
+          :height 12
+          :x 17
+          :y 2
+          (tui-div
+           (if winner
+               (list "Winner: " winner)
+             (list "Next player: "
+                   (if x-is-next "X" "O")
+                   "        ")))
+          "\n\n"
+          (tui-ol
+           :children
+           (-map-indexed
+            (-lambda (move squares)
+              (let ((desc (if (> move 0)
+                              (format "Go to move #%d" move)
+                            "Go to game start")))
+                (tui-button
+                 :action `(lambda (event)
+                            (interactive "e")
+                            (let ((game (tui-get-element-at
+                                         (posn-point (event-start event))
+                                         'tui-tic-tac-toe-game)))
+                              (tui-tic-tac-toe-jump-to game ,move)))
+                 desc)))
+            history))))))))
 
 (defun tui-tic-tac-toe--handle-click (game i)
   "Handle mouse click for GAME board cell I."

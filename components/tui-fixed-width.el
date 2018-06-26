@@ -21,6 +21,10 @@
   :documentation "Render :contents with a fixed :width.
 
 It :width value is nil, the component width is variable."
+  :prop-documentation
+  (:minimum-padding "Minimum padding"
+                    :align "One of: `left', `center', `right'.  (**not yet implemented**)"
+                    :width "Width (in characters) or a shared width object.")
   :get-default-props
   (lambda ()
     (list :minimum-padding (or tui-fixed-width-minimum-padding

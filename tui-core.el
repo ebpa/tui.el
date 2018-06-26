@@ -202,11 +202,10 @@ method) and appropriately binds `tui-get-props' and
                     (tui--get-props element)))
            (old-content (tui-element-content element))
            (new-content (tui--normalize-content (plist-get props :children)))) ;; condition-case -> tui-error-placeholder-string element
-      
       (tui--reconcile-content old-content new-content element)
       element)))
 
-(cl-defmethod tui--update ((component tui-component) &optional next-props next-state)
+(cl-defmethod tui--update ((component tui-component) &optional next-props next-state force)
   "Update COMPONENT."
   (save-current-buffer
     (save-excursion

@@ -276,4 +276,17 @@
         (tui-remove a)
         (expect (tui-child-nodes tui-element) :to-be nil)))))
 
+(describe "tui-force-update"
+  (it "re-renders target component"
+    (let* ((component-b (tui-div "Blah"))
+           (component-a (tui-div component-b)))
+      (spy-on 'tui-render :and-call-through)
+      (tui-with-rendered-element component-a
+        (expect 'tui-render :to-have-been-called-with component-a)
+        (spy-calls-reset 'tui-render)
+        (tui-force-update component-a)
+        (expect 'tui-render :to-have-been-called-with component-a))))
+
+  (it "calls should-component-update on all children"))
+
 (describe "tui-component")

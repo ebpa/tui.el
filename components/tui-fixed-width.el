@@ -15,8 +15,6 @@
 
 ;;; Code:
 
-(defvar tui-fixed-width-minimum-padding 0)
-
 (tui-define-component tui-fixed-width
   :documentation "Render :contents with a fixed :width.
 
@@ -27,8 +25,7 @@ It :width value is nil, the component width is variable."
                     :width "Width (in characters) or a shared width object.")
   :get-default-props
   (lambda ()
-    (list :minimum-padding (or tui-fixed-width-minimum-padding
-                               0)
+    (list :minimum-padding 0
           :align 'left))
   :render
   (lambda ()
@@ -46,12 +43,12 @@ It :width value is nil, the component width is variable."
   (lexical-let ((component component)) ;; TODO: is this needed?
     (-let* (((&plist :width desired-width
                      :minimum-padding minimum-padding)
-             (tui-get-props)))
+             (tui--get-props component)))
       (cond
        ((tui-shared-size-p desired-width)
         (tui-request-size desired-width
                        (+ (tui-length (tui-fixed-width--content component))
-                          minimum-padding)
+                          (or minimum-padding 0))
                        (lambda () (tui-fixed-width--update component))))
        (desired-width
         (tui-fixed-width--update component))))))

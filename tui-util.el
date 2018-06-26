@@ -7,17 +7,21 @@
 
 ;;; Code:
 
-(defun tui--plist-delete (plist property)
-  "Delete PROPERTY from PLIST.
+(defun tui--plist-delete (plist &rest properties)
+  "Delete PROPERTIES from PLIST.
 This is in contrast to merely setting it to 0.
 
 \(copied from `use-package-plist-delete')"
-  (let (p)
+  (let ((property (car properties))
+        (rest-properties (cdr properties))
+        p)
     (while plist
       (if (not (eq property (car plist)))
           (setq p (plist-put p (car plist) (nth 1 plist))))
       (setq plist (cddr plist)))
-    p))
+    (if rest-properties
+        (apply #'tui--plist-delete p rest-properties)
+      p)))
 
 (defun tui--plist-merge (a b &rest rest)
   ""

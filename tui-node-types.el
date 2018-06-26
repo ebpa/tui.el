@@ -81,8 +81,9 @@
 
 (cl-defmethod tui-equal ((node-a tui-node) node-b)
   "An `equal' function for `tui-node' objects."
-  (tui-equal (tui-node-content node-a)
-          (tui-node-content node-b)))
+  (and (tui-node-p node-b)
+       (tui-equal (tui-node-content node-a)
+               (tui-node-content node-b))))
 
 (cl-defmethod tui-equal ((component-a tui-component) component-b)
   "An `equal' function for `tui-component' objects."

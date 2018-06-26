@@ -195,7 +195,7 @@ method) and appropriately binds `tui-get-props' and
   (tui--insert text-node))
 
 (cl-defmethod tui--update ((element tui-element) &optional (next-props nil next-props-supplied-p))
-  "Update displayed element."
+  "Update ELEMENT."
   (save-excursion
     (let* ((props (if next-props-supplied-p
                       (setf (tui-element-props element) next-props)
@@ -206,7 +206,7 @@ method) and appropriately binds `tui-get-props' and
       (tui--reconcile-content old-content new-content element))))
 
 (cl-defmethod tui--update ((component tui-component) &optional next-props next-state)
-  "Update displayed component."
+  "Update COMPONENT."
   (save-current-buffer
     (save-excursion
       (let* ((next-props (or next-props
@@ -586,7 +586,7 @@ tui-element."
   (abs (random)))
 
 (defun tui--normalize-node (node)
-  ;; TODO: set parent opportunisticly?
+  ;; TODO: set parent opportunistically?
   "Convert NODE's content tree to normalized form.
 
 A normalized content tree:

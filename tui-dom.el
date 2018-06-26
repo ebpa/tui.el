@@ -1,4 +1,4 @@
-;;; tui-dom.el --- Tui "DOM" logic
+;;; tui-dom.el --- Tui "DOM" logic       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

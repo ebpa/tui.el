@@ -1,4 +1,4 @@
-;;; tui-dev.el --- Developer helper functions
+;;; tui-dev.el --- Developer helper functions       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

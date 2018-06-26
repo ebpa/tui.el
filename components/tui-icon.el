@@ -1,4 +1,4 @@
-;;; tui-icon.el --- Icon helper component
+;;; tui-icon.el --- Icon helper component       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

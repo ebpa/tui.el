@@ -1,4 +1,4 @@
-;;; tui-button.el --- Basic button
+;;; tui-button.el --- Basic button       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

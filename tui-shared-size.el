@@ -1,4 +1,4 @@
-;;; tui-shared-size.el --- Shared sizes
+;;; tui-shared-size.el --- Shared sizes       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

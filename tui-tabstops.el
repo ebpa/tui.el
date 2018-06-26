@@ -1,4 +1,4 @@
-;;; tui-tabstops.el ---
+;;; tui-tabstops.el ---       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

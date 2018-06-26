@@ -1,4 +1,4 @@
-;;; tui-reconciler.el --- Logic for diffing content trees
+;;; tui-reconciler.el --- Logic for diffing content trees       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

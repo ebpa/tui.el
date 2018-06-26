@@ -1,4 +1,4 @@
-;;; tui-buffer.el --- Buffer container component
+;;; tui-buffer.el --- Buffer container component       -*- lexical-binding: t; -*-
 
 
 ;;; Commentary:

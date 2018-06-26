@@ -1,4 +1,4 @@
-;;; tui-section.el --- HTML 'section'-like element
+;;; tui-section.el --- HTML 'section'-like element       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

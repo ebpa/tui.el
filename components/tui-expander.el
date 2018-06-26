@@ -1,4 +1,4 @@
-;;; tui-expander.el --- Basic expander control
+;;; tui-expander.el --- Basic expander control       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

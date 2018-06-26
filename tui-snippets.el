@@ -1,3 +1,12 @@
+;;; tui-snippets.el --- Useful snippets       -*- lexical-binding: t; -*-
+
+
+
+;;; Commentary:
+;;
+
+;;; Code:
+
 (defvar tui-snippets-root (file-name-directory (or load-file-name
                                                 (buffer-file-name))))
 
@@ -12,3 +21,5 @@
   '(tui-snippets-initialize))
 
 (provide 'tui-snippets)
+
+;;; tui-snippets.el ends here

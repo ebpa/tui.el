@@ -1,4 +1,4 @@
-;;; tui-ul.el --- HTML 'ul'-like component
+;;; tui-ul.el --- HTML 'ul'-like component       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

@@ -1,4 +1,4 @@
-;;; tui-absolute.el --- Absolute positioning container
+;;; tui-absolute.el --- Absolute positioning container       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

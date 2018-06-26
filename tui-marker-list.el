@@ -1,4 +1,4 @@
-;;; tui-marker-list.el --- Linked list structure tracking markers
+;;; tui-marker-list.el --- Linked list structure tracking markers       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

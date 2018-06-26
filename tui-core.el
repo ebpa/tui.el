@@ -1,4 +1,4 @@
-;;; tui-core.el --- Core functions
+;;; tui-core.el --- Core functions        -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

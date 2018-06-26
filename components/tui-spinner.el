@@ -1,3 +1,10 @@
+;;; tui-spinner.el --- Spinner component       -*- lexical-binding: t; -*-
+
+;;; Commentary:
+;;
+
+;;; Code:
+
 (tui-define-component tui-spinner
   :prop-documentation
   (:type "One of `spinner-types'"
@@ -20,3 +27,5 @@
       (spinner-print spinner))))
 
 (provide 'tui-spinner)
+
+;;; tui-spinner.el ends here

@@ -1,4 +1,4 @@
-;;; tui-log.el --- Tui logging
+;;; tui-log.el --- Tui logging       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

@@ -1,4 +1,4 @@
-;;; tui-demo-timer.el --- A basic timer
+;;; tui-demo-timer.el --- A basic timer       -*- lexical-binding: t; -*-
 
 
 ;;; Commentary:

@@ -1,4 +1,4 @@
-;;; tui-live-reloading.el --- Live reloading and instance tracking
+;;; tui-live-reloading.el --- Live reloading and instance tracking       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

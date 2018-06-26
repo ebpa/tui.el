@@ -1,4 +1,4 @@
-;;; tui-link.el --- A basic clickable link component
+;;; tui-link.el --- A basic clickable link component       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

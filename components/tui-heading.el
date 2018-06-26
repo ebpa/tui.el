@@ -1,4 +1,4 @@
-;;; tui-heading.el --- HTML 'h1'-like component
+;;; tui-heading.el --- HTML 'h1'-like component       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

@@ -1,4 +1,11 @@
+;;; tui-listview.el --- Interactive list component       -*- lexical-binding: t; -*-
+
+;;; Commentary:
+;;
+
 (require 'tui-core)
+
+;;; Code:
 
 (tui-define-component tui-listview
   :documentation ""
@@ -108,3 +115,5 @@
       :collection sample-list))))
 
 (provide 'tui-listview)
+
+;;; tui-listview.el ends here

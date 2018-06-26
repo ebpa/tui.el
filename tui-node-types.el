@@ -1,4 +1,4 @@
-;;; tui-node-types.el --- Core Tui Node Types
+;;; tui-node-types.el --- Core Tui Node Types       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

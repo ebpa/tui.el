@@ -1,4 +1,4 @@
-;;; tui-layout.el --- Layout / Visibility Helpers
+;;; tui-layout.el --- Layout / Visibility Helpers       -*- lexical-binding: t; -*-
 ;;; Measurement
 
 ;;; Commentary:

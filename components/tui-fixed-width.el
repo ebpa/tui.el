@@ -1,4 +1,4 @@
-;;; tui-fixed-width.el --- Constrain contents to a fixed width
+;;; tui-fixed-width.el --- Constrain contents to a fixed width       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

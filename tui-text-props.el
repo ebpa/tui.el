@@ -1,4 +1,4 @@
-;;; tui-text-props.el --- Text properies
+;;; tui-text-props.el --- Text properies       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

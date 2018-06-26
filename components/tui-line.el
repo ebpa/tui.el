@@ -1,4 +1,4 @@
-;;; tui-line.el --- Adds a newline after its content
+;;; tui-line.el --- Adds a newline after its content       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

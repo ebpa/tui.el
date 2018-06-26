@@ -1,4 +1,4 @@
-;;; tui-span.el --- HTML 'span'-like compnent
+;;; tui-span.el --- HTML 'span'-like compnent       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 

@@ -20,7 +20,7 @@
     (-let* ((props (tui-get-props))
             (children (plist-get props :children)))
       (tui-buffer
-       :buffer (format "*Tui-%d*" (tui--new-id))
+       :buffer (format " *Tui-%d*" (tui--new-id))
        children)))
   :component-did-mount
   (lambda ()

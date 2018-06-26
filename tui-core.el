@@ -203,7 +203,8 @@ method) and appropriately binds `tui-get-props' and
            (old-content (tui-element-content element))
            (new-content (tui--normalize-content (plist-get props :children)))) ;; condition-case -> tui-error-placeholder-string element
       
-      (tui--reconcile-content old-content new-content element))))
+      (tui--reconcile-content old-content new-content element)
+      element)))
 
 (cl-defmethod tui--update ((component tui-component) &optional next-props next-state)
   "Update COMPONENT."
@@ -224,16 +225,15 @@ method) and appropriately binds `tui-get-props' and
         (setf (tui-component-state component) next-state)
         (let* ((new-content (tui--normalize-content (tui--funcall #'tui-render component)))) ;; condition-case -> tui-error-placeholder-string element
           (tui--reconcile-content old-content new-content component)
-          (push `(component-did-update ,component ,prev-props ,prev-state) tui--update-queue))))))
-;; TODO: (force-window-update (current-buffer))?
-;;(tui-valid-element-p component) ;; CLEANUP: better method for recursive assertions?
-;; TODO: restore original modification status
-
+          (push `(component-did-update ,component ,prev-props ,prev-state) tui--update-queue)
+          component)))))
 
 (cl-defmethod tui--unmount ((node tui-node))
   "Internal use only.  Unmount COMPONENT, but leave unmounted
 component in its current context.  Replacement/removal of
-COMPONENT should be handled by the calling method."
+COMPONENT should be handled by the calling method.
+
+Returns NODE."
   (-let* (((start . end) (tui-segment--nodes node))
           (parent (tui-parent node))
           (inhibit-read-only t))
@@ -248,21 +248,28 @@ COMPONENT should be handled by the calling method."
           (delete-region (tui-marker-list-node-marker start)
                          (tui-marker-list-node-marker end))
           (tui-marker-list-delete-node-segment (tui-node-marker-list node) start end)
-          (setf (tui-node-mounted node) nil))))))
+          (setf (tui-node-mounted node) nil)
+          node)))))
 
 (cl-defmethod tui--unmount ((element tui-element))
   "Internal use only.  Unmount COMPONENT, but leave unmounted
 component in its current context.  Replacement/removal of
-COMPONENT should be handled by the calling method."
+COMPONENT should be handled by the calling method.
+
+Returns ELEMENT."
   (mapc #'tui--unmount (tui-child-nodes element))
-  (cl-call-next-method))
+  (cl-call-next-method)
+  element)
 
 (cl-defmethod tui--unmount ((component tui-component))
   "Internal use only.  Unmount COMPONENT, but leave unmounted
 component in its current context.  Replacement/removal of
-COMPONENT should be handled by the calling method."
+COMPONENT should be handled by the calling method.
+
+Returns COMPONENT."
   (tui--funcall #'tui-component-will-unmount component)
-  (cl-call-next-method))
+  (cl-call-next-method)
+  component)
 
 
 ;;; Props and State functions

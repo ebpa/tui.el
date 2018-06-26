@@ -303,7 +303,7 @@ COMPONENT should be handled by the calling method."
 
 (cl-defmethod tui--set-props ((element tui-element) next-props)
   "Internal use only."
-  (display-warning 'comp (format "SET-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
+  (display-warning 'comp (format "SET-PROPS %S" (tui--object-class element)) :debug tui-log-buffer-name)
   (let ((prev-props (tui--get-props element)))
     ;; TODO: verify operation
     (when (tui--text-prop-changes prev-props next-props)

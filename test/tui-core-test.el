@@ -6,7 +6,27 @@
 
 ;; CLEANUP: improve testing focus
 
-(describe "tui-define-component")
+(describe "tui-define-component"
+  (it "accepts a documentation string"
+    (expect (tui-define-component tui-test-component-a
+              :documentation "Documentation!"
+              :render
+              (lambda ()
+                nil))))
+  (it "accepts a prop-documentation string"
+    (expect (tui-define-component tui-test-component-b
+              :prop-documentation "Property documentation!"
+              :render
+              (lambda ()
+                nil))))
+  (it "requires a render method"
+    (expect (tui-define-component tui-test-component-c
+              :render
+              (lambda ()
+                nil)))
+    ;; TODO: Raise an error when no method is supplied? (or is it not required?)
+    ;; (expect (tui-define-component tui-test-component-c))
+    ))
 
 (describe "tui-element"
   

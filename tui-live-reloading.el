@@ -23,7 +23,9 @@
 (defun tui-component-instances (class)
   "Return a list of live instances of CLASS."
   (-when-let* ((instance-table (gethash class tui--component-instance-table)))
-    (hash-table-keys instance-table)))
+    (-filter
+     #'tui-mounted-p
+     (hash-table-keys instance-table))))
 
 (defun tui-force-update-component-instances (class)
   "Force instances of CLASS to update.  Updated rendering lifecycle logic is applied."

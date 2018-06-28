@@ -31,7 +31,7 @@
    (tui-button
     :action `(lambda (event)
                (interactive "e")
-               (let ((game (tui-get-element-at (posn-point (event-start event)) 'tui-tic-tac-toe-game)))
+               (when-let ((game (tui-get-element-at (posn-point (event-start event)) 'tui-tic-tac-toe-game)))
                  (tui-tic-tac-toe--handle-click game ,i)))
     "⌜ ⌝\n"
     (format " %s \n" (or (nth i squares) " "))
@@ -115,19 +115,21 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
                 (nth i squares))
       (setf (nth i squares)
             (if (plist-get state :x-is-next) "X" "O"))
-      (tui--set-state
-       game
-       (list :history (append history
-                              (list squares))
-             :x-is-next (not (plist-get state :x-is-next)))))))
+      (tui--save-point-row-column
+       (tui--set-state
+        game
+        (list :history (append history
+                               (list squares))
+              :x-is-next (not (plist-get state :x-is-next))))))))
 
 (defun tui-tic-tac-toe-jump-to (game turn-number)
   "Roll back GAME state to TURN-NUMBER."
   (let* ((state (cl-copy-list (tui--get-state game)))
          (history (plist-get state :history)))
-    (tui--set-state game
-                 (list :history (cl-subseq history 0 (+ 1 turn-number))
-                       :x-is-next (= (% turn-number 2) 0)))))
+    (tui--save-point-row-column
+     (tui--set-state game
+                  (list :history (cl-subseq history 0 (+ 1 turn-number))
+                        :x-is-next (= (% turn-number 2) 0))))))
 
 ;;;###autoload
 (defun tui-tic-tac-toe-insert-game ()

@@ -15,15 +15,18 @@
       :y "Distance from the top of the buffer for positioning content (indexed from zero)."
       :width "Width reserved for the content."
       :height "Height reserved for the content.")
+  :get-initial-state
+  (lambda ()
+    (list :id (tui--new-id)))
   :render
   (lambda ()
-    (-let* ((props (tui-get-props))
-            (children (plist-get props :children)))
+    (tui-let (&props children &state id)
       (tui-buffer
-       :buffer (format " *Tui-%d*" (tui--new-id))
+       :buffer (format " *Tui-%d*" id)
        children)))
   :component-did-mount
   (lambda ()
+    (tui--register-instance component)
     (tui-absolute--copy-contents component))
   :component-did-update
   (lambda (pref-props prev-state)
@@ -40,7 +43,7 @@
           (children (tui-child-nodes component)))
     (when children
       (save-current-buffer
-        (save-excursion
+        (tui--save-point-row-column
           (let (content)
             (tui--goto (tui-start (cl-first children)))
             (setq content (buffer-substring (point-min) (point-max)))
@@ -67,12 +70,28 @@
           (lambda (a b)
             (> (tui--node-height a)
                (tui--node-height a)))
-          (tui-component-instances 'cl-struct-tui-absolute))))
+          (tui-component-instances 'tui-absolute))))
     (mapc
      #'tui-absolute--copy-contents
      instances)))
 
 (add-hook 'tui-update-hook #'tui-absolute--update-all)
+
+(defmacro tui--save-point-row-column (&rest body)
+  "Utility macro to restore point based on the row and column."
+  (let ((row-num-var (make-symbol "row-num"))
+        (col-num-var (make-symbol "col-num")))
+    `(let* ((,row-num-var (line-number-at-pos))
+            (,col-num-var (current-column)))
+       (prog1 (progn ,@body)
+         (goto-char (point-min))
+         (forward-line (1- ,row-num-var))
+         (move-to-column ,col-num-var)))))
+
+(cl-defmethod tui--update ((this tui-absolute) &optional next-props next-state force)
+  "Wrap the update lifecycle method to preserve position based on the row and column of the point rather than using a marker."
+  (tui--save-point-row-column
+   (call-next-method this next-props next-state force)))
 
 (provide 'tui-absolute)
 

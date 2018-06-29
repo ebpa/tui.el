@@ -31,7 +31,7 @@
    (tui-button
     :action `(lambda (event)
                (interactive "e")
-               (when-let ((game (tui-get-element-at (posn-point (event-start event)) 'tui-tic-tac-toe-game)))
+               (-when-let ((game (tui-get-element-at (posn-point (event-start event)) 'tui-tic-tac-toe-game)))
                  (tui-tic-tac-toe--handle-click game ,i)))
     "⌜ ⌝\n"
     (format " %s \n" (or (nth i squares) " "))

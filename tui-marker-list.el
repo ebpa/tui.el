@@ -280,19 +280,19 @@ Return nil if MARKER-LIST is empty."
 (cl-defmethod cl-print-object ((marker-list tui-marker-list) stream)
   (princ "#<marker-list>" stream))
 
-(cl-defmethod print-object ((marker-list tui-marker-list) stream)
+(cl-defmethod cl-print-object ((marker-list tui-marker-list) stream)
   (princ "#<marker-list>" stream))
 
-(cl-defmethod object-print ((marker-list tui-marker-list) stream)
+(cl-defmethod cl-object-print ((marker-list tui-marker-list) stream)
   (princ "#<marker-list>" stream))
 
 (cl-defmethod cl-print-object ((node tui-marker-list-node) stream)
   (princ "#<tui-marker-list-node>" stream))
 
-(cl-defmethod print-object ((node tui-marker-list-node) stream)
+(cl-defmethod cl-print-object ((node tui-marker-list-node) stream)
   (princ "#<tui-marker-list-node>" stream))
 
-(cl-defmethod object-print ((node tui-marker-list-node) stream)
+(cl-defmethod cl-object-print ((node tui-marker-list-node) stream)
   (princ "#<tui-marker-list-node>" stream))
 
 (defun tui-marker-list--get-marker (position)

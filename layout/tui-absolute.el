@@ -91,7 +91,7 @@
 (cl-defmethod tui--update ((this tui-absolute) &optional next-props next-state force)
   "Wrap the update lifecycle method to preserve position based on the row and column of the point rather than using a marker."
   (tui--save-point-row-column
-   (call-next-method this next-props next-state force)))
+   (cl-call-next-method this next-props next-state force)))
 
 (provide 'tui-absolute)
 

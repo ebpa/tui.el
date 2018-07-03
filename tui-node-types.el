@@ -45,7 +45,7 @@
 (cl-defmethod cl-print-object ((node tui-node) stream)
   (princ "#<tui-node>" stream))
 
-(cl-defmethod print-object ((node tui-node) stream)
+(cl-defmethod cl-print-object ((node tui-node) stream)
   (princ "#<tui-node>" stream))
 
 ;; (cl-defmethod object-print (node tui-node) stream

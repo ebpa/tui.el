@@ -572,7 +572,12 @@ tui-element."
             (push node tui--content-trees))
           (tui--process-update-queue)
           ;;(tui-valid-content-tree-p node)
-          node)))))
+          node))
+      ;; Since many people will interact with this via
+      ;; `eval-expression', we'll return nil since Emacs handles
+      ;; printing complex values very badly.
+      ;; TODO: figure out an alternative
+      nil)))
 
 (cl-defmethod tui-rendered-p ((node tui-node))
   "Return t if ELEMENT has been rendered."

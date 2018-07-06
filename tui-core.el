@@ -406,10 +406,10 @@ component-will-unmount ()"
                                                 &aux (id (tui--new-id))))))
        ;; FIXME: this is a rather hacky way of suppressing function creation for component slots
        (mapc (-lambda ((slot ignore))
-                 (unless (eq slot 'cl-tag-slot)
-                   (setf (symbol-function (intern (concat (symbol-name ',name) "-" (symbol-name slot)))) nil)
-                   (setf (symbol-function (intern (concat (symbol-name ',name) "-" (symbol-name slot) "--cmacro"))) nil)))
-                (cl-struct-slot-info 'tui-component))
+               (unless (eq slot 'cl-tag-slot)
+                 (setf (symbol-function (intern (concat (symbol-name ',name) "-" (symbol-name slot)))) nil)
+                 (setf (symbol-function (intern (concat (symbol-name ',name) "-" (symbol-name slot) "--cmacro"))) nil)))
+             (cl-struct-slot-info 'tui-component))
        (remhash ',name tui--default-props-table)
        ,(if get-default-props
             `(cl-defmethod tui-get-default-props ((component ,name))
@@ -550,7 +550,7 @@ Optionally specify TARGET context for rendering NODE.  TARGET may
 be a character position, marker, buffer name, buffer, or another
 tui-element."
   ;; FIXME: temporary measure until there's a mechanism for cleaning up the queue after errors
-  ;; (should probably just examine whether targets in the queue are live and skip those that aren't)
+  ;; (should probably just examine the queue and skip targets that are not live)
   (setq tui--update-queue nil)
   (save-excursion
     (save-current-buffer

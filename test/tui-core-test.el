@@ -1,8 +1,7 @@
 (require 'tui-test-helper "test/tui-test-helper.el")
-
+(require 'buttercup)
 (require 's)
 (require 'tui)
-
 
 ;; CLEANUP: improve testing focus
 
@@ -27,6 +26,47 @@
     ;; TODO: Raise an error when no method is supplied? (or is it not required?)
     ;; (expect (tui-define-component tui-test-component-c))
     ))
+
+(describe "tui-component"
+  (describe "lifecycle"
+    (describe "lifecycle methods"
+      (describe "tui-get-default-props"
+        (it "gets called before tui-get-initial-state"))
+      (describe "tui-get-initial-state")
+      (describe "tui-component-will-mount"
+        (it "is called with a dynamically-scoped `component' reference"
+          (cl-flet ((my/component-will-mount () (expect (tui--type component) :to-equal 'my/component-will-mount)))
+            (tui-define-component my/test-component-did-mount-component
+              :component-did-mount
+              'my/component-will-mount
+              :render
+              (lambda ()
+                "Test!"))
+
+            (spy-on 'my/component-will-mount)
+
+            (tui-with-rendered-element (my/test-component-did-mount-component)
+              (expect 'my/component-will-mount :to-have-been-called-times 1)))))
+      (describe "tui--mount"
+        (it "calls an overridden tui--mount when defined"))
+      (describe "tui-component-did-mount"
+        (it "is called on mount")
+        (it "component is marked as mounted already"))
+      (describe "tui-component-will-receive-props"
+        (it "supplies new props"))
+      (describe "tui-should-component-update"
+        (it "inhibits an update with a nil return value"))
+      (describe "tui-component-will-update"
+        (it "is called before tui-component-did-update"))
+      (describe "tui-component-did-update")
+      (describe "tui-will-unmount"
+        (it "is called when a component is removed")))
+
+    (describe "unmounting"
+      (it "all elements get unmounted when buffer is about to be destroyed")
+      (it "unmounting can be skipped on buffer destruction"
+        ;; TODO: configuration value
+        ))))
 
 (describe "tui-element"
   
@@ -61,34 +101,9 @@
         (tui-with-rendered-element
           div
           (tui-render-element "bar" div)
-          (expect (buffer-string) :to-equal "foobar")))))
+          (expect (buffer-string) :to-equal "foobar"))))))
 
-  (describe "lifecycle"
-    (describe "lifecycle methods"
-      (describe "tui-get-default-props"
-        (it "gets called before tui-get-initial-state"))
-      (describe "tui-get-initial-state")
-      (describe "tui-component-will-mount")
-      (describe "tui--mount"
-        (it "calls an overridden tui--mount when defined"))
-      (describe "tui-component-did-mount"
-        (it "is called on mount")
-        (it "component is marked as mounted already"))
-      (describe "tui-component-will-receive-props"
-        (it "supplies new props"))
-      (describe "tui-should-component-update"
-        (it "inhibits an update with a nil return value"))
-      (describe "tui-component-will-update"
-        (it "is called before tui-component-did-update"))
-      (describe "tui-component-did-update")
-      (describe "tui-will-unmount"
-        (it "is called when a component is removed")))
 
-    (describe "unmounting"
-      (it "all elements get unmounted when buffer is about to be destroyed")
-      (it "unmounting can be skipped on buffer destruction"
-        ;; TODO: configuration value
-        ))))
 
 (describe "text properties"
   (it "basic text properties are applied"

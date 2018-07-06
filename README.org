@@ -63,8 +63,12 @@ If all goes well you should be able to require the library and render something 
 
 #+begin_src emacs-lisp
 (require 'tui)
-(tui-render-element "Hello world!")
+(progn
+  (tui-render-element "Hello world!")
+  nil)
 #+end_src
+
+**Note: The `(progn ... nil)` wrapper is a recommended measure to avoid printing the value returned by `tui-render-element` when calling it using `eval-last-sexp` or `eval-expression`.  Printing the complex object can cause Emacs hang badly.**
 
 ** Overview
 :PROPERTIES:

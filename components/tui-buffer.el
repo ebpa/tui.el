@@ -29,6 +29,7 @@
            (mode (plist-get props :mode))
            (keymap (plist-get props :keymap))
            (marker-list (tui-marker-list-create))
+           (init-fn (plist-get props :init-fn))
            start end)
       (setf (tui-component-props component) props)
       (with-current-buffer (get-buffer-create buffer)
@@ -48,7 +49,10 @@
           (setf (tui-node-marker-list component) marker-list)
           (setq start (tui-marker-list-insert marker-list (point-marker)))
           (setq end (cl-second (tui-marker-list-split-node marker-list start)))
-          (cl-call-next-method component start end parent marker-list)))))
+          (cl-call-next-method component start end parent marker-list)))
+      (with-current-buffer (get-buffer-create buffer)
+        (when init-fn
+          (funcall init-fn)))))
   :render
   (lambda ()
     (plist-get (tui-get-props) :children)))

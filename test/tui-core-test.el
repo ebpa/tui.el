@@ -66,7 +66,46 @@
       (it "all elements get unmounted when buffer is about to be destroyed")
       (it "unmounting can be skipped on buffer destruction"
         ;; TODO: configuration value
-        ))))
+        )))
+
+  (describe "ref callback"
+    :var (my/ref-callback my/test-component component-did-mount-called-p)
+
+    (before-each
+      (setq component-did-mount-called-p nil)
+      (setf (symbol-function 'my/ref-callback)
+            (lambda (component)
+              nil))
+
+      (tui-define-component my/test-component
+        :component-did-mount
+        (lambda ()
+          (setq component-did-mount-called-p t))
+        :render
+        (lambda ()
+          "test")))
+
+    (after-each
+      (tui-unintern 'my/test-component))
+
+    (it "is called once before the :component-did-mount method"
+      (let* (ref-callback-called-first-p)
+        (spy-on 'my/ref-callback :and-call-fake
+                (lambda (component)
+                  (setq ref-callback-called-first-p
+                        (not component-did-mount-called-p))
+                  nil))
+
+        (tui-with-rendered-element (my/test-component :ref #'my/ref-callback)
+          (expect component-did-mount-called-p)
+          (expect ref-callback-called-first-p))))
+    (it "is called with nil when unmounting"
+      (spy-on 'my/ref-callback)
+
+      (tui-with-rendered-element (my/test-component :ref #'my/ref-callback)
+        (spy-calls-reset 'my/ref-callback))
+      (expect 'my/ref-callback :to-have-been-called-with nil))
+    (it "is called with nil before update when :ref argument is changed")))
 
 (describe "tui-element"
   

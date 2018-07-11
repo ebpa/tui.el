@@ -258,6 +258,7 @@ COMPONENT should be handled by the calling method.
 Returns ELEMENT."
   (mapc #'tui--unmount (tui-child-nodes element))
   (cl-call-next-method)
+  (tui--make-ref-callback element t)
   element)
 
 (cl-defmethod tui--unmount ((component tui-component))
@@ -666,10 +667,18 @@ Very basic now; simply apply updates until the queue is empty."
       (tui--apply-update (pop tui--update-queue)))
     (run-hooks 'tui-update-hook)))
 
+(defun tui--make-ref-callback (component &optional with-nil-p)
+  "Call COMPONENT :ref callback (if defined).  When WITH-NIL-P is truthy, make callback with nil as the argument rather than the component reference."
+  (let* ((ref-callback (plist-get (tui--get-props component) :ref)))
+    (when (functionp ref-callback)
+      (funcall ref-callback (when (not with-nil-p)
+                              component)))))
+
 (defun tui--apply-update (update)
   "Apply UPDATE to corresponding content tree."
   (pcase update
     (`(component-did-mount ,component)
+     (tui--make-ref-callback component)
      (tui--funcall #'tui-component-did-mount component))
     (`(mount ,child ,start ,end ,parent)
      (tui--mount child start end parent))
@@ -689,9 +698,16 @@ Very basic now; simply apply updates until the queue is empty."
        (tui--insert node)))
     (`(update-props ,component ,updated-props)
      (-let* ((old-props (tui--get-props component))
-             (invisible (plist-get updated-props :invisible)))
+             (invisible (plist-get updated-props :invisible))
+             (old-ref (plist-get old-props :ref))
+             (new-ref (plist-get updated-props :ref))
+             (ref-changed (not (equal old-ref new-ref))))
        (display-warning 'tui-diff (format "UPDATE-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
+       (when (and ref-changed
+                  (functionp old-ref))
+         (funcall old-ref))
        (tui--set-props component updated-props)
+       (tui--make-ref-callback component)
        (when (not (eq (plist-get old-props :invisible) invisible))
          (if invisible
              (tui-hide-element component)

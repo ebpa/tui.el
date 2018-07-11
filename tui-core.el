@@ -580,9 +580,12 @@ tui-element."
        t))
 
 (cl-defmethod tui-mounted-p ((node tui-node))
-  ""
+  "Return t if NODE is mounted in a live buffer and nil otherwise."
   (and (tui-node-mounted node)
        (not (eq (tui-node-mounted node) 'pending))
+       (let* ((start (tui-start node)))
+         (and start
+              (marker-buffer start)))
        t))
 
 ;;;; Internal

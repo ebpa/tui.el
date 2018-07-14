@@ -391,7 +391,9 @@ should-component-update (next-props next-state)
 component-will-update (next-props next-state)
 render ()
 component-did-update (prev-props prev-state)
-component-will-unmount ()"
+component-will-unmount ()
+
+See React's documentation (https://reactjs.org/docs/react-component.html) for a good explanation of how these methods should be used."
   (declare (indent defun)) ;; TODO: support an optional docstring as the third parameter (as an alternative to the keyword form)
   (tui--check-key-value-documentation prop-documentation)
   (tui--check-key-value-documentation state-documentation)

@@ -24,7 +24,10 @@ This is in contrast to merely setting it to 0.
       p)))
 
 (defun tui--plist-merge (a b &rest rest)
-  ""
+  "Merge plists A, B, and REST into a new list.
+
+Ex: If a property is found in plists A and B, the returned list will contain the value from B."
+  ;; CLEANUP: Phrase this more clearly
   (let* ((merged (cl-copy-seq a)))
     (cl-loop for (key val) on b by 'cddr
              do (setq merged (plist-put merged key val)))

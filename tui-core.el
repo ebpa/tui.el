@@ -301,12 +301,13 @@ Returns COMPONENT."
 (cl-defmethod tui--set-props ((component tui-component) next-props)
   "Internal use only."
   (display-warning 'comp (format "SET-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
-  (let ((prev-props (tui--get-props component))
-        (prev-state (tui--get-state component)))
+  (let* ((prev-props (tui--get-props component))
+         (prev-state (tui--get-state component))
+         (next-props (tui--plist-merge prev-props next-props)))
     (tui--funcall #'tui-component-will-receive-props component next-props)
     (let ((next-state (tui--get-state component)))
       (when (tui--funcall #'tui-should-component-update component next-props next-state)
-        (cl-call-next-method)))))
+        (cl-call-next-method component next-props)))))
 
 (cl-defmethod tui--set-props ((element tui-element) next-props)
   "Internal use only."

@@ -343,4 +343,22 @@
 
   (it "calls should-component-update on all children"))
 
+(describe "core utility functions"
+  (describe "tui--set-props"
+    (it "preserves existing properties"
+      (tui-define-component tui-set-props-test-component
+        :get-default-props
+        (lambda ()
+          (list :a 1234))
+        :render
+        (lambda ()
+          "test"))
+      (let* ((test-component (tui-set-props-test-component)))
+        (tui-with-rendered-element test-component
+          (tui--set-props test-component '(:b 100))
+          (expect (plist-get
+                   (tui--get-props test-component)
+                   :a)
+                  :to-equal 1234))))))
+
 (describe "tui-component")

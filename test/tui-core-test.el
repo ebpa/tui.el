@@ -33,31 +33,26 @@
       (describe "tui-get-default-props"
         (it "gets called before tui-get-initial-state"))
       (describe "tui-get-initial-state")
-      (describe "tui-component-will-mount"
-        (it "is called with a dynamically-scoped `component' reference"
-          (cl-flet ((my/component-will-mount () (expect (tui--type component) :to-equal 'my/component-will-mount)))
-            (tui-define-component my/test-component-did-mount-component
-              :component-did-mount
-              'my/component-will-mount
-              :render
-              (lambda ()
-                "Test!"))
-
-            (spy-on 'my/component-will-mount)
-
-            (tui-with-rendered-element (my/test-component-did-mount-component)
-              (expect 'my/component-will-mount :to-have-been-called-times 1)))))
       (describe "tui--mount"
         (it "calls an overridden tui--mount when defined"))
       (describe "tui-component-did-mount"
         (it "is called on mount")
-        (it "component is marked as mounted already"))
-      (describe "tui-component-will-receive-props"
-        (it "supplies new props"))
+        (it "component is marked as mounted already")
+        (it "is called with a dynamically-scoped `component' reference"
+          (cl-flet ((my/test-component-did-mount () (expect (tui--type component) :to-equal 'my/test-component-did-mount)))
+            (tui-define-component my/test-component-did-mount-component
+              :component-did-mount
+              'my/test-component-did-mount
+              :render
+              (lambda ()
+                "Test!"))
+
+            (spy-on 'my/test-component-did-mount)
+
+            (tui-with-rendered-element (my/test-component-did-mount-component)
+              (expect 'my/test-component-did-mount :to-have-been-called-times 1)))))
       (describe "tui-should-component-update"
         (it "inhibits an update with a nil return value"))
-      (describe "tui-component-will-update"
-        (it "is called before tui-component-did-update"))
       (describe "tui-component-did-update")
       (describe "tui-will-unmount"
         (it "is called when a component is removed")))

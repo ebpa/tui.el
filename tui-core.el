@@ -39,25 +39,13 @@
   "Empty default method"
   nil)
 
-(cl-defmethod tui-component-will-mount ((component tui-component))
-  "Empty default method"
-  nil)
-
 (cl-defmethod tui-component-did-mount ((component tui-component))
-  "Empty default method"
-  nil)
-
-(cl-defmethod tui-component-will-receive-props ((component tui-component) next-props)
   "Empty default method"
   nil)
 
 (cl-defmethod tui-should-component-update ((component tui-component) next-props next-state)
   "Empty default method"
   t)
-
-(cl-defmethod tui-component-will-update ((component tui-component) next-props next-state)
-  "Empty default method"
-  nil)
 
 (cl-defmethod tui-render ((component tui-component))
   "Empty default method"
@@ -85,7 +73,7 @@ method) and appropriately binds `tui-get-props' and
                  (lambda () (tui--get-props component)))
                 ((symbol-function 'tui-get-state)
                  (lambda () (tui--get-state component))))
-        (if (member func '(tui-component-will-mount tui-component-did-mount tui-component-will-receive-props tui-component-did-update tui--mount))
+        (if (member func '(tui-component-did-mount tui-component-did-update tui--mount))
             (cl-letf (((symbol-function 'tui-set-state)
                        (lambda (new-state &optional no-update) (tui--set-state component new-state no-update))))
               (apply func component args))
@@ -138,7 +126,6 @@ method) and appropriately binds `tui-get-props' and
   ;; Call the render method
   (setf (tui-component-content component)
         (tui--normalize-content (tui--funcall #'tui-render component))) ;; TODO: condition-case -> tui-error-placeholder-string
-  (tui--funcall #'tui-component-will-mount component)
   (setf tui--update-queue
         (append (let ((tui--update-queue nil))
                   (cl-call-next-method)
@@ -216,7 +203,6 @@ method) and appropriately binds `tui-get-props' and
              (prev-props (tui--get-props component))
              (prev-state (tui--get-state component))
              (old-content (tui-component-content component)))
-        (tui--funcall #'tui-component-will-update component next-props next-state)
         ;; TODO: restore
         ;; (-when-let* ((changed-text-props (tui--text-prop-changes prev-props next-props)))
         ;;   (push `(update-text-props ,component ,changed-text-props) tui--update-queue))
@@ -292,10 +278,10 @@ Returns COMPONENT."
 
 (defun tui-get-state ()
   "Get current component state from within a lifecycle method of a component."
-  (error "`tui-get-state' must be called from within one of `component-will-mount',`component-did-mount',`component-will-receive-props', or `component-did-update' component lifecycle methods"))
+  (error "`tui-get-state' must be called from within one of `component-did-mount', or `component-did-update' component lifecycle methods"))
 
 (defun tui--get-state (component)
-  "Internal function to get COMPONENT state.  Do not call this directly; use `tui-get-state' within one of `component-will-mount',`component-did-mount',`component-will-receive-props', or `component-did-update' component lifecycle methods."
+  "Internal function to get COMPONENT state.  Do not call this directly; use `tui-get-state' within one of `component-did-mount', or `component-did-update' component lifecycle methods."
   (cl-copy-list (tui-component-state component)))
 
 (cl-defmethod tui--set-props ((component tui-component) next-props)
@@ -304,7 +290,6 @@ Returns COMPONENT."
   (let* ((prev-props (tui--get-props component))
          (prev-state (tui--get-state component))
          (next-props (tui--plist-merge prev-props next-props)))
-    (tui--funcall #'tui-component-will-receive-props component next-props)
     (let ((next-state (tui--get-state component)))
       (when (tui--funcall #'tui-should-component-update component next-props next-state)
         (cl-call-next-method component next-props)))))
@@ -370,12 +355,9 @@ Binds `tui-element' to ELEMENT for evaluation of BODY."
                                      state-documentation
                                      get-default-props
                                      get-initial-state
-                                     component-will-mount
                                      mount
                                      component-did-mount
-                                     component-will-receive-props
                                      should-component-update
-                                     component-will-update
                                      render
                                      component-did-update
                                      component-will-unmount)
@@ -384,12 +366,9 @@ Binds `tui-element' to ELEMENT for evaluation of BODY."
 Lifecycle signatures:
 get-default-props ()
 get-initial-state ()
-component-will-mount ()
 mount ()
 component-did-mount ()
-component-will-receive-props (next-props)
 should-component-update (next-props next-state)
-component-will-update (next-props next-state)
 render ()
 component-did-update (prev-props prev-state)
 component-will-unmount ()
@@ -431,12 +410,6 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
                (funcall ,get-initial-state))
           `(tui--cl-generic-remove-method 'tui-get-initial-state nil '(,name)))
 
-       ,(if component-will-mount
-            `(cl-defmethod tui-component-will-mount ((component ,name))
-               ""
-               (funcall ,component-will-mount))
-          `(tui--cl-generic-remove-method 'tui-component-will-mount nil '(,name)))
-
        ,(if mount
             `(cl-defmethod tui--mount ((component ,name) start &optional end parent)
                ""
@@ -449,23 +422,11 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
                (funcall ,component-did-mount))
           `(tui--cl-generic-remove-method 'tui-component-did-mount nil '(,name)))
 
-       ,(if component-will-receive-props
-            `(cl-defmethod tui-component-will-receive-props ((component ,name) next-props)
-               ""
-               (funcall ,component-will-receive-props next-props))
-          `(tui--cl-generic-remove-method 'tui-component-will-receive-props nil '(,name)))
-
        ,(if should-component-update
             `(cl-defmethod tui-should-component-update ((component ,name) next-props next-state)
                ""
                (funcall ,should-component-update next-props next-state))
           `(tui--cl-generic-remove-method 'tui-should-component-update nil '(,name)))
-
-       ,(if component-will-update
-            `(cl-defmethod tui-component-will-update ((component ,name) next-props next-state)
-               ""
-               (funcall ,component-will-update next-props next-state))
-          `(tui--cl-generic-remove-method 'tui-component-will-update nil '(,name)))
 
        ,(if render
             `(cl-defmethod tui-render ((component ,name))
@@ -531,7 +492,6 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
   "Force COMPONENT to re-render."
   (let* ((new-props (tui--get-props component))
          (new-state (tui--get-state component)))
-    (tui--funcall 'tui-component-will-update component new-props new-state)
     (push `(component-did-update ,component ,new-props ,new-state) tui--update-queue)
     (tui--update component)
     (unless tui--applying-updates

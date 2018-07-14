@@ -41,15 +41,27 @@
   ;; "The base class for all components."
   state)
 
+;;;; Print methods
 
 (cl-defmethod cl-print-object ((node tui-node) stream)
   (princ "#<tui-node>" stream))
 
-(cl-defmethod cl-print-object ((node tui-node) stream)
+(cl-defmethod cl-object-print ((node tui-node) stream)
   (princ "#<tui-node>" stream))
 
-;; (cl-defmethod object-print (node tui-node) stream
-;;   (princ "#<tui-node>" stream))
+(cl-defmethod cl-print-object ((element tui-element) stream)
+  (princ "#<tui-element>" stream))
+
+(cl-defmethod cl-object-print ((element tui-element) stream)
+  (princ "#<tui-element>" stream))
+
+(cl-defmethod cl-print-object ((component tui-component) stream)
+  (princ (format "#<tui-component %s>" (tui--type component)) stream))
+
+(cl-defmethod cl-object-print ((component tui-component) stream)
+  (princ (format "#<tui-component %s>" (tui--type component)) stream))
+
+;;;; Type helpers
 
 (defun tui--object-class (obj)
   "Return the struct tag if OBJ is a ‘cl-defstruct’ or the class symbol if an EIEIO class."

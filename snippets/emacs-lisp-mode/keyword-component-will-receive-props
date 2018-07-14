@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: keyword-component-will-receive-props
-# key: :cwrp
-# --
-:component-will-receive-props
-(lambda (next-props)
-  $0)

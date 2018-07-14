@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: keyword-component-will-update
-# key: :cwup
-# --
-:component-will-update
-(lambda (next-props next-state)
-  $0)

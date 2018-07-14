@@ -32,7 +32,8 @@
     (describe "lifecycle methods"
       (describe "tui-get-default-props"
         (it "gets called before tui-get-initial-state"))
-      (describe "tui-get-initial-state")
+      (describe "tui-get-initial-state"
+        (it "is reflected in the initial component state"))
       (describe "tui--mount"
         (it "calls an overridden tui--mount when defined"))
       (describe "tui-component-did-mount"
@@ -51,17 +52,86 @@
 
             (tui-with-rendered-element (my/test-component-did-mount-component)
               (expect 'my/test-component-did-mount :to-have-been-called-times 1)))))
-      (describe "tui-should-component-update"
-        (it "inhibits an update with a nil return value"))
-      (describe "tui-component-did-update")
-      (describe "tui-will-unmount"
-        (it "is called when a component is removed")))
+      (describe "tui-get-derived-state-from-props"
 
-    (describe "unmounting"
-      (it "all elements get unmounted when buffer is about to be destroyed")
-      (it "unmounting can be skipped on buffer destruction"
-        ;; TODO: configuration value
-        )))
+        :var (my/get-derived-state-from-props my/test-component)
+
+        (before-each
+          (setf (symbol-function 'my/get-derived-state-from-props)
+                (lambda (props state)
+                  (let* ((a (plist-get props :a))
+                         (b (plist-get state :b)))
+                    (when (and a b)
+                      (list :c (* a b))))))
+
+          (tui-define-component my/test-component
+            :get-default-props
+            (lambda ()
+              (list :a 7))
+            :get-initial-state
+            (lambda ()
+              (list :b 6))
+            :get-derived-state-from-props
+            #'my/get-derived-state-from-props
+            :render
+            (lambda ()
+              "test")))
+
+        (after-each
+          (tui-unintern 'my/test-component))
+
+        (it "receives component props and state"
+          (spy-on 'my/get-derived-state-from-props)
+          (tui-with-rendered-element (my/test-component)
+            ;; CLEANUP: Check using something like plist-contains
+            (-let* ((call-args (spy-calls-args-for 'my/get-derived-state-from-props 0))
+                    (((&plist :a a)
+                      (&plist :b b))
+                     call-args))
+              (expect call-args)
+              (expect a :to-be 7)
+              (expect b :to-be 6))))
+        (it "has its return value merged into state"
+          (tui-with-rendered-element (my/test-component)
+            (expect (plist-get (tui--get-state tui-element) :c) :to-be 42)))
+        (it "is called before the initial render call"
+          (let* (render-called-p get-derived-state-called-first-p)
+            (cl-defmethod tui-render ((component my/test-component))
+              (setq render-called-p t)
+              (cl-call-next-method))
+
+            (spy-on 'my/get-derived-state-from-props
+                    :and-call-fake
+                    (lambda (props state)
+                      (setq get-derived-state-called-first-p
+                            (not render-called-p))))
+
+            (tui-with-rendered-element (my/test-component)
+              (expect get-derived-state-called-first-p :to-be t))))
+        (it "is called when component properties are updated"
+          (tui-with-rendered-element (my/test-component)
+            (spy-on 'my/get-derived-state-from-props)
+            (expect 'my/get-derived-state-from-props :not :to-have-been-called)
+            (tui--set-props tui-element '(:a 70))
+            (expect 'my/get-derived-state-from-props :to-have-been-called)))
+        (it "is is not called when component state is updated"
+          (tui-with-rendered-element (my/test-component)
+            (spy-on 'my/get-derived-state-from-props)
+            (tui--set-state tui-element '(:b 0))
+            (expect 'my/get-derived-state-from-props :not :to-have-been-called)))
+        (describe "tui-should-component-update"
+          (it "inhibits an update with a nil return value")
+          (it "is called following a prop update")
+          (it "is called following a state update"))
+        (describe "tui-component-did-update")
+        (describe "tui-will-unmount"
+          (it "is called when a component is removed")))
+
+      (describe "unmounting"
+        (it "all elements get unmounted when buffer is about to be destroyed")
+        (it "unmounting can be skipped on buffer destruction"
+          ;; TODO: configuration value
+          ))))
 
   (describe "ref callback"
     :var (my/ref-callback my/test-component component-did-mount-called-p)

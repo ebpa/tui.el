@@ -122,7 +122,12 @@ method) and appropriately binds `tui-get-props' and
         (tui--plist-merge (tui--funcall #'tui-get-default-props component)
                        (tui--get-props component)))
   ;; Set the initial state (w/o forcing an update)
-  (setf (tui-component-state component) (tui--funcall #'tui-get-initial-state component))
+  (let* ((initial-state (tui--funcall #'tui-get-initial-state component)))
+    (setf (tui-component-state component)
+          (tui--plist-merge initial-state
+                         (tui-get-derived-state-from-props component
+                                                        (tui-component-props component)
+                                                        initial-state))))
   ;; Call the render method
   (setf (tui-component-content component)
         (tui--normalize-content (tui--funcall #'tui-render component))) ;; TODO: condition-case -> tui-error-placeholder-string
@@ -288,11 +293,12 @@ Returns COMPONENT."
   "Internal use only."
   (display-warning 'comp (format "SET-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
   (let* ((prev-props (tui--get-props component))
+         (next-props (tui--plist-merge prev-props next-props))
          (prev-state (tui--get-state component))
-         (next-props (tui--plist-merge prev-props next-props)))
-    (let ((next-state (tui--get-state component)))
-      (when (tui--funcall #'tui-should-component-update component next-props next-state)
-        (cl-call-next-method component next-props)))))
+         (next-state (tui--plist-merge (tui--get-state component)
+                                    (tui-get-derived-state-from-props component next-props prev-state))))
+    (when (tui--funcall #'tui-should-component-update component next-props next-state)
+      (cl-call-next-method component next-props))))
 
 (cl-defmethod tui--set-props ((element tui-element) next-props)
   "Internal use only."
@@ -357,6 +363,7 @@ Binds `tui-element' to ELEMENT for evaluation of BODY."
                                      get-initial-state
                                      mount
                                      component-did-mount
+                                     get-derived-state-from-props
                                      should-component-update
                                      render
                                      component-did-update
@@ -368,6 +375,7 @@ get-default-props ()
 get-initial-state ()
 mount ()
 component-did-mount ()
+get-derived-state-from-props (props state)
 should-component-update (next-props next-state)
 render ()
 component-did-update (prev-props prev-state)
@@ -421,6 +429,12 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
                ""
                (funcall ,component-did-mount))
           `(tui--cl-generic-remove-method 'tui-component-did-mount nil '(,name)))
+
+       ,(if get-derived-state-from-props
+            `(cl-defmethod tui-get-derived-state-from-props ((component ,name) props state)
+               ""
+               (funcall ,get-derived-state-from-props props state))
+          `(tui--cl-generic-remove-method 'tui-get-derived-state-from-props nil '(,name)))
 
        ,(if should-component-update
             `(cl-defmethod tui-should-component-update ((component ,name) next-props next-state)

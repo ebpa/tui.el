@@ -11,9 +11,10 @@
   :documentation "HTML 'section'-like element.  Includes a newline after the content."
   :render
   (lambda ()
-    (list
-     (plist-get (tui-get-props) :children)
-     "\n")))
+    (tui-let (&props children)
+      (list
+       children
+       "\n"))))
 
 (provide 'tui-section)
 

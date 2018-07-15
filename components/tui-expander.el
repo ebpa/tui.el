@@ -84,25 +84,26 @@ Optional argument COLLAPSE-GLYPH - glyph to show when expanded."
   :documentation
   "Expander component enables showing/hiding content below a supplied header."
   :prop-documentation
-  (:header "Shown regardless of whether expander is expanded or collapsed."
-    :children "Content of the expander shown following the header."
-    :initially-expanded "Whether the content of the expander should be initially be shown.")
-  ;; TODO :get-default-props
-  ;; :expanded-glyph
-  ;; :collapsed-glyph
+  (
+   :header "Shown regardless of whether expander is expanded or collapsed."
+   :children "Content of the expander shown following the header."
+   :initially-expanded "Whether the content of the expander should be initially be shown."
+   :expanded-glyph "Glyph to display when the expander is in the expanded state."
+   :collapsed-glyph "Glyph to display when the expander is in the collapsed state."
+   )
+  :get-default-props
+  (lambda ()
+    (list :initially-expanded t))
   :get-initial-state
   (lambda ()
-    (let* ((props (tui-get-props))
-           (initially-expanded (if (plist-member props :initially-expanded)
-                                   (plist-get props :initially-expanded)
-                                 t)))
-      (list :expanded initially-expanded)))
+    nil)
+  :get-derived-state-from-props
+  (lambda (props state)
+    (when (not (plist-member state :expanded))
+      (list :expanded (plist-get props :initially-expanded))))
   :render
   (lambda ()
-    (let* ((props (tui-get-props))
-           (header (plist-get props :header))
-           (content (plist-get props :children))
-           (expanded (plist-get (tui-get-state) :expanded)))
+    (tui-let (&props header children collapsed-glyph expanded-glyph &state expanded)
       (tui-div
        :text-props `(keymap ,tui-expander-keymap)
        :replace-behavior nil
@@ -110,12 +111,14 @@ Optional argument COLLAPSE-GLYPH - glyph to show when expanded."
         :text-props-replace `(font-lock-ignore t
                                        face (:background "blue")
                                        keymap ,tui-expander-glyph-keymap)
-        (if expanded "⊟" "⊞"))
+        (if expanded
+            (or expanded-glyph "⊟")
+          (or collapsed-glyph "⊞")))
        " "
        header
        (tui-div
         :invisible (not expanded)
-        content)))))
+        children)))))
 
 (defun tui-demo-basic-expander ()
   "Show a demonstration expander."
@@ -140,8 +143,6 @@ Optional argument COLLAPSE-GLYPH - glyph to show when expanded."
        (tui-prefix-lines
         :prefix "    "
         (tui-line "Aliquam erat volutpat.  Nunc eleifend leo vitae magna.  In id erat non orci commodo lobortis.  Proin neque massa, cursus ut, gravida ut, lobortis eget, lacus.  Sed diam.  Praesent fermentum tempor tellus.  Nullam tempus.  Mauris ac felis vel velit tristique imperdiet.  Donec at pede.  Etiam vel neque nec dui dignissim bibendum.  Vivamus id enim.  Phasellus neque orci, porta a, aliquet quis, semper a, massa.  Phasellus purus.  Pellentesque tristique imperdiet tortor.  Nam euismod tellus id erat."))))))))
-
-(provide 'tui-expander)
 
 (provide 'tui-expander)
 

@@ -12,8 +12,7 @@
   :documentation "Unordered list component"
   :render
   (lambda ()
-    (let* ((props (tui-get-props))
-           (children (plist-get props :children)))
+    (tui-let (&props children)
       (mapcar
        (lambda (child)
          (tui-line

@@ -14,15 +14,13 @@
   (:action "Function to bind to [mouse-1].")
   :render
   (lambda ()
-    (let* ((props (tui-get-props))
-           (children (plist-get props :children))
-           (action (plist-get props :action))
-           (map (make-sparse-keymap)))
-      (define-key map [mouse-1] action)
-      (tui-span
-       :text-props-replace `(mouse-face highlight
-                                        keymap ,map)
-       children))))
+    (tui-let (&props children action)
+      (let* ((map (make-sparse-keymap)))
+        (define-key map [mouse-1] action)
+        (tui-span
+         :text-props-replace `(mouse-face highlight
+                                          keymap ,map)
+         children)))))
 
 (provide 'tui-button)
 

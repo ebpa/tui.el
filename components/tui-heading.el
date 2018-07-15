@@ -12,11 +12,12 @@
   :documentation "HTML 'h1'-like component"
   :render
   (lambda ()
-    (tui-line
-     (tui-span
-      :text-props '(face org-level-1)
-      :children
-      (plist-get (tui-get-props) :children)))))
+    (tui-let (&props children)
+      (tui-line
+       (tui-span
+        :text-props '(face org-level-1)
+        :children
+        children)))))
 
 (provide 'tui-heading)
 

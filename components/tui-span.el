@@ -11,7 +11,8 @@
   :documentation "HTML 'span'-like compnent for grouping content."
   :render
   (lambda ()
-    (plist-get (tui-get-props) :children)))
+    (tui-let (&props children)
+      children)))
 
 (provide 'tui-span)
 

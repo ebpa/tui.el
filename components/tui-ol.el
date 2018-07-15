@@ -12,7 +12,7 @@
   :documentation "Ordered list component"
   :render
   (lambda ()
-    (let* ((children (plist-get (tui-get-props) :children)))
+    (tui-let (&props children)
       (-map-indexed
        (lambda (index child)
          (tui-line

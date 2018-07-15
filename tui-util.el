@@ -323,6 +323,22 @@ When optional argument NO-ERROR it truthy cancel the timer if FUNCTION throws an
   "Generate a TUI ID."
   (abs (random)))
 
+(cl-defmacro tui--component-defstruct (name)
+  "Internal helper macro for defining component structs."
+  `(progn
+     (cl-defstruct (,name (:include tui-component)
+                          (:constructor nil)
+                          (:constructor ,(intern (format "%s-create" (symbol-name name)))
+                                        (&key props invisible
+                                              &aux (id (tui--new-id))))))
+     ;; FIXME: this is a rather hacky way of suppressing function creation for component slots
+     (mapc (-lambda ((slot ignore))
+             (unless (eq slot 'cl-tag-slot)
+               (setf (symbol-function (intern (concat (symbol-name ',name) "-" (symbol-name slot)))) nil)
+               (setf (symbol-function (intern (concat (symbol-name ',name) "-" (symbol-name slot) "--cmacro"))) nil)))
+           (cl-struct-slot-info 'tui-component))
+     ',name))
+
 (defun tui-unintern (type)
   "Remove all definitions for component TYPE.
 

@@ -319,6 +319,24 @@ When optional argument NO-ERROR it truthy cancel the timer if FUNCTION throws an
                      (apply function args)))
                  args))))
 
+(defun tui-all-component-types ()
+  "Return a list of symbols for all tui components that have been defined."
+  (let* (types)
+    (do-symbols (symbol)
+      (when (and (s-matches-p "^tui" (symbol-name symbol))
+                 (symbol-function symbol)
+                 (when (cl--find-class symbol)
+                   (member 'tui-component
+                           (mapcar
+                            #'cl--struct-class-name
+                            (cl--struct-all-parents (cl--struct-get-class symbol))))))
+        (push symbol types)))
+    types))
+
+(cl-defun tui-read-component-type (&optional (prompt "Component type: "))
+  "Return a component type."
+  (completing-read prompt (tui-all-component-types)))
+
 (provide 'tui-util)
 
 ;;; tui-util.el ends here

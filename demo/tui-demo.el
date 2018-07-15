@@ -18,20 +18,6 @@
 
 (put 'tui-demo-mode 'mode-class 'special)
 
-(defun tui-all-component-types ()
-  "Return a list of all tui components that have been defined."
-  (let* (tui-symbols)
-    (do-symbols (symbol)
-      (when (and (s-matches-p "^tui" (symbol-name symbol))
-                 (symbol-function symbol))
-        (push symbol tui-symbols)))
-    tui-symbols))
-
-(cl-defun tui-read-component-type (&optional (prompt "Component type: "))
-  "Return a component type."
-  ;; FIXME: proper filtering (check that the component inherits from tui-component)
-  (completing-read prompt (tui-all-component-types)))
-
 (defun tui-show-component-demo (content)
   "Display demo CONTENT in a dedicated buffer."
   (interactive (let* ((component-type (tui-read-component-type)))

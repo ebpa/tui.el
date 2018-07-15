@@ -323,6 +323,24 @@ When optional argument NO-ERROR it truthy cancel the timer if FUNCTION throws an
   "Generate a TUI ID."
   (abs (random)))
 
+(defun tui-unintern (type)
+  "Remove all definitions for component TYPE.
+
+Return t if a component definition exists and was successfully removed and return nil otherwise."
+  (interactive (tui-read-component-type "Unintern tui component: "))
+  (when (symbolp type)
+    (setf (symbol-function type) nil)
+    ;; TODO: Additional cl cleanup of struct definition
+    (remhash type tui--default-props-table)
+    (tui--cl-generic-remove-method 'tui-get-initial-state nil `(,type))
+    (tui--cl-generic-remove-method 'tui--mount nil '(,type))
+    (tui--cl-generic-remove-method 'tui-component-did-mount nil `(,type))
+    (tui--cl-generic-remove-method 'tui-get-derived-state-from-props nil `(,type))
+    (tui--cl-generic-remove-method 'tui-should-component-update nil `(,type))
+    (tui--cl-generic-remove-method 'tui-render nil `(,type))
+    (tui--cl-generic-remove-method 'tui-component-did-update nil `(,type))
+    (tui--cl-generic-remove-method 'tui-component-will-unmount nil `(,type))))
+
 (defun tui-all-component-types ()
   "Return a list of symbols for all tui components that have been defined."
   (let* (types)

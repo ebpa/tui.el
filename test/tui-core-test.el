@@ -201,10 +201,10 @@
       )
 
     (it "can render an element within an existing element"
-      (let ((div (tui-div "foo")))
+      (let ((span (tui-span "foo")))
         (tui-with-rendered-element
-          div
-          (tui-render-element "bar" div)
+          span
+          (tui-render-element "bar" span)
           (expect (buffer-string) :to-equal "foobar"))))))
 
 
@@ -212,7 +212,7 @@
 (describe "text properties"
   (it "basic text properties are applied"
     (tui-with-rendered-element
-      (tui-div
+      (tui-span
        :text-props '(foo "bar")
        "woo")
       (expect (get-text-property 1 'foo) :to-equal "bar")))
@@ -243,10 +243,10 @@
 
     (it "only hides subtree of the target element"
       (let ((preceding-content (tui-line "Preceding content"))
-            (hide-me (tui-div "Hide me!"))
+            (hide-me (tui-span "Hide me!"))
             (following-content "(but not me!)"))
         (tui-with-rendered-element
-          (tui-div
+          (tui-span
            preceding-content
            hide-me
            following-content)
@@ -265,7 +265,7 @@
   (describe ":invisible elements"
     (it "is not rendered when :invisible is truthy"
       (tui-with-rendered-element
-        (tui-div :invisible t
+        (tui-span :invisible t
               :children "foo")
         (expect (buffer-string) :to-equal ""))))
 
@@ -279,31 +279,31 @@
   (describe "tui-insert-node"
     (it "can insert an element into an empty list"
       (tui-with-rendered-element
-        (tui-div)
-        (tui-insert-node (tui-div "foo") tui-element 0)
+        (tui-span)
+        (tui-insert-node (tui-span "foo") tui-element 0)
         (expect (buffer-string) :to-equal "foo")))
     
     (it "can insert an element at the beginning of a list"
       (let ((bar (tui--normalize-node "bar")))
         (tui-with-rendered-element
-          (tui-div bar)
-          (tui-insert-node (tui-div "foo") tui-element 0)
+          (tui-span bar)
+          (tui-insert-node (tui-span "foo") tui-element 0)
           (expect (buffer-substring (point-min) (point-max)) :to-equal "foobar")
           (expect (tui-node-relative-index bar) :to-be 1))))
     
     (it "can insert an element at the end of a list"
       (let ((foo (tui--normalize-node "foo")))
         (tui-with-rendered-element
-          (tui-div foo)
-          (tui-insert-node (tui-div "bar") tui-element 1)
+          (tui-span foo)
+          (tui-insert-node (tui-span "bar") tui-element 1)
           (expect (buffer-substring (point-min) (point-max)) :to-equal "foobar")
           (expect (tui-node-relative-index foo) :to-be 0))))
     (it "can insert an element in the middle of a list"
       (let* ((foo (tui--normalize-node "foo"))
-             (bar (tui-div "bar"))
+             (bar (tui-span "bar"))
              (baz (tui--normalize-node "baz")))
         (tui-with-rendered-element
-          (tui-div foo baz)
+          (tui-span foo baz)
           (tui-insert-node bar tui-element 1)
           (expect (buffer-substring (point-min) (point-max)) :to-equal "foobarbaz")
           (expect (tui-node-relative-index foo) :to-be 0)
@@ -316,7 +316,7 @@
             (baz (tui--normalize-node "baz"))
             (-compare-fn #'eq))
         (tui-with-rendered-element
-          (tui-div foo bar baz)
+          (tui-span foo bar baz)
           (tui-insert-node baz tui-element 0)
           (expect (buffer-string) :to-equal "bazfoobar")
           (expect (tui-node-relative-index baz) :to-be 0)
@@ -328,7 +328,7 @@
             (bar (tui--normalize-node "bar"))
             (baz (tui--normalize-node "baz")))
         (tui-with-rendered-element
-          (tui-div foo bar baz)
+          (tui-span foo bar baz)
           (tui-insert-node bar tui-element 1)
           (expect (tui-valid-element-p tui-element))
           (expect (buffer-string) :to-equal "foobarbaz"))))
@@ -336,17 +336,17 @@
     (it "can reinsert the sole child of an element at the same position"
       (let ((foo (tui--normalize-node "foo")))
         (tui-with-rendered-element
-          (tui-div foo)
+          (tui-span foo)
           (tui-insert-node foo tui-element 0)
           (expect (tui-valid-element-p tui-element))
           (expect (buffer-string) :to-equal "foo"))))
 
     (it "can reinsert the sole child of an element into another element"
       (let* ((foo (tui--normalize-node "foo"))
-             (bar (tui-div foo))
+             (bar (tui-span foo))
              (baz (tui-span)))
         (tui-with-rendered-element
-          (tui-div bar "-" baz)
+          (tui-span bar "-" baz)
           (tui-insert-node foo baz 0)
           (expect (tui-valid-element-p tui-element))
           (expect (buffer-string) :to-equal "-foo"))))))
@@ -355,7 +355,7 @@
   (it "identifies shared parent"
     (let* ((a (tui-span "A"))
            (b (tui-span "B"))
-           (c (tui-div "C" a b)))
+           (c (tui-span "C" a b)))
       (tui-with-rendered-element c
         (expect (tui-lowest-common-ancestor a b) :to-be c)))))
 
@@ -366,7 +366,7 @@
           (b (tui--normalize-node "b"))
           (c (tui--normalize-node "c")))
       (tui-with-rendered-element
-        (tui-div a b c)
+        (tui-span a b c)
         (tui-remove a)
         (expect (tui-node-relative-index b) :to-be 0)
         (expect (tui-node-relative-index c) :to-be 1))))
@@ -375,7 +375,7 @@
           (b (tui--normalize-node "b"))
           (c (tui--normalize-node "c")))
       (tui-with-rendered-element
-        (tui-div a b c)
+        (tui-span a b c)
         (tui-remove b)
         (expect (tui-node-relative-index a) :to-be 0)
         (expect (tui-node-relative-index c) :to-be 1))))
@@ -384,21 +384,21 @@
           (b (tui--normalize-node "b"))
           (c (tui--normalize-node "c")))
       (tui-with-rendered-element
-        (tui-div a b c)
+        (tui-span a b c)
         (tui-remove c)
         (expect (tui-node-relative-index a) :to-be 0)
         (expect (tui-node-relative-index b) :to-be 1))))
   (it "can remove the only child of an element"
     (let ((a (tui--normalize-node "a")))
       (tui-with-rendered-element
-        (tui-div a)
+        (tui-span a)
         (tui-remove a)
         (expect (tui-child-nodes tui-element) :to-be nil)))))
 
 (describe "tui-force-update"
   (it "re-renders target component"
-    (let* ((component-b (tui-div "Blah"))
-           (component-a (tui-div component-b)))
+    (let* ((component-b (tui-span "Blah"))
+           (component-a (tui-span component-b)))
       (spy-on 'tui-render :and-call-through)
       (tui-with-rendered-element component-a
         (expect 'tui-render :to-have-been-called-with component-a)

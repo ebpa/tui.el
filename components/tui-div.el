@@ -8,10 +8,14 @@
 ;;; Code:
 
 (tui-define-component tui-div
-  :documentation "Component for grouping elements"
+  :documentation "Component for grouping elements.  Render with a newline before and after the child content."
   :render
   (lambda ()
-    (plist-get (tui-get-props) :children)))
+    (tui-let (&props children)
+      (list
+       "\n"
+       children
+       "\n"))))
 
 (provide 'tui-div)
 

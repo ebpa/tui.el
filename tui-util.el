@@ -375,6 +375,25 @@ Return t if a component definition exists and was successfully removed and retur
   "Return a component type."
   (completing-read prompt (tui-all-component-types)))
 
+(cl-defun tui-component--docstring (documentation prop-documentation state-documentation)
+  "Internal function for building component docstrings."
+  (concat
+   documentation
+   (if prop-documentation
+       (format "\n\nValid parameters include:\n%s"
+               (s-join "\n"
+                       (cl-loop for (key docstring) on prop-documentation by #'cddr
+                                collect
+                                (format "\t%S\t\t%s\n" key docstring))))
+     "")
+   (if state-documentation
+       (format "\n\nInternal State variables:\n%s"
+               (s-join "\n"
+                       (cl-loop for (key docstring) on state-documentation by #'cddr
+                                collect
+                                (format "\t%S\t\t%s\n" key docstring))))
+     "")))
+
 (provide 'tui-util)
 
 ;;; tui-util.el ends here

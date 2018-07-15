@@ -503,22 +503,7 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
                                    `(&key ,prop-name))
                                  prop-names))
                          '(&allow-other-keys))
-         ,(format "%s%s"
-                  documentation
-                  (if prop-documentation
-                      (format "\n\nValid parameters include:\n%s"
-                              (s-join "\n"
-                                      (cl-loop for (key docstring) on prop-documentation by #'cddr
-                                               collect
-                                               (format "\t%S\t\t%s\n" key docstring))))
-                    "")
-                  (if state-documentation
-                      (format "\n\nInternal State variables:\n%s"
-                              (s-join "\n"
-                                      (cl-loop for (key docstring) on state-documentation by #'cddr
-                                               collect
-                                               (format "\t%S\t\t%s\n" key docstring))))
-                    ""))
+         ,(tui-component--docstring documentation prop-documentation state-documentation)
          (let (children props)
            ;; Parse keyword key-value pairs permitting shorthand children (omitted :children)
            (while (keywordp (car args))

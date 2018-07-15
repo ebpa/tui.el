@@ -8,11 +8,11 @@
 ;;; Code:
 
 (tui-define-component tui-line
-  :documentation "Render :children elements with a following \\n."
+  :documentation "Render with a newline after the child content."
   :render
   (lambda ()
-    (let ((content (plist-get (tui-get-props) :children)))
-      (list content
+    (tui-let (&props children)
+      (list children
             "\n"))))
 
 (provide 'tui-line)

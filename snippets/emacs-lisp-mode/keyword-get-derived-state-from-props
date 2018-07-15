@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: keyword-get-derived-state-from-props
+# key: :gds
+# --
+:get-derived-state-from-props
+(lambda (props state)
+  $0)

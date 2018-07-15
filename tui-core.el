@@ -31,29 +31,75 @@
 
 ;;; Component lifecycle methods
 
+(cl-defgeneric tui-get-default-props ()
+  (:documentation "Return default properties for all instances of the component type.
+
+Equivalent to React's createReactClass form: https://reactjs.org/docs/react-without-es6.html#declaring-default-props"))
+
 (cl-defmethod tui-get-default-props ((component tui-component))
   "Empty default method"
   nil)
+
+(cl-defgeneric tui-get-initial-state ()
+  (:documentation "Return the initial component state for a new component instance.
+
+Equivalent to React's createReactClass form: https://reactjs.org/docs/react-without-es6.html#setting-the-initial-state"))
 
 (cl-defmethod tui-get-initial-state ((component tui-component))
   "Empty default method"
   nil)
 
+(cl-defgeneric tui-component-did-mount ()
+  (:documentation "Called immediately after a component is mounted.  `tui-set-state' may be used in this method.
+
+React documentation: https://reactjs.org/docs/react-component.html#componentdidmount"))
+
 (cl-defmethod tui-component-did-mount ((component tui-component))
   "Empty default method"
   nil)
+
+(cl-defgeneric tui-get-derived-state-from-props (props state)
+  (:documentation "Return a plist of any state values derived from PROPS or the current STATE.
+
+React documentation: https://reactjs.org/docs/react-component.html#static-getderivedstatefromprops"))
+
+(cl-defmethod tui-get-derived-state-from-props ((component tui-component) props state)
+  "Empty default method"
+  nil)
+
+(cl-defgeneric tui-should-component-update (next-props next-state)
+  (:documentation "Performance optimization method to prevent component updates.
+
+Return nil to indicate that the component's output is not affected by the current change in props or state.
+
+React documentation: https://reactjs.org/docs/react-component.html#shouldcomponentupdate"))
 
 (cl-defmethod tui-should-component-update ((component tui-component) next-props next-state)
   "Empty default method"
   t)
 
+(cl-defgeneric tui-render ()
+  (:documentation "Return the component output content.
+
+React documentation: https://reactjs.org/docs/react-component.html#render"))
+
 (cl-defmethod tui-render ((component tui-component))
   "Empty default method"
   nil)
 
+(cl-defgeneric tui-component-did-update (next-props next-state)
+  (:documentation "Is called after all component updates.  It is not called for the initial render.
+
+React documentation: https://reactjs.org/docs/react-component.html#componentdidupdate"))
+
 (cl-defmethod tui-component-did-update ((component tui-component) next-props next-state)
   "Empty default method"
   nil)
+
+(cl-defgeneric tui-component-will-unmount
+    (:documentation "Called immediately before a component will unmount.
+
+React documentation: https://reactjs.org/docs/react-component.html#componentwillunmount"))
 
 (cl-defmethod tui-component-will-unmount ((component tui-component))
   "Empty default method"

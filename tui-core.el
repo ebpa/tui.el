@@ -614,10 +614,6 @@ tui-element."
 
 ;;;; Internal
 
-(defun tui--new-id ()
-  "Generate a TUI ID."
-  (abs (random)))
-
 (defun tui--normalize-node (node)
   ;; TODO: set parent opportunistically?
   "Convert NODE's content tree to normalized form.

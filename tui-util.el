@@ -319,6 +319,10 @@ When optional argument NO-ERROR it truthy cancel the timer if FUNCTION throws an
                      (apply function args)))
                  args))))
 
+(defun tui--new-id ()
+  "Generate a TUI ID."
+  (abs (random)))
+
 (defun tui-all-component-types ()
   "Return a list of symbols for all tui components that have been defined."
   (let* (types)

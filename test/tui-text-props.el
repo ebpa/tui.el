@@ -1,4 +1,8 @@
 (require 'tui-test-helper "test/tui-test-helper.el")
+(require 'tui)
+(require 'tui-text-props)
+
+(describe "tui--extend-text-props")
 
 (describe "tui--apply-grouped-text-props"
   (it "merges empty sets"

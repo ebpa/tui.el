@@ -6,6 +6,7 @@
 (require 'dash)
 (require 'tui-core)
 (require 'tui-span "components/tui-span.el")
+(require 'tui-prefix-lines "components/tui-prefix-lines.el")
 
 ;;; Code:
 
@@ -58,7 +59,12 @@ Optional argument COLLAPSE-GLYPH - glyph to show when expanded."
   (unless expander (setq expander (tui-expander-get-expander)))
   (tui--set-state expander '(:expanded t)))
 
-;; FIXME: has implicit expectation that it is invoked with the tree column as current
+(defun tui-expander-collapse (event)
+  "Mouse function to collapse expander at point of EVENT."
+  (interactive "e")
+  (tui-expander--collapse
+   (tui-expander-get-expander event)))
+
 (defun tui-expander--collapse (&optional expander)
   "Collapse EXPANDER."
   (unless expander (setq expander (tui-expander-get-expander)))
@@ -116,7 +122,7 @@ Optional argument COLLAPSE-GLYPH - glyph to show when expanded."
           (or collapsed-glyph "⊞")))
        " "
        header
-       (tui-div
+       (tui-span
         :invisible (not expanded)
         children)))))
 
@@ -126,7 +132,9 @@ Optional argument COLLAPSE-GLYPH - glyph to show when expanded."
   (tui-show-component-demo
    (tui-expander
     :header (tui-line "This is an expander")
-    "Aliquam erat volutpat.  Nunc eleifend leo vitae magna.  In id erat non orci commodo lobortis.  Proin neque massa, cursus ut, gravida ut, lobortis eget, lacus.  Sed diam.  Praesent fermentum tempor tellus.  Nullam tempus.  Mauris ac felis vel velit tristique imperdiet.  Donec at pede.  Etiam vel neque nec dui dignissim bibendum.  Vivamus id enim.  Phasellus neque orci, porta a, aliquet quis, semper a, massa.  Phasellus purus.  Pellentesque tristique imperdiet tortor.  Nam euismod tellus id erat.\n")))
+    (tui-prefix-lines
+     :prefix "  "
+     "Aliquam erat volutpat.  Nunc eleifend leo vitae magna.  In id erat non orci commodo lobortis.  Proin neque massa, cursus ut, gravida ut, lobortis eget, lacus.  Sed diam.  Praesent fermentum tempor tellus.  Nullam tempus.  Mauris ac felis vel velit tristique imperdiet.  Donec at pede.  Etiam vel neque nec dui dignissim bibendum.  Vivamus id enim.  Phasellus neque orci, porta a, aliquet quis, semper a, massa.  Phasellus purus.  Pellentesque tristique imperdiet tortor.  Nam euismod tellus id erat.\n"))))
 
 (defun tui-demo-nested-expander ()
   "Show a demonstration of nested expanders."
@@ -136,13 +144,12 @@ Optional argument COLLAPSE-GLYPH - glyph to show when expanded."
     :header (tui-line "This is an expander")
     (tui-prefix-lines
      :prefix "  "
-     (list
-      (tui-line "Lorem ipsum dolor sit amet, consectetuer adipiscing elit.  Donec hendrerit tempor tellus.  Donec pretium posuere tellus.  Proin quam nisl, tincidunt et, mattis eget, convallis nec, purus.  Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.  Nulla posuere.  Donec vitae dolor.  Nullam tristique diam non turpis.  Cras placerat accumsan nulla.  Nullam rutrum.  Nam vestibulum accumsan nisl.")
-      (tui-expander
-       :header (tui-line "This is a nested expander")
-       (tui-prefix-lines
-        :prefix "    "
-        (tui-line "Aliquam erat volutpat.  Nunc eleifend leo vitae magna.  In id erat non orci commodo lobortis.  Proin neque massa, cursus ut, gravida ut, lobortis eget, lacus.  Sed diam.  Praesent fermentum tempor tellus.  Nullam tempus.  Mauris ac felis vel velit tristique imperdiet.  Donec at pede.  Etiam vel neque nec dui dignissim bibendum.  Vivamus id enim.  Phasellus neque orci, porta a, aliquet quis, semper a, massa.  Phasellus purus.  Pellentesque tristique imperdiet tortor.  Nam euismod tellus id erat."))))))))
+     (tui-line "Lorem ipsum dolor sit amet, consectetuer adipiscing elit.  Donec hendrerit tempor tellus.  Donec pretium posuere tellus.  Proin quam nisl, tincidunt et, mattis eget, convallis nec, purus.  Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.  Nulla posuere.  Donec vitae dolor.  Nullam tristique diam non turpis.  Cras placerat accumsan nulla.  Nullam rutrum.  Nam vestibulum accumsan nisl.")
+     (tui-expander
+      :header (tui-line "This is a nested expander")
+      (tui-prefix-lines
+       :prefix "    "
+       (tui-line "Aliquam erat volutpat.  Nunc eleifend leo vitae magna.  In id erat non orci commodo lobortis.  Proin neque massa, cursus ut, gravida ut, lobortis eget, lacus.  Sed diam.  Praesent fermentum tempor tellus.  Nullam tempus.  Mauris ac felis vel velit tristique imperdiet.  Donec at pede.  Etiam vel neque nec dui dignissim bibendum.  Vivamus id enim.  Phasellus neque orci, porta a, aliquet quis, semper a, massa.  Phasellus purus.  Pellentesque tristique imperdiet tortor.  Nam euismod tellus id erat.")))))))
 
 (provide 'tui-expander)
 

@@ -42,6 +42,7 @@
 (require 'tui-span "components/tui-span.el")
 (require 'tui-spinner "components/tui-spinner.el")
 (require 'tui-timer "components/tui-timer.el")
+(require 'tui-prefix-lines "components/tui-prefix-lines.el")
 
 ;; Layout
 (require 'tui-absolute "layout/tui-absolute.el")

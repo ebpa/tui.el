@@ -30,7 +30,7 @@
                            (when face
                              `(face ,face)))))
       (tui-span
-       :text-props text-props
+       :text-props-replace text-props
        :children
        (plist-get (tui-get-props) :children)))))
 

@@ -11,10 +11,12 @@
 (tui-define-component tui-absolute
   :documentation "A helper component to render a subtree at a particular position using a separate buffer."
   :prop-documentation
-  (:x "Distance from the beginning of the line for positioning of content (indexed from zero)."
-      :y "Distance from the top of the buffer for positioning content (indexed from zero)."
-      :width "Width reserved for the content."
-      :height "Height reserved for the content.")
+  (
+   :x "Distance from the beginning of the line for positioning of content (indexed from zero)."
+   :y "Distance from the top of the buffer for positioning content (indexed from zero)."
+   :width "Width reserved for the content."
+   :height "Height reserved for the content."
+   )
   :get-initial-state
   (lambda ()
     (list :id (tui--new-id)))
@@ -44,12 +46,11 @@
     (when children
       (save-current-buffer
         (tui--save-point-row-column
-          (let (content)
-            (tui--goto (tui-start (cl-first children)))
-            (setq content (buffer-substring (point-min) (point-max)))
-            (when parent
-              (tui--goto (tui-start parent)))
-            (tui-absolute--paste (s-split "\n" content) x y width height)))))))
+         (tui--goto (tui-start (cl-first children)))
+         (let* ((content (artist-copy-generic 0 0 (- width 1) (- height 1))))
+           (when parent
+             (tui--goto (tui-start parent)))
+           (tui-absolute--paste content x y width height)))))))
 
 (defun tui-absolute--paste (content x y width height)
   "Paste CONTENT at position X,Y filling WIDTH and HEIGHT."

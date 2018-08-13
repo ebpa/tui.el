@@ -6,7 +6,11 @@
 ;;; Commentary:
 ;; 
 
-(require 'tui-core)
+(require 'tui-absolute)
+(require 'tui-buffer)
+(require 'tui-button)
+(require 'tui-div)
+(require 'tui-ol)
 
 ;; Design (for monospaced fonts)
 
@@ -31,7 +35,7 @@
    (tui-button
     :action `(lambda (event)
                (interactive "e")
-               (-when-let ((game (tui-get-element-at (posn-point (event-start event)) 'tui-tic-tac-toe-game)))
+               (-when-let* ((game (tui-get-element-at (posn-point (event-start event)) 'tui-tic-tac-toe-game)))
                  (tui-tic-tac-toe--handle-click game ,i)))
     "⌜ ⌝\n"
     (format " %s \n" (or (nth i squares) " "))
@@ -41,8 +45,6 @@
   :render
   (lambda ()
     (let ((squares (plist-get (tui-get-props) :squares)))
-      ;; (when (-any-p #'identity squares)
-      ;;   (edebug))
       (list
        (tui-tic-tac-toe--square squares 0)
        (tui-tic-tac-toe--square squares 1)
@@ -84,12 +86,11 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
           :height 12
           :x 17
           :y 2
-          (tui-div
-           (if winner
-               (list "Winner: " winner)
-             (list "Next player: "
-                   (if x-is-next "X" "O")
-                   "        ")))
+          (if winner
+              (tui-div "Winner: " winner)
+            (tui-div "Next player: "
+                  (if x-is-next "X" "O")
+                  "        "))
           "\n\n"
           (tui-ol
            :children
@@ -101,9 +102,9 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
                 (tui-button
                  :action `(lambda (event)
                             (interactive "e")
-                            (let ((game (tui-get-element-at
-                                         (posn-point (event-start event))
-                                         'tui-tic-tac-toe-game)))
+                            (-when-let* ((game (tui-get-element-at
+                                                (posn-point (event-start event))
+                                                'tui-tic-tac-toe-game)))
                               (tui-tic-tac-toe-jump-to game ,move)))
                  desc)))
             history))))))))
@@ -140,6 +141,17 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
   (interactive)
   (tui-render-element
    (tui-tic-tac-toe-game)))
+
+;;;###autoload
+(defun tui-play-tic-tac-toe ()
+  ""
+  (interactive)
+  (let* ((buffer (get-buffer-create "*Tic Tac Toe*")))
+    (tui-render-element
+     (tui-buffer
+      :buffer buffer
+      (tui-tic-tac-toe-game)))
+    (switch-to-buffer buffer)))
 
 (defun tui-tic-tac-toe-calculate-winner (squares)
   "Calculate whether the state of SQUARES yields a winner."

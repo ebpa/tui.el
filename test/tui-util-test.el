@@ -1,6 +1,7 @@
 (require 'buttercup)
 (require 'tui-test-helper "test/tui-test-helper.el")
 (require 'cl)
+(require 'tui-core)
 
 (describe "tui-put-text-properties"
   (describe "inheritance rules"
@@ -33,6 +34,12 @@
       (expect (plist-member bar :b) :to-equal nil)
       (expect (plist-get bar :c) :to-equal 3))))
 
+(describe "tui--plist-equal"
+  (it "judges equality independent of order"
+    (expect (tui--plist-equal '(:a 1 :b 2) '(:b 2 :a 1)) :to-be t)
+    (expect (tui--plist-equal '(:a 1 :b 2) '(:b 2 :a 1 :c 3)) :to-be nil)
+    (expect (tui--plist-equal '(:a 1 :b 2 :c 3) '(:b 2 :a 1)) :to-be nil)))
+
 (describe "tui-unintern"
   (before-each
     (tui-define-component test-component
@@ -55,4 +62,3 @@
       (lambda (generic)
         (equal 'test-component (car (cl--generic-method-specializers generic))))
       (cl--generic-method-table (cl-generic-ensure-function 'tui-get-initial-state))))))
-

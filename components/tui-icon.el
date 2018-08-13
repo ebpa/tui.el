@@ -78,16 +78,16 @@ Example:
     (tui-let (&props icon-set icon-name scaling foreground background)
       (-let* (((scale-width . scale-height) (gethash (cons icon-set icon-name) tui--all-the-icons-size-data)))
         (tui-span
-         :text-props `(font-lock-face ,(list (append (list :family (funcall (all-the-icons--family-name icon-set)))
-                                                    (when foreground
-                                                      (list :foreground foreground))
-                                                    (when background
-                                                      (list :foreground background))
-                                                    (when scaling
-                                                      (list :height (* (/ 1 scale-width)
-                                                                       (if (eq scaling t)
-                                                                           1
-                                                                         scaling)))))))
+         :text-props `(font-lock-face ,(append (list :family (funcall (all-the-icons--family-name icon-set)))
+                                       (when foreground
+                                         (list :foreground foreground))
+                                       (when background
+                                         (list :foreground background))
+                                       (when scaling
+                                         (list :height (* (/ 1 scale-width)
+                                                          (if (eq scaling t)
+                                                              1
+                                                            scaling))))))
          (assoc-default icon-name (funcall (all-the-icons--data-name icon-set))))))))
 
 (provide 'tui-icon)

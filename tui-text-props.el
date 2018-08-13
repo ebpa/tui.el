@@ -1,7 +1,9 @@
 ;;; tui-text-props.el --- Text properies       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; 
+;;
+
+(require 'tui-util)
 
 (defvar tui--text-props
   (make-hash-table :weakness 'key)
@@ -44,7 +46,7 @@ This includes inherited text properties."
   "Return the calculated text properties of ELEMENT as a plist."
   (let* ((keys (make-hash-table :test #'equal))
          text-props)
-    (cl-loop for (key . value) in (tui--get-merged-text-props element)
+    (cl-loop for (key value) on (tui--get-merged-text-props element) by #'cddr
              do
              (unless (gethash key keys)
                (push value text-props)
@@ -53,34 +55,38 @@ This includes inherited text properties."
     text-props))
 
 (defun tui--get-grouped-text-props (element)
-  "Return calculated text props applied to the children of ELEMENT."
+  "Return text props grouped by their application rule (replace push append safe) applied that should be applied to children of ELEMENT."
   (or (gethash element tui--grouped-text-props)
       (let* ((props (tui--get-props element))
-             (replace (tui--plist-to-sorted-alist (or (plist-get props :text-props)
-                                                   (plist-get props :text-props-replace))))
-             (push (tui--plist-to-sorted-alist (plist-get props :text-props-push)))
-             (append (tui--plist-to-sorted-alist (plist-get props :text-props-append)))
-             (safe (tui--plist-to-sorted-alist (plist-get props :text-props-safe))))
+             (replace (or (plist-get props :text-props)
+                          (plist-get props :text-props-replace)))
+             (push (plist-get props :text-props-push))
+             (append (plist-get props :text-props-append))
+             (safe (plist-get props :text-props-safe)))
         (puthash element
                  (list replace push append safe)
                  tui--grouped-text-props))))
 
 (defun tui--extend-text-props (target-props grouped-props)
-  "Internal function to combine multiple grouped text property descriptions."
+  "Internal function.
+
+Merge GROUPED-PROPS text property descriptions structured as `(replace push append safe)' into TARGET-PROPS with proper inheritance."
   (-let* (((replace push append safe) grouped-props)
+          (target-props (nreverse (cl-loop for (key value) on target-props by #'cddr
+                                           collect (cons key value))))
           (prop-table (make-hash-table :test #'equal))
           (miss (make-symbol "miss"))
-          (text-props nil))
-    (cl-loop for (key . value) in safe
-             for existing-value = (or (assoc key target-props) miss)
+          (merged-props nil))
+    (cl-loop for (key . value) in target-props
+             do
+             (puthash key value prop-table))
+    (cl-loop for (key value) on safe by #'cddr
+             for existing-value = (gethash key prop-table miss)
              do
              (if (eq existing-value miss)
                  (puthash key value prop-table)))
-    (cl-loop for (key . value) in push
-             for existing-local-value = (gethash key prop-table miss)
-             for existing-value = (if (eq existing-local-value miss)
-                                      (or (assoc key target-props) miss)
-                                    existing-local-value)
+    (cl-loop for (key value) on push by #'cddr
+             for existing-value = (gethash key prop-table miss)
              do
              (cond
               ((eq existing-value miss)
@@ -89,11 +95,8 @@ This includes inherited text properties."
                (puthash key (cons value existing-value) prop-table))
               (t
                (puthash key (cons value (list existing-value)) prop-table))))
-    (cl-loop for (key . value) in append
-             for existing-local-value = (gethash key prop-table miss)
-             for existing-value = (if (eq existing-local-value miss)
-                                      (or (assoc key target-props) miss)
-                                    existing-local-value)
+    (cl-loop for (key value) on append by #'cddr
+             for existing-value = (gethash key prop-table miss)
              do
              (cond
               ((eq existing-value miss)
@@ -105,14 +108,13 @@ This includes inherited text properties."
               (t
                (puthash key (cons existing-value (list value))
                         prop-table))))
-    (cl-loop for (key . value) in replace
+    (cl-loop for (key value) on replace by #'cddr
              do
              (puthash key value prop-table))
     (maphash (lambda (key value)
-               (push (cons key value) text-props))
+               (setf merged-props (append (list key value) merged-props)))
              prop-table)
-    (append text-props
-            target-props)))
+    merged-props))
 
 ;; (defun tui--get-calculated-grouped-text-props (node)
 ;;   "Return a list of text properties inherited from NODE and NODE's parent elements."
@@ -158,12 +160,14 @@ This includes inherited text properties."
 ;;       (tui-put-text-properties start end safe buffer nil))))
 
 (defun tui--apply-inherited-text-props (start end element &optional object)
+  ;; CLEANUP: bad function signature
   "Internal function to apply inherited text properties.
-Applyes text properties to region between START and END inherited from ELEMENT.
+Applies text properties to region between START and END inherited from ELEMENT.
 
 Optional argument OBJECT is a string to which the properties be applied.  START and END should indicate positions within that string."
-  (-let* (((start . end) (tui-segment element))
-          (text-props (tui-get-text-props element)))
+  (unless start (setq start (tui-start element)))
+  (unless end (setq end (tui-end element)))
+  (-let* ((text-props (tui-get-text-props element)))
     (tui-put-text-properties start end text-props (marker-buffer start) t)))
 
 (defun tui--update-text-props (subtree changed-props)
@@ -179,7 +183,7 @@ Optional argument OBJECT is a string to which the properties be applied.  START 
             (lambda (node)
               (when (member key (gethash node tui--text-props))
                 ;; update this node
-
+                ;;(tui--apply-inherited-text-props 
                 
                 ))
             subtree)))

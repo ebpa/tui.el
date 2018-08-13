@@ -125,9 +125,10 @@ It :width value is nil, the component width is variable."
   (tui--with-open-node
     padding-node
     (delete-region (tui-start padding-node) (tui-end padding-node))
-    (insert-and-inherit (propertize (make-string width ? )
-                                    'font-lock-ignore t
-                                    'cursor-intangible t))))
+    (insert (propertize (make-string width ? )
+                        'font-lock-ignore t
+                        'cursor-intangible t))
+    (tui--apply-inherited-text-props (tui-start padding-node) (tui-end padding-node) padding-node)))
 
 (provide 'tui-fixed-width)
 

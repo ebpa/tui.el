@@ -152,7 +152,7 @@ method) and appropriately binds `tui-get-props' and
   ;; (display-warning 'tui-diff (format "MOUNT %S between %S and %S (%s)" (tui--object-class node) start end (unless (eq start end) "eq" "distinct")) :debug tui-log-buffer-name)
   (tui--insert node)
   (when parent
-    (tui--apply-inherited-text-props start end parent))
+    (tui--apply-inherited-text-props (tui-start node) (tui-end node) parent (marker-buffer (tui-start node))))
   (setf (tui-node-mounted node) t)
   ;; (cl-assert (or (< start end)
   ;;               (eq start end)) t "Segment endpoints should be ordered if not represented by the same marker.")

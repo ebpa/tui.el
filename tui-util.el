@@ -35,6 +35,17 @@ Ex: If a property is found in plists A and B, the returned list will contain the
         (apply #'tui--plist-merge merged rest)
       merged)))
 
+(defun tui--plist-equal (a b)
+  "Helper to check wither plists A and B are equal.  Key order is irrelevant once list degeneracies are removed."
+  (let* ((b b))
+    (cl-loop for (key-a value-a) on a by #'cddr
+             always (equal
+                     (plist-get b key-a)
+                     value-a)
+             do
+             (setq b (tui--plist-delete b key-a))
+             finally return (null b))))
+
 (defun tui-map-subtree (fn node)
   "Apply FN to all elements in the subtree of NODE."
   (let* ((nodes (list node)))

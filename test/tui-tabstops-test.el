@@ -1,3 +1,4 @@
+(require 'buttercup)
 (require 'tui)
 
 (describe "tabstops"

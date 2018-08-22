@@ -46,6 +46,7 @@
 
 ;; Layout
 (require 'tui-absolute "layout/tui-absolute.el")
+(require 'tui-canvas "layout/tui-canvas.el")
 
 (require 'tui-demo "demo/tui-demo.el")
 (require 'tui-dev)

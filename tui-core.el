@@ -356,15 +356,16 @@ Returns COMPONENT."
       )
     (tui--update element next-props)))
 
-(defun tui--set-state (component next-state &optional no-update)
+(defun tui--set-state (component new-state &optional no-update)
   "Internal function to set COMPONENT state.
 
 Do not call this directly; use `tui-set-state'.
 
 Sets the current state of COMPONENT to NEXT-STATE.  Does not
 cause the component to update when NO-UPDATE is truthy."
-  (let ((prev-state (tui-component-state component)))
   (display-warning 'tui (format "SET-STATE %S" (tui--object-class component)) :debug tui-log-buffer-name)
+  (let* ((prev-state (tui-component-state component))
+         (next-state (tui--plist-merge prev-state new-state)))
     (when (not (equal prev-state next-state))
       (unless no-update
         (tui--update component nil next-state))

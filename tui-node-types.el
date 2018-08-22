@@ -44,22 +44,22 @@
 ;;;; Print methods
 
 (cl-defmethod cl-print-object ((node tui-node) stream)
-  (princ "#<tui-node>" stream))
+  (princ (format "#<tui-node %d>" (tui-node-id node)) stream))
 
 (cl-defmethod cl-object-print ((node tui-node) stream)
-  (princ "#<tui-node>" stream))
+  (princ (format "#<tui-node %d>" (tui-node-id node)) stream))
 
 (cl-defmethod cl-print-object ((element tui-element) stream)
-  (princ "#<tui-element>" stream))
+  (princ (format "#<tui-element %d>" (tui-node-id element)) stream))
 
 (cl-defmethod cl-object-print ((element tui-element) stream)
-  (princ "#<tui-element>" stream))
+  (princ (format "#<tui-element %d>" (tui-node-id element)) stream))
 
 (cl-defmethod cl-print-object ((component tui-component) stream)
-  (princ (format "#<tui-component %s>" (tui--type component)) stream))
+  (princ (format "#<tui-component %s %d>" (tui--type component) (tui-node-id component)) stream))
 
 (cl-defmethod cl-object-print ((component tui-component) stream)
-  (princ (format "#<tui-component %s>" (tui--type component)) stream))
+  (princ (format "#<tui-component %s %d>" (tui--type component) (tui-node-id component)) stream))
 
 ;;;; Type helpers
 

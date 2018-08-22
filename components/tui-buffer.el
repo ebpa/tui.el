@@ -59,6 +59,12 @@
   (lambda ()
     (plist-get (tui-get-props) :children)))
 
+(cl-defmethod tui-buffer--get-content ((buffer tui-buffer))
+  "Return the `buffer-string' value for BUFFER."
+  (let* ((buffer-ref (plist-get (tui--get-props buffer) :buffer)))
+    (with-current-buffer buffer-ref
+      (buffer-string))))
+
 (provide 'tui-buffer)
 
 ;;; tui-buffer.el ends here

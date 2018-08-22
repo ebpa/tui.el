@@ -647,9 +647,10 @@ form.
 Very basic now; simply apply updates until the queue is empty."
   (let ((tui--applying-updates t)
         (inhibit-read-only t))
-    (while tui--update-queue
-      (tui--apply-update (pop tui--update-queue)))
-    (run-hooks 'tui-update-hook)))
+    (combine-after-change-calls
+      (while tui--update-queue
+        (tui--apply-update (pop tui--update-queue)))
+      (run-hooks 'tui-update-hook))))
 
 (defun tui--make-ref-callback (component &optional with-nil-p)
   "Call COMPONENT :ref callback (if defined).  When WITH-NIL-P is truthy, make callback with nil as the argument rather than the component reference."

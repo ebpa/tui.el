@@ -167,9 +167,11 @@ method) and appropriately binds `tui-get-props' and
         (tui--plist-merge (tui--funcall #'tui-get-default-props component)
                        (tui--get-props component)))
   ;; Set the initial state (w/o forcing an update)
-  (let* ((initial-state (tui--funcall #'tui-get-initial-state component)))
+  (let* ((existing-state (tui-component-state component)) ;; existing state- such as from an overridden mount method
+         (initial-state (tui--funcall #'tui-get-initial-state component)))
     (setf (tui-component-state component)
-          (tui--plist-merge initial-state
+          (tui--plist-merge existing-state
+                         initial-state
                          (tui-get-derived-state-from-props component
                                                         (tui-component-props component)
                                                         initial-state))))

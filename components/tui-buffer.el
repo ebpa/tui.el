@@ -34,6 +34,7 @@
            (init-fn (plist-get props :init-fn))
            start end)
       (setf (tui-component-props component) props)
+      (setf (tui-component-state component) (list :buffer-ref buffer))
       (with-current-buffer (get-buffer-create buffer)
         (let ((inhibit-read-only t))
           (tui--unmount-buffer-content)
@@ -61,7 +62,7 @@
 
 (cl-defmethod tui-buffer--get-content ((buffer tui-buffer))
   "Return the `buffer-string' value for BUFFER."
-  (let* ((buffer-ref (plist-get (tui--get-props buffer) :buffer)))
+  (let* ((buffer-ref (plist-get (tui--get-state buffer) :buffer-ref)))
     (with-current-buffer buffer-ref
       (buffer-string))))
 

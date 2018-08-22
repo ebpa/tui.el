@@ -79,11 +79,10 @@
         (insert (tui-element-outline-string (tui-root-node node)))
         (switch-to-buffer-other-window buffer)))))
 
-
-;; TODO: tree view
-;; TODO: links to navigate directly to items
 (defun tui-show-element-outline (&optional node)
   "Show a an interactive outline representation of NODE."
+  ;; TODO: tree view
+  ;; TODO: links to navigate directly to items
   (interactive)
   (tui-popup
    (tui-element-outline

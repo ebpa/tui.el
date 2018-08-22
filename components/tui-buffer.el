@@ -13,10 +13,12 @@
   ;; TODO: support inheriting text properties?
   :documentation "Component representing a buffer."
   :prop-documentation
-  (:buffer "Buffer or buffer name to use or create."
-           :children "Content to display in the buffer."
-           :mode "Major mode to set in the buffer."
-           :keymap "Local keymap to use in the buffer.")
+  (
+   :buffer "Buffer or buffer name to use or create."
+   :children "Content to display in the buffer."
+   :mode "Major mode to set in the buffer."
+   :keymap "Local keymap to use in the buffer."
+   )
   :get-default-props
   (lambda ()
     (list :mode 'special-mode))

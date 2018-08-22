@@ -6,7 +6,7 @@
 ;;; Commentary:
 ;; 
 
-(require 'tui-absolute)
+(require 'tui-absolute-container)
 (require 'tui-buffer)
 (require 'tui-button)
 (require 'tui-div)
@@ -27,25 +27,24 @@
 
 (defun tui-tic-tac-toe--square (squares i)
   "Build a tic-tac-toe cell from SQUARES for cell I."
-  (tui-absolute
-   :width 3
-   :height 3
+  (tui-button
    :x (* (% i 3) 4)
    :y (* (/ i 3) 3)
-   (tui-button
-    :action `(lambda (event)
-               (interactive "e")
-               (-when-let* ((game (tui-get-element-at (posn-point (event-start event)) 'tui-tic-tac-toe-game)))
-                 (tui-tic-tac-toe--handle-click game ,i)))
-    "⌜ ⌝\n"
-    (format " %s \n" (or (nth i squares) " "))
-    "⌞ ⌟\n")))
+   :max-width 3
+   :max-height 3
+   :action `(lambda (event)
+              (interactive "e")
+              (-when-let* ((game (tui-get-element-at (posn-point (event-start event)) 'tui-tic-tac-toe-game)))
+                (tui-tic-tac-toe--handle-click game ,i)))
+   "⌜ ⌝\n"
+   (format " %s \n" (or (nth i squares) " "))
+   "⌞ ⌟\n"))
 
 (tui-define-component tui-tic-tac-toe-board
   :render
   (lambda ()
     (let ((squares (plist-get (tui-get-props) :squares)))
-      (list
+      (tui-absolute-container
        (tui-tic-tac-toe--square squares 0)
        (tui-tic-tac-toe--square squares 1)
        (tui-tic-tac-toe--square squares 2)
@@ -73,19 +72,18 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
       (let* ((step-number (- (length history) 1))
              (current (nth step-number history))
              (winner (tui-tic-tac-toe-calculate-winner current)))
-        (list
-         (tui-absolute
+        (tui-absolute-container
+         (tui-tic-tac-toe-board
           :x 2
           :y 3
           :width 11
           :height 9
-          (tui-tic-tac-toe-board
-           :squares current))
-         (tui-absolute
-          :width 20
-          :height 12
+          :squares current)
+         (tui-div
           :x 17
           :y 2
+          :width 20
+          :height 12
           (if winner
               (tui-div "Winner: " winner)
             (tui-div "Next player: "

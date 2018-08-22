@@ -45,8 +45,7 @@
 (require 'tui-prefix-lines "components/tui-prefix-lines.el")
 
 ;; Layout
-(require 'tui-absolute "layout/tui-absolute.el")
-(require 'tui-canvas "layout/tui-canvas.el")
+(require 'tui-absolute-container "layout/tui-absolute-container.el")
 
 (require 'tui-demo "demo/tui-demo.el")
 (require 'tui-dev)

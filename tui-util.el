@@ -36,7 +36,8 @@ Ex: If a property is found in plists A and B, the returned list will contain the
       merged)))
 
 (defun tui--plist-equal (a b)
-  "Helper to check wither plists A and B are equal.  Key order is irrelevant once list degeneracies are removed."
+  "Helper to check wither plists A and B are equal."
+  ;; CLEANUP: be consistent about ignoring degeneracies.  Currently only degeneracies in B are ignored.
   (let* ((b b))
     (cl-loop for (key-a value-a) on a by #'cddr
              always (equal

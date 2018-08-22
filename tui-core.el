@@ -336,7 +336,7 @@ Returns COMPONENT."
 
 (cl-defmethod tui--set-props ((component tui-component) next-props)
   "Internal use only."
-  (display-warning 'comp (format "SET-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
+  (display-warning 'tui (format "SET-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
   (let* ((prev-props (tui--get-props component))
          (next-props (tui--plist-merge prev-props next-props))
          (prev-state (tui--get-state component))
@@ -347,7 +347,7 @@ Returns COMPONENT."
 
 (cl-defmethod tui--set-props ((element tui-element) next-props)
   "Internal use only."
-  (display-warning 'comp (format "SET-PROPS %S" (tui--object-class element)) :debug tui-log-buffer-name)
+  (display-warning 'tui (format "SET-PROPS %S" (tui--object-class element)) :debug tui-log-buffer-name)
   (let ((prev-props (tui--get-props element)))
     ;; TODO: verify operation
     (when (tui--text-prop-changes prev-props next-props)
@@ -363,8 +363,8 @@ Do not call this directly; use `tui-set-state'.
 
 Sets the current state of COMPONENT to NEXT-STATE.  Does not
 cause the component to update when NO-UPDATE is truthy."
-  (display-warning 'comp (format "SET-STATE %S" (tui--object-class component)) :debug tui-log-buffer-name)
   (let ((prev-state (tui-component-state component)))
+  (display-warning 'tui (format "SET-STATE %S" (tui--object-class component)) :debug tui-log-buffer-name)
     (when (not (equal prev-state next-state))
       (unless no-update
         (tui--update component nil next-state))

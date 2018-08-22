@@ -52,10 +52,13 @@ Ex: If a property is found in plists A and B, the returned list will contain the
   (let* ((nodes (list node)))
     (while nodes
       (let* ((node (pop nodes)))
-        (funcall fn node)
-        (when (tui-element-p node)
-          (push (tui-child-nodes node) nodes))))))
-
+        (cond
+         ((tui-element-p node)
+          (funcall fn node)
+          (push (tui-child-nodes node) nodes))
+         ;; CLEANUP: better handling of list nodes
+         ((listp node)
+          (setq nodes (append node nodes))))))))
 
 (cl-defun tui-first-subtree-node (predicate node)
   "Return the first node in the subtree of NODE that satisfies PREDICATE.

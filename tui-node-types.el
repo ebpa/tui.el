@@ -15,7 +15,8 @@
   mounted
   relative-index ;; "Index position of node within parent (cached value)"
   marker-list ;; "Reference to the containing content tree's ordered marker list."
-  id)
+  id
+  (update-count 0))
 
 ;;;; Text Node
 
@@ -99,14 +100,24 @@
 
 (cl-defmethod tui-equal ((component-a tui-component) component-b)
   "An `equal' function for `tui-component' objects."
-  (and (cl-call-next-method)
-       (not (tui--plist-changes (tui--get-props component-a)
-                             (tui--get-props component-b)))))
+  (not (tui--plist-changes (tui--get-props component-a)
+                        (tui--get-props component-b))))
 
 (cl-defmethod tui-equal (obj-a obj-b)
   "An `equal' function which handles `tui-*' objects recursively as a special case."
-  (eq obj-a obj-b))
-
+  (and (not (tui-node-p obj-b))
+       (cond
+        ((eq obj-a obj-b)
+         t)
+        ((stringp obj-a)
+         (equal obj-a obj-b))
+        ((and (proper-list-p obj-a) (proper-list-p obj-b))
+         (and (eq (length obj-a)
+                  (length obj-b))
+              (cl-loop for elt-a in obj-a
+                       for elt-b in obj-b
+                       always
+                       (tui-equal elt-a elt-b)))))))
 
 (provide 'tui-node-types)
 

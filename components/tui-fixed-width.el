@@ -15,8 +15,10 @@
 
 ;;; Code:
 
+(defvar tui-fixed-width--suppress-recalculation nil)
+
 (tui-define-component tui-fixed-width
-  :documentation "Render :contents with a fixed :width.
+  :documentation "Container component to constrain content to a declared width.
 
 It :width value is nil, the component width is variable."
   :prop-documentation
@@ -33,7 +35,8 @@ It :width value is nil, the component width is variable."
       (list "" children "")))
   :component-did-mount
   (lambda ()
-    (tui-fixed-width--request-width component))
+    (unless tui-fixed-width--suppress-recalculation
+      (tui-fixed-width--request-width component)))
   :component-did-update
   (lambda (pref-props prev-state)
     (tui-fixed-width--request-width component)))
@@ -49,7 +52,7 @@ It :width value is nil, the component width is variable."
         (tui-request-size desired-width
                        (+ (tui-length (tui-fixed-width--content component))
                           (or minimum-padding 0))
-                       (lambda () (tui-fixed-width--update component))))
+                       component))
        (desired-width
         (tui-fixed-width--update component))))))
 
@@ -57,7 +60,7 @@ It :width value is nil, the component width is variable."
   ;; TODO: callback?
   ;; TODO: max-width and min-width
   ;; TODO: clean up size calculations involving padding
-  "Helper component to constrain content within COMPONENT to a declared width."
+  "Update COMPONENT width."
   (-let* ((inhibit-read-only t)
           ((&plist :padding-node padding-node)
            (tui--get-state component))

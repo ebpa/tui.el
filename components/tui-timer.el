@@ -31,8 +31,8 @@
          (format "%02d:%02d" minutes seconds)))))
   :component-did-mount
   (lambda ()
-    (tui-run-with-timer component 1 1 `(lambda ()
-                                     (tui-force-update ,component)))))
+    (tui-run-with-timer component 1 1 t `(lambda ()
+                                        (tui-force-update ,component)))))
 
 (provide 'tui-timer)
 

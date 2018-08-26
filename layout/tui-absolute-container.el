@@ -5,6 +5,7 @@
 
 ;; TODO: eliminate artist dependency
 (require 'artist)
+(require 'tui-canvas "components/tui-canvas.el")
 (require 'tui-buffer "components/tui-buffer.el")
 
 ;;; Code:
@@ -20,12 +21,12 @@ Child elements will be positioned by properties on the child elements themselves
 :max-height - Maximum height of the copied content."
   :get-initial-state
   (lambda ()
-    (list :canvas-content ""
-          :buffer (get-buffer-create (format " *tui-absolute-container-%d*" (tui-node-id component)))
+    (list :canvas-ref (tui-create-ref)
+          ;; :buffer (get-buffer-create (format " *tui-absolute-container-%d*" (tui-node-id component)))
           :child-buffers (make-hash-table :test #'equal)))
   :render
   (lambda ()
-    (tui-let (&props children &state canvas-content buffer child-buffers)
+    (tui-let (&props children &state canvas-content canvas-ref child-buffers)
       (tui-div
        (tui-span
         :children
@@ -36,15 +37,25 @@ Child elements will be positioned by properties on the child elements themselves
                     (puthash ,index ref ,child-buffers))
             child))
          children))
-       canvas-content)))
+       (tui-canvas
+        :ref canvas-ref))))
   :component-did-mount
   (lambda ()
     (tui-absolute-container--update component))
-  :component-did-update
-  (lambda (next-props next-state)
-    (when (or (not (eq next-props (tui-get-props)))
-              (not (tui--plist-equal (tui--plist-delete next-state :canvas-content) (tui--plist-delete (tui-get-state) :canvas-content))))
-      (tui-absolute-container--update component))))
+  ;; :component-did-update
+  ;; (lambda (next-props next-state)
+  ;;   (when (or (not (eq next-props (tui-get-props)))
+  ;;             (not (tui--plist-equal (tui--plist-delete next-state :canvas-content) (tui--plist-delete (tui-get-state) :canvas-content))))
+  ;;     (tui-absolute-container--update component)))
+  )
+
+(defun tui-absolute-container--update-parent (&rest ignore)
+  "Helper to update the parent container."
+  (message (format "BUFFER-UPDATED EVENT (%s)" (buffer-name (current-buffer))))
+  (-when-let* ((container (tui-parent tui-buffer--ref 'tui-absolute-container)))
+    ;;(message (format "BUFFER-UPDATED EVENT %d (%s)" (tui-node-id container) (buffer-name (current-buffer))))
+    ;;(display-warning 'tui-absolute-container (format "BUFFER-UPDATED EVENT %d (%s)" (tui-node-id container) (buffer-name (current-buffer))) :debug tui-log-buffer-name)
+    (tui-absolute-container--update container)))
 
 ;; (defun tui-absolute--copy-contents (component)
 ;;   "Copy string content to the dependent buffer location represented by COMPONENT."
@@ -73,46 +84,35 @@ Child elements will be positioned by properties on the child elements themselves
 (cl-defmethod tui-absolute-container--update ((container tui-absolute-container))
   "Re-render CANVAS-- replacing its content with its separately rendered children."
   ;; CLEANUP: split this function
-  (tui-let (&props children &state buffer child-buffers)
-    (with-current-buffer buffer
-      (erase-buffer))
-    (let* ((keyed-children (-map-indexed
-                            (lambda (index child)
-                              (let* ((key (or (when (tui-node-p child)
-                                                (plist-get (tui--get-props child) :key))
-                                              index)))
-                                (cons key child)))
-                            children)))
-      (mapcar
-       (-lambda ((key . child))
-         (-let* ((child-buffer (gethash key child-buffers))
-                 ((&plist :x x :y y) (tui--get-props child)))
-           (if child-buffer
-               (tui--set-props child-buffer (list :children (list child)))
-             (setq child-buffer (tui-buffer
-                                 :buffer (format " *tui-absolute-container-%d-%s*" (tui-node-id container) (tui--new-id))
-                                 child))
-             (puthash key child-buffer child-buffers)
-             (tui-render-element child-buffer))
-           (let* ((child-content (tui-buffer--get-content child-buffer)))
-             (with-current-buffer buffer
-               (tui-absolute-container--paste child-content (or x 0) (or y 0))))))
-       keyed-children)
-      (let* ((canvas-content (with-current-buffer buffer
-                               (buffer-string))))
-        (tui--set-state container `(:canvas-content ,canvas-content))))))
-
-(defun tui-absolute-container--paste (content x y)
-  "Paste CONTENT at position X,Y"
-  (cl-loop for line in (split-string content "\n")
-           for line-num from 0
-           do
-           (artist-move-to-xy x (+ y line-num))
-           (delete-region (point) (min (+ (point) (length line))
-                                       (save-excursion (end-of-line)
-                                                       (point))))
-           (when line
-             (insert line))))
+  (message "UPDATE %S (%d)" (tui--type container) (tui-node-id container))
+  (let* ((props (tui--get-props container))
+         (children (plist-get props :children))
+         (state (tui--get-state container))
+         (canvas (tui-ref-element (plist-get state :canvas-ref)))
+         (child-buffers (plist-get state :child-buffers)))
+    (tui-canvas-erase canvas t)
+    ;; (let* ((keyed-children (-map-indexed
+    ;;                         (lambda (index child)
+    ;;                           (let* ((key (or (when (tui-node-p child)
+    ;;                                             (plist-get (tui--get-props child) :key))
+    ;;                                           index)))
+    ;;                             (cons key child)))
+    ;;                         children)))
+    (maphash 
+     (lambda (key child-buffer)
+       (-let* ((child-content (tui-buffer--get-content child-buffer))
+               ((child) (plist-get (tui--get-props child-buffer) :children));; (child-buffer (gethash key child-buffers))
+               ((&plist :x x :y y) (tui--get-props child)))
+         ;;   (if child-buffer
+         ;;       (tui--set-props child-buffer (list :children (list child)))
+         ;;     (setq child-buffer (tui-buffer
+         ;;                         :buffer (format " *tui-absolute-container-%d-%s*" (tui-node-id container) (tui--new-id))
+         ;;                         child))
+         ;;     (puthash key child-buffer child-buffers)
+         ;;     (tui-render-element child-buffer))
+         (tui-canvas--paste-content-at canvas child-content (or x 0) (or y 0) t)))
+     child-buffers)
+    (tui-force-update canvas)))
 
 ;; (defun tui-absolute--paste (content x y width height)
 ;;   "Paste CONTENT at position X,Y filling WIDTH and HEIGHT."
@@ -125,20 +125,34 @@ Child elements will be positioned by properties on the child elements themselves
 ;;       (when string
 ;;         (insert string)))))
 
-;; (defun tui-absolute--update-all ()
-;;   "Update all indirect ‘tui-absolute-container’ elements."
-;;   ;; TODO: track whether a buffer has been modified since last update
-;;   (let ((instances
-;;          (-sort
-;;           (lambda (a b)
-;;             (> (tui--node-height a)
-;;                (tui--node-height a)))
-;;           (tui-component-instances 'tui-absolute-container))))
-;;     (mapc
-;;      #'tui-absolute--copy-contents
-;;      instances)))
+(defun tui-absolute-container--needing-update ()
+  ""
+  (-let* ((-compare-fn #'eq)
+          (containers
+           (-uniq
+            (-non-nil
+             (mapcar
+              (lambda (buffer)
+                (tui--mark-buffer-clean buffer)
+                (-when-let* ((buffer-element (buffer-local-value 'tui-buffer--ref buffer)))
+                  (tui-parent buffer-element 'tui-absolute-container)))
+              (tui--updated-buffers)))))
+          (containers-by-height (seq-sort-by
+                                 #'car #'>
+                                 (mapcar (lambda (container)
+                                           (cons (tui-node-height container) container))
+                                         containers))))
+    (mapcar #'cdr containers-by-height)))
 
-;;(add-hook 'tui-update-hook #'tui-absolute--update-all)
+(defun tui-absolute-container--update-all ()
+  "Update all indirect ‘tui-absolute-container’ elements."
+  (let* ((inhibit-modification-hooks t)
+         (containers (tui-absolute-container--needing-update)))
+    (when containers
+      (display-warning 'tui-absolute-container (format "UPDATING %S" (mapcar #'tui-node-id containers)) :debug tui-log-buffer-name))
+    (mapc #'tui-absolute-container--update containers)))
+
+;;(add-hook 'tui-update-hook #'tui-absolute-container--update-all)
 
 (defmacro tui--save-point-row-column (&rest body)
   "Utility macro to restore point based on the row and column."
@@ -156,22 +170,22 @@ Child elements will be positioned by properties on the child elements themselves
   (tui--save-point-row-column
    (cl-call-next-method this next-props next-state force)))
 
-;; (defun tui-absolute-container--show-indirect-buffer (&optional element)
-;;   "Show indirect buffer in a separate window."
-;;   (interactive)
-;;   (unless element
-;;     (setq element (tui-get-element-at (point) 'tui-absolute-container)))
-;;   (-when-let* ((buffer-name (plist-get (tui--get-state element) :buffer-name)))
-;;     (switch-to-buffer-other-window buffer-name)))
+(defun tui--show-indirect-buffer (element)
+  "Show indirect buffer in a separate window."
+  (interactive)
+  ;; (unless element
+  ;;   (setq element (tui-get-element-at (point) 'tui-absolute-container)))
+  (-when-let* ((buffer-name (plist-get (tui--get-state element) :buffer-ref)))
+    (switch-to-buffer-other-window buffer-name)))
 
-;; (defun tui-absolute--show-all-indirect-buffers ()
-;;   "Show all indirect buffers for the current content tree."
-;;   (interactive)
-;;   (tui-map-subtree
-;;    (lambda (element)
-;;      (when (tui-absolute-p element)
-;;        (tui-absolute--show-indirect-buffer element)))
-;;    (tui-root-node)))
+(defun tui--show-all-indirect-buffers ()
+  "Show all indirect buffers for the current content tree."
+  (interactive)
+  (tui-map-subtree
+   (lambda (element)
+     (when (tui-buffer-p element)
+       (tui--show-indirect-buffer element)))
+   (tui-root-node)))
 
 ;; (defun tui-absolute--clean-up-indirect-buffers ()
 ;;   ""

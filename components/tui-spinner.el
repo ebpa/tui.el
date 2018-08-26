@@ -12,8 +12,8 @@
          :delay "seconds to wait after starting the spinner before actually displaying it")
   :component-did-mount
   (lambda ()
-    (tui-run-with-timer component 1 1 `(lambda ()
-                                      (tui-force-update ,component))))
+    (tui-run-with-timer component 1 1 t `(lambda ()
+                                        (tui-force-update ,component))))
   :get-initial-state
   (lambda ()
     (require 'spinner)

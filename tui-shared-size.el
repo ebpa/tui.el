@@ -6,28 +6,29 @@
 (eval-when-compile (require 'cl-lib))
 (require 'tui-core)
 
-;; TODO: based on length distribution  (95th percentile?)
 ;;; Code:
+
 
 (cl-defstruct (tui-shared-size (:constructor nil)
                             (:constructor tui-shared-size-create (&key size)))
   size
-  element-sizes
-  callbacks)
+  element-sizes)
 
 (cl-defmethod tui-size (size)
+  ;; TODO: implement as a generic size lookup? (WIDTH . HEIGHT)?
   size)
 
 (cl-defmethod tui-size ((shared-size tui-shared-size))
-  ""
+  "Return the current prescribed size of SHARED-SIZE object."
   (tui-shared-size-size shared-size))
 
-(cl-defmethod tui-request-size ((shared-size tui-shared-size) size &optional callback)
-  ""
-  (push size (tui-shared-size-element-sizes shared-size))
-  (push callback (tui-shared-size-callbacks shared-size)))
+(cl-defmethod tui-request-size ((shared-size tui-shared-size) size element)
+  "Register request by ELEMENT that SHARED-SIZE equal SIZE."
+  (push (cons size element) (tui-shared-size-element-sizes shared-size)))
 
 (cl-defmethod tui-recalculate-size ((shared-size tui-shared-size))
+  "Recalculate SHARED-SIZE based requested sizes by its elements."
+  ;; TODO: support complex sizing (ex: based on length distribution  (95th percentile?)
   (let* ((element-sizes (tui-shared-size-element-sizes shared-size))
          (pixel-unit (listp (cl-first element-sizes)))
          (new-size (when element-sizes

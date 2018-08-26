@@ -426,4 +426,8 @@
                    :a)
                   :to-equal 1234))))))
 
+(describe "tui--set-state"
+  (it "causes an update when NO-UPDATE is nil")
+  (it "does not update when NO-UPDATE is truthy"))
+
 (describe "tui-component")

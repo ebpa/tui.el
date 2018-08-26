@@ -14,6 +14,7 @@
 (require 'tui-log)
 (require 'tui-marker-list)
 (require 'tui-node-types)
+(require 'tui-ref)
 (require 'tui-text-props)
 (require 'tui-util)
 
@@ -28,6 +29,7 @@
 (defvar tui--update-queue nil "Queue of updates to be committed.")
 (defvar tui--applying-updates nil "Dynamic scope variable to indicate whether queued updates are being processed.")
 (defvar tui-update-hook nil "Run after the update queue has been cleared.")
+(defvar-local tui--buffer-modified-p nil "Internally track modified buffers that should be updated.")
 
 ;;; Component lifecycle methods
 
@@ -166,16 +168,15 @@ method) and appropriately binds `tui-get-props' and
   (setf (tui-component-props component)
         (tui--plist-merge (tui--funcall #'tui-get-default-props component)
                        (tui--get-props component)))
-  ;; Set the initial state (w/o forcing an update)
-  (let* ((existing-state (tui-component-state component)) ;; existing state- such as from an overridden mount method
-         (initial-state (tui--funcall #'tui-get-initial-state component)))
-    (setf (tui-component-state component)
-          (tui--plist-merge existing-state
-                         initial-state
-                         (tui-get-derived-state-from-props component
-                                                        (tui-component-props component)
-                                                        initial-state))))
-  ;; Call the render method
+  (let* ((initial-state (tui--funcall #'tui-get-initial-state component))
+         (derived-state (tui-get-derived-state-from-props component
+                                                       (tui-component-props component)
+                                                       initial-state)))
+    ;; (when (eq (tui--type component) 'tui-absolute-container)
+    ;;   (edebug))
+    ;; Set the initial state (w/o forcing an update)
+    (tui--set-state component (tui--plist-merge initial-state derived-state) t))
+  ;; Call the component render method
   (setf (tui-component-content component)
         (tui--normalize-content (tui--funcall #'tui-render component))) ;; TODO: condition-case -> tui-error-placeholder-string
   (setf tui--update-queue
@@ -203,12 +204,15 @@ method) and appropriately binds `tui-get-props' and
             (parent (tui-parent text-node)))
         (tui--goto start)
         (delete-region start end)
-        ;; (when (equal (tui-text-node-content text-node) "2. ")
-        ;;   (edebug))
-        (-when-let* ((content (tui-text-node-content text-node)))
-          (insert (tui--get-string content)))
-        (put-text-property start end 'tui-node text-node (marker-buffer start))
-        (tui--apply-inherited-text-props start end text-node (marker-buffer start))))))
+        (-when-let* ((content (tui-text-node-content text-node))
+                     (string (tui--get-string content)))
+          ;; (unless (get-text-property 0 'tui-node string)
+          ;;   (put-text-property start end 'tui-node text-node (marker-buffer start)))
+          (insert string))
+        (tui-put-text-property start end 'tui-node text-node (marker-buffer start) nil)
+        (tui--apply-inherited-text-props start end text-node (marker-buffer start)))
+      (cl-incf (tui-node-update-count text-node))
+      (setq tui--buffer-modified-p t))))
 
 (cl-defmethod tui--insert ((element tui-element))
   "Insert content of ELEMENT."
@@ -227,7 +231,8 @@ method) and appropriately binds `tui-get-props' and
                    do
                    (cl-assert (tui-marker-list--nodes-adjacent-p left-division right-division) t "We should be looking at adjacent divisions")
                    (push (list 'mount child left-division right-division element) tui--update-queue))
-          (setq i (+ i 1)))))))
+          (setq i (+ i 1))))))
+  (cl-incf (tui-node-update-count element)))
 
 (cl-defmethod tui--update ((text-node tui-text-node))
   "Update displayed element."
@@ -338,7 +343,7 @@ Returns COMPONENT."
 
 (cl-defmethod tui--set-props ((component tui-component) next-props)
   "Internal use only."
-  (display-warning 'tui (format "SET-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
+  (display-warning 'tui (format "SET-PROPS %S (%d) %s" (tui--object-class component) (tui-node-id component) (tui--plist-keys next-props)) :debug tui-log-buffer-name)
   (let* ((prev-props (tui--get-props component))
          (next-props (tui--plist-merge prev-props next-props))
          (prev-state (tui--get-state component))
@@ -349,14 +354,14 @@ Returns COMPONENT."
 
 (cl-defmethod tui--set-props ((element tui-element) next-props)
   "Internal use only."
-  (display-warning 'tui (format "SET-PROPS %S" (tui--object-class element)) :debug tui-log-buffer-name)
-  (let ((prev-props (tui--get-props element)))
-    ;; TODO: verify operation
-    (when (tui--text-prop-changes prev-props next-props)
-      ;; TODO
-      ;; (tui--clear-cached-text-props component)
-      )
-    (tui--update element next-props)))
+  ;;(display-warning 'tui (format "SET-PROPS %S (%d)" (tui--object-class element) (tui-node-id element)) :debug tui-log-buffer-name)
+  ;;(let ((prev-props (tui--get-props element)))
+  ;; TODO: verify operation
+  ;; (when (tui--text-prop-changes prev-props next-props)
+  ;;   ;; TODO
+  ;;   ;; (tui--clear-cached-text-props component)
+  ;;   )
+  (tui--update element next-props))
 
 (defun tui--set-state (component new-state &optional no-update)
   "Internal function to set COMPONENT state.
@@ -365,11 +370,19 @@ Do not call this directly; use `tui-set-state'.
 
 Sets the current state of COMPONENT to NEXT-STATE.  Does not
 cause the component to update when NO-UPDATE is truthy."
-  (display-warning 'tui (format "SET-STATE %S" (tui--object-class component)) :debug tui-log-buffer-name)
+  (display-warning
+   'tui
+   (format "SET-STATE %s %S (%d) %S"
+           (if no-update "(no-update)" "")
+           (tui--object-class component)
+           (tui-node-id component)
+           (tui--plist-keys new-state))
+   :debug tui-log-buffer-name)
   (let* ((prev-state (tui-component-state component))
          (next-state (tui--plist-merge prev-state new-state)))
-    (when (not (equal prev-state next-state))
-      (unless no-update
+    (when (not (equal prev-state next-state)) ;; XXX: remove this check?
+      (if no-update
+          (setf (tui-component-state component) next-state)
         (tui--update component nil next-state))
       (unless tui--applying-updates
         (tui--process-update-queue)))))
@@ -518,6 +531,7 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
 
 (defun tui-force-update (component)
   "Force COMPONENT to re-render."
+  (display-warning 'tui (format "FORCE-UPDATE %S %d" (tui--object-class component) (tui-node-id component)) :debug tui-log-buffer-name)
   (let* ((new-props (tui--get-props component))
          (new-state (tui--get-state component)))
     (push `(component-did-update ,component ,new-props ,new-state) tui--update-queue)
@@ -648,19 +662,28 @@ form.
   "Process the update queue.
 
 Very basic now; simply apply updates until the queue is empty."
-  (let ((tui--applying-updates t)
-        (inhibit-read-only t))
-    (combine-after-change-calls
+  (combine-after-change-calls
+    (let* ((tui--applying-updates t)
+           (inhibit-read-only t))
       (while tui--update-queue
         (tui--apply-update (pop tui--update-queue)))
-      (run-hooks 'tui-update-hook))))
+      ;; (let* ((inhibit-modification-hooks t))
+      (run-hooks 'tui-update-hook)
+      (while tui--update-queue
+        (tui--apply-update (pop tui--update-queue))))))
 
 (defun tui--make-ref-callback (component &optional with-nil-p)
   "Call COMPONENT :ref callback (if defined).  When WITH-NIL-P is truthy, make callback with nil as the argument rather than the component reference."
-  (let* ((ref-callback (plist-get (tui--get-props component) :ref)))
-    (when (functionp ref-callback)
-      (funcall ref-callback (when (not with-nil-p)
-                              component)))))
+  (let* ((ref-value (plist-get (tui--get-props component) :ref)))
+    (cond
+     ((functionp ref-value)
+      (funcall ref-value (when (not with-nil-p)
+                           component)))
+     ((tui-ref-p ref-value)
+      (setf (tui-ref-element ref-value) (when (not with-nil-p)
+                                       component)))
+     (ref-value
+      (warn "Received an unexpected ref value")))))
 
 (defun tui--apply-update (update)
   "Apply UPDATE to corresponding content tree."
@@ -679,11 +702,14 @@ Very basic now; simply apply updates until the queue is empty."
     (`(replace ,old-node ,new-node)
      (display-warning 'tui-diff (format "RELACE-NODE %S %S" (tui--object-class old-node) (tui--object-class new-node)) :debug tui-log-buffer-name)
      (tui-replace-node old-node new-node))
-    (`(update-content ,node ,new-content)
-     (display-warning 'tui-diff (format "UPDATE-CONTENT %S %S" (tui--object-class node) new-content) :debug tui-log-buffer-name)
-     (setf (tui-node-content node) new-content)
-     (-let* (((start . end) (tui-segment node)))
-       (tui--insert node)))
+    (`(update-content ,node ,update-count ,new-content)
+     (let* ((current-update-count (tui-node-update-count node)))
+       (if (> current-update-count update-count)
+           (display-warning 'tui-diff (format "UPDATE-CONTENT SKIPPED (OUTDATED) %S (%d) %S" (tui--object-class node) (tui-node-id node) (substring-no-properties new-content)) :debug tui-log-buffer-name)
+         (display-warning 'tui-diff (format "UPDATE-CONTENT %S (%d) %S" (tui--object-class node) (tui-node-id node) (substring-no-properties new-content)) :debug tui-log-buffer-name)
+         (setf (tui-node-content node) new-content)
+         (-let* (((start . end) (tui-segment node)))
+           (tui--insert node)))))
     (`(update-props ,component ,updated-props)
      (-let* ((old-props (tui--get-props component))
              (invisible (plist-get updated-props :invisible))
@@ -693,7 +719,7 @@ Very basic now; simply apply updates until the queue is empty."
        (display-warning 'tui-diff (format "UPDATE-PROPS %S" (tui--object-class component)) :debug tui-log-buffer-name)
        (when (and ref-changed
                   (functionp old-ref))
-         (funcall old-ref))
+         (funcall old-ref nil))
        (tui--set-props component updated-props)
        (tui--make-ref-callback component)
        (when (not (eq (plist-get old-props :invisible) invisible))
@@ -720,6 +746,17 @@ Very basic now; simply apply updates until the queue is empty."
   (setq tui--content-trees nil))
 
 (add-hook 'kill-buffer-hook #'tui--unmount-buffer-content)
+
+(defun tui--updated-buffers ()
+  "Return a list of buffers that have been marked as modified."
+  (-filter
+   (lambda (buffer)
+     (buffer-local-value 'tui--buffer-modified-p buffer))
+   (buffer-list)))
+
+(defun tui--mark-buffer-clean (buffer)
+  "Reset the `tui--buffer-modified-p' flag on BUFFER."
+  (setf (buffer-local-value 'tui--buffer-modified-p (current-buffer)) nil))
 
 ;; (cl-defmethod tui--mark-subtree-dirty ((node tui-node))
 ;;   ""

@@ -112,6 +112,7 @@ See also: `tui-first-subtree-node'."
                              (tui-equal (cdr a)
                                      (cdr b)))))
          (difference (-difference new-list old-list)))
+    ;;(display-warning 'tui (format "(differences: %S)" (mapcar #'car difference)) :debug tui-log-buffer-name)
     (cl-loop for (key . value) in difference
              append (list key value))))
 
@@ -133,9 +134,10 @@ See also: `tui-first-subtree-node'."
 (defun tui-put-text-properties (start end properties &optional object replace-behavior)
   "Apply text properties to region between START and END.
 
-Like `put-text-property, but accepts a list of PROPERTIES and has
-controllable REPLACE-BEHAVIOR.  Unlike `put-text-property` the
-default behavior is to not replace existing property values.
+Like `put-text-property, but PROPERTIES is a list of properties
+and has controllable REPLACE-BEHAVIOR.  Unlike
+`put-text-property` the default behavior is to not replace
+existing property values.
 
 When REPLACE-BEHAVIOR is t existing values for properties are
 replaced with the new value from PROPERTIES.  When
@@ -321,17 +323,23 @@ For use in any context where `tui-get-props' and `tui-get-state' are defined."
       (setf (cl--generic-method-table generic)
             (-filter (lambda (x) (not (eq x (car me)))) mt)))))
 
-(cl-defmethod tui-run-with-timer ((component tui-component) secs repeat function &rest args)
+(cl-defmethod tui-run-with-timer ((component tui-component) secs repeat cancel-on-error function &rest args)
   "Wrapper to `run-with-timer' that automatically cancels a timer when the associated component is unmounted.
 
-When optional argument NO-ERROR it truthy cancel the timer if FUNCTION throws an error."
+When optional argument CANCEL-ON-ERROR is truthy cancel the timer if FUNCTION throws an error."
   (lexical-let* ((timer (list nil)))
     (setq timer
           (apply #'run-with-timer secs repeat
                  (lambda (&rest args)
                    (if (not (tui-mounted-p component))
                        (cancel-timer timer)
-                     (apply function args)))
+                     (if cancel-on-error
+                         (apply function args)
+                       (condition-case-unless-debug err
+                           (apply function args)
+                         (error
+                          (message "%s" (error-message-string err))
+                          (cancel-timer timer))))))
                  args))))
 
 (defun tui--new-id ()
@@ -408,6 +416,11 @@ Return t if a component definition exists and was successfully removed and retur
                                 collect
                                 (format "\t%S\t\t%s\n" key docstring))))
      "")))
+
+(defun tui--plist-keys (plist)
+  "Return the keys of PLIST."
+  (cl-loop for (key value) on plist by #'cddr
+           collect key))
 
 (provide 'tui-util)
 

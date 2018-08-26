@@ -34,10 +34,10 @@
        :children
        (plist-get (tui-get-props) :children)))))
 
-;; TODO: reconcile this with tui-link-follow-link ?
 (defun tui-link-follow-link-click (event)
   "Handle click EVENT for following link."
   (interactive "e")
+  ;; TODO: reconcile this function with tui-link-follow-link ?
   (tui-link-follow-link (posn-point (event-end event))))
 
 (defun tui-link-follow-link (&optional pos)

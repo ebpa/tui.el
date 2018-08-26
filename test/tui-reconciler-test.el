@@ -2,12 +2,28 @@
 (require 'tui)
 ;; (require 'tui-div)
 (require 'tui-heading "components/tui-heading.el")
+(require 'buttercup)
 
-(describe "tui--plist-changes"
-  (it "identifies a changed value"
-    (expect (tui--plist-changes '(:a 1 :b 2 :c 3)
-                             '(:a 1 :b 4 :c 3))
-            :to-equal '(:b 4))))
+(describe "tui-diff"
+  (it "recognizes equivalent empty elements"
+    (expect (tui--diff (tui-div) (tui-div)) :to-be nil))
+  (it "recognizes equivalent elements with basic content"
+    (expect (tui--diff (tui-div 1) (tui-div 1)) :to-be nil)
+    (expect (tui--diff (tui-div "foo") (tui-div "foo")) :to-be nil))
+  (it "identifies basic content differences"
+    (let* ((operations (tui--diff (tui-div "foo") (tui-div "bar"))))
+      (expect (length operations) :to-be 1)
+      (expect (caar operations) :to-be 'update-props)))
+  (it "identifies a nested content difference"
+    (let* ((operations (tui--diff (tui-div (tui-span "foo")) (tui-div (tui-span "bar")))))
+      (expect (length operations) :to-be 1)
+      (expect (caar operations) :to-be 'update-props)
+      (expect (tui--type (cadar operations)) :to-be 'tui-div)))
+  (it "only updates an element for changed children if one of its children would not be reference-equal")
+  (it "diffs a mounted element with a fresh element"
+    (let* ((div (tui-div (tui-span 1))))
+      (tui-with-rendered-element div
+        (tui--diff div (tui-div (tui-span 1)))))))
 
 (describe "tui-reconciler"
   (it "is called on a basic property change"

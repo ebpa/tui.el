@@ -25,7 +25,7 @@
 ;;  ⌞ ⌟ ⌞ ⌟ ⌞ ⌟
 
 
-(defun tui-tic-tac-toe--square (squares i)
+(defun tui-tic-tac-toe--square (value i)
   "Build a tic-tac-toe cell from SQUARES for cell I."
   (tui-button
    :x (* (% i 3) 4)
@@ -36,24 +36,25 @@
               (interactive "e")
               (-when-let* ((game (tui-get-element-at (posn-point (event-start event)) 'tui-tic-tac-toe-game)))
                 (tui-tic-tac-toe--handle-click game ,i)))
-   "⌜ ⌝\n"
-   (format " %s \n" (or (nth i squares) " "))
-   "⌞ ⌟\n"))
+   (concat
+    "⌜ ⌝\n"
+    (format " %s \n" (or value " "))
+    "⌞ ⌟\n")))
 
 (tui-define-component tui-tic-tac-toe-board
   :render
   (lambda ()
     (let ((squares (plist-get (tui-get-props) :squares)))
       (tui-absolute-container
-       (tui-tic-tac-toe--square squares 0)
-       (tui-tic-tac-toe--square squares 1)
-       (tui-tic-tac-toe--square squares 2)
-       (tui-tic-tac-toe--square squares 3)
-       (tui-tic-tac-toe--square squares 4)
-       (tui-tic-tac-toe--square squares 5)
-       (tui-tic-tac-toe--square squares 6)
-       (tui-tic-tac-toe--square squares 7)
-       (tui-tic-tac-toe--square squares 8)))))
+       (tui-tic-tac-toe--square (nth 0 squares) 0)
+       (tui-tic-tac-toe--square (nth 1 squares) 1)
+       (tui-tic-tac-toe--square (nth 2 squares) 2)
+       (tui-tic-tac-toe--square (nth 3 squares) 3)
+       (tui-tic-tac-toe--square (nth 4 squares) 4)
+       (tui-tic-tac-toe--square (nth 5 squares) 5)
+       (tui-tic-tac-toe--square (nth 6 squares) 6)
+       (tui-tic-tac-toe--square (nth 7 squares) 7)
+       (tui-tic-tac-toe--square (nth 8 squares) 8)))))
 
 (tui-define-component tui-tic-tac-toe-game
   :documentation "A demo implementation of Tic-Tac-Toe.
@@ -85,18 +86,19 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
           :width 20
           :height 12
           (if winner
-              (tui-div "Winner: " winner)
-            (tui-div "Next player: "
-                  (if x-is-next "X" "O")
-                  "        "))
-          "\n\n"
+              (tui-div (concat "Winner: " winner))
+            (tui-div (concat
+                   "Next player: "
+                   (if x-is-next "X" "O")
+                   "        ")))
+          "\n"
           (tui-ol
            :children
            (-map-indexed
             (-lambda (move squares)
-              (let ((desc (if (> move 0)
-                              (format "Go to move #%d" move)
-                            "Go to game start")))
+              (let* ((desc (if (> move 0)
+                               (format "Go to move #%d" move)
+                             "Go to game start")))
                 (tui-button
                  :action `(lambda (event)
                             (interactive "e")

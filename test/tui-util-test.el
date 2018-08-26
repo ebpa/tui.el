@@ -62,3 +62,29 @@
       (lambda (generic)
         (equal 'test-component (car (cl--generic-method-specializers generic))))
       (cl--generic-method-table (cl-generic-ensure-function 'tui-get-initial-state))))))
+
+(describe "tui-equal"
+  
+  (it "behaves like equal for non-lisp, non-tui types"
+    (expect (tui-equal nil nil) :to-be t)
+    (expect (tui-equal "foo" "foo") :to-be t)
+    (expect (tui-equal "2" 2) :to-be nil)
+    (expect (tui-equal "foo" nil) :to-be nil))
+  (it "fresh objects without children are identical"
+    (expect (tui-equal (tui-div) (tui-div)))))
+
+(describe "tui--plist-changes"
+  (it "compares empty lists"
+    (expect (tui--plist-changes nil nil) :to-be nil))
+  (it "identifies differences"
+    (expect (tui--plist-changes '(:a 1 :b 2 :c 3)
+                             '(:a 1 :b 4 :c 3))
+            :to-equal '(:b 4))
+    (expect (tui--plist-changes '(:a 1 :b 2) '(:a 2 :b 2 :c 2))
+            :to-equal '(:a 2 :c 2)))
+  ;; TODO: reconsider this behavior?
+  (it "uses tui-equal to compare items"
+    (spy-on 'tui-equal)
+    (expect (tui--plist-changes '(:a (1 2 3)) '(:a (1 2 3)))
+            :to-equal '(:a (1 2 3)))
+    (expect 'tui-equal :to-have-been-called)))

@@ -1,5 +1,4 @@
 ;;; tui-layout.el --- Layout / Visibility Helpers       -*- lexical-binding: t; -*-
-;;; Measurement
 
 ;;; Commentary:
 ;; 
@@ -24,9 +23,9 @@
 
 (cl-defmethod tui--get-string ((node tui-node))
   "Return the string representation of ELEMENT's content tree.  Returns nil if ELEMENT is not mounted."
-  (-let* ((start (tui-start node))
-          (end (tui-end node)))
-    (when (and start end)
+  (-when-let* ((start (tui-start node))
+               (end (tui-end node)))
+    (with-current-buffer (marker-buffer start)
       (buffer-substring start end))))
 
 (cl-defmethod tui--get-string (content)
@@ -76,12 +75,12 @@
 (defmacro tui--with-open-node (node &rest body)
   "\"Open\" segment of NODE and execute BODY.  Ensure that markers are consolidated following evaluation of BODY."
   (declare (indent defun))
-  `(save-current-buffer
-     (save-excursion
-       (-let* ((node ,node))
-         (tui--open-segment node)
-         (tui--goto (tui-start node))
-         (progn . ,body)))))
+  `;; (save-current-buffer
+  ;;   (save-excursion
+  (-let* ((node ,node))
+    (tui--open-segment node)
+    (tui--goto (tui-start node))
+    (progn . ,body)))
 
 (cl-defmethod tui--open-segment ((node tui-node))
   "Return the segment for NODE formatted as a cons cell (START . END)."
@@ -162,30 +161,59 @@
         (tui-child-nodes element))
   (cl-call-next-method))
 
-;;; Size calculation
+;;; Measurement / size calculation
 
-(cl-defmethod tui-height ((element tui-element))
-  "Returns the total width of COMPONENT (not just visible characters)."
+(cl-defmethod tui-line-height ((element tui-element))
+  "Returns the total height (in lines) of ELEMENT (not just visible characters)."
   (-let* (((start . end) (tui-segment element)))
     (when (and start end)
       (- (line-number-at-pos end)
          (line-number-at-pos start)))))
+(defalias 'tui-height 'tui-line-height)
 
-(cl-defmethod tui-width ((element tui-element))
-  "Returns the total width of COMPONENT (not just visible characters)."
+(cl-defun tui-region-width (start end &optional no-wrap)
+  "Returns the total width (in columns) of region."
+  ;; TODO: invisible characters?
+  (when (<= start end)
+    (save-current-buffer
+      (save-excursion
+        (when (markerp start)
+          (set-buffer (marker-buffer start)))
+        (if no-wrap
+            (apply #'max
+                   (mapcar #'length
+                           (s-split "\n" (buffer-substring start end) t)))
+          (tui--goto start)
+          (-let* ((min-x (current-column))
+                  (max-x min-x))
+            (while (< (point) end)
+              (end-of-visual-line)
+              (when (<= (point) end)
+                (setq max-x 
+                      (max max-x (current-column))))
+              (forward-char)
+              (when (<= (point) end)
+                (setq min-x 
+                      (min min-x (current-column)))))
+            (- max-x min-x)))))))
+
+(cl-defmethod tui-column-width ((element tui-element) &optional no-wrap)
+  ;; TODO: Reimplement as column-width (and alias tui-column-width to it) include "rectangular" in docstring
+  "Returns the total width (in columns) of ELEMENT (not just visible characters)."
   (-let* (((start . end) (tui-segment element)))
-    (when (and start end)
-      (- end start))))
+    (tui-region-column-width start end no-wrap)))
+(defalias 'tui-width 'tui-column-width)
 
-(cl-defmethod tui-pixel-width ((component tui-component))
+(cl-defmethod tui-pixel-width ((element tui-element))
   "Returns the total width of COMPONENT in pixels."
-  (-let* (((start . end) (tui-segment component)))
+  (-let* (((start . end) (tui-segment element)))
     (when (and start end)
       (tui-segment-pixel-width start end))))
 
-(cl-defmethod tui-visible-width ((component tui-component))
+(cl-defmethod tui-visible-width ((element tui-element))
+  ;; CLEANUP: Rename as "length"?
   "Returns the visible width (i.e. the number of characters within the segment that are *not* invisible)."
-  (-let* (((start . end) (tui-segment component)))
+  (-let* (((start . end) (tui-segment element)))
     (tui-segment-visible-width start end)))
 
 (defun tui-segment-visible-width (start end)
@@ -213,8 +241,8 @@
     (message "%S" height)
     height))
 
-;; CLEANUP: improve name
 (defun tui-char-pixel-size (str)
+  ;; CLEANUP: improve name
   "Return (WIDTH . HEIGHT) of string STR rendered at point."
   (let ((pos (point)))
     (insert str)
@@ -327,14 +355,14 @@ unit is assumed have a unit of characters.  When a list of length
           (and (listp b)
                (eq 0 (car b))))
       a)
-     
      (t
       (error "Unexpected (presumably incompatible) pixel values")))))
 
 (cl-defmethod tui-length ((node tui-node))
-  "Return the length (number of characters) of NODE."
+  "Return the length (number of characters) of NODE including invisilbe characters."
   (-let* (((start . end) (tui-segment node)))
     (- end start)))
+
 (defun tui--node-height (node)
   "Return the height of NODE in its content tree.  The root element has a height of 1."
   (length (tui-ancestor-elements node)))

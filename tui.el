@@ -5,7 +5,7 @@
 ;; Author: Erik Anderson <erik@ebpa.link>
 ;; Homepage: https://github.com/ebpa/tui.el
 ;; Keywords: maint
-;; Version: 0.0.1
+;; Version: 0.0.2
 ;; Package-Requires: ((emacs "26.1") (cl-lib "0.6.1") (s "1.12.0") (dash "2.12.0") (dash-functional "1.2.0"))
 
 ;; This program is free software; you can redistribute it and/or modify

@@ -1,9 +1,9 @@
 * tui.el
 :PROPERTIES:
 :ID:       ddb48016-ee39-4503-a61d-7f37c4032022
-:org:pin:  t
+:pin:  t
 :label: An experimental UI framework for Emacs inspired by React
-:github:keywords: ui-framework emacs
+:keywords: ui-framework emacs
 :END:
 
 [[file:images/tui-bird.png]]
@@ -19,7 +19,7 @@
 
 ** Introduction
 :PROPERTIES:
-:org:pin:  0
+:pin:  0
 :ID:       8ff5465c-8ffc-4237-8302-964fbaab6454
 :END:
 This is an experiment in building purely text-based user interfaces (TUI's).  The ultimate goal is to explore new paradigms for user interface design and development using Emacs.  To this end, tui.el implements an API based on the popular React JavaScript framework in order to reduce the demands involved with designing and building complex text-based UI's.
@@ -28,7 +28,7 @@ This is all currently experimental!  Expect things to change as I get feedback a
 
 ** Installing
 :PROPERTIES:
-:org:pin:  2
+:pin:  2
 :ID:       21c4d574-5de0-43ac-ae9d-444b2cbc5b86
 :END:
 
@@ -55,9 +55,15 @@ git clone git@github.com:ebpa/tui.el.git
 
 ** Getting started
 :PROPERTIES:
-:org:pin:  3
+:pin:  3
 :ID:       2ed4f7e4-4982-429c-974d-c07ce9cc5d3b
 :END:
+
+**** Tic Tac Toe
+
+Tui contains a tic tac toe game as a demonstration component.  You can play the game with `M-x tui-play-tic-tac-toe`.  Check out the source code with `M-x find-function "tui-play-tic-tac-toe"`.
+
+**** Rendering content
 
 If all goes well you should be able to require the library and render something to the buffer.  The following will render a greeting at the point.
 
@@ -70,16 +76,20 @@ If all goes well you should be able to require the library and render something 
 
 **Note: The `(progn ... nil)` wrapper is a recommended measure to avoid printing the value returned by `tui-render-element` when calling it using `eval-last-sexp` or `eval-expression`.  Printing the complex object can cause Emacs hang badly.**
 
+**** Defining a component
+
+Tui components are defined using `tui-define-component`.  
+
 ** Overview
 :PROPERTIES:
-:org:pin:  4
+:pin:  4
 :ID:       55b5d38e-176e-4cdb-8700-9994991e0b6c
 :END:
 Some familiarity with React should prove extremely helpful in using tui.el.  I recommend checking out the [[https://reactjs.org/docs/hello-world.html][introductory material]] on the React website. In particular- be sure to read the short primer on [[https://reactjs.org/docs/thinking-in-react.html][Thinking in React]] and the component [[https://reactjs.org/docs/state-and-lifecycle.html][lifecycle model]] ([[http://dbertella.github.io/react-lifecycle-svg/][diagram]]).
 
 *** Syntax
 :PROPERTIES:
-:org:pin:  0
+:pin:  0
 :ID:       e26942ae-3363-4020-91d7-53a051a2daa5
 :END:
 Tui offers an terse syntax for expressing content that roughly resembles the form of JSX.  For instance, an expander control consists of a header and some content that is hidden when collapsed by the user:
@@ -123,7 +133,7 @@ The various forms of improper lists are currently not supported and are reserved
 
 *** Text properties
 :PROPERTIES:
-:org:pin:  t
+:pin:  t
 :ID:       8a74a2f8-b56e-4947-9fcb-50e2feb2bca9
 :END:
 To simplify styling, text properties may be applied to elements using the keyword :text-props.  This property value should be a plist of text properties and their values.  For example:
@@ -141,7 +151,7 @@ To simplify styling, text properties may be applied to elements using the keywor
 
 **** ReactJS equivalents
 :PROPERTIES:
-:org:pin:  t
+:pin:  t
 :ID:       2a9d46b9-99d7-4955-9cee-34dfefe007c4
 :END:
 
@@ -158,8 +168,7 @@ To simplify styling, text properties may be applied to elements using the keywor
 ** Components
 :PROPERTIES:
 :ID:       f0470d65-9cbd-4737-a43f-d5ab759e302a
-:CUSTOM_ID: components
-:org:pin:  t
+:pin:  t
 :END:
 
 *** HTML-like components
@@ -193,7 +202,7 @@ Things I'm currently working on:
 
 ** Contributing
 :PROPERTIES:
-:org:pin:  -2
+:pin:  -2
 :ID:       6a69022c-a3cd-49e5-bcea-b0ba6cf8c399
 :END:
 
@@ -237,13 +246,13 @@ Why not give Emacs some big blocky buttons and sliders, so we can use our pervas
 
 *** Feedback
 :PROPERTIES:
-:org:pin:  t
+:pin:  t
 :ID:       22794aed-d57f-40aa-89de-f035b07ce89b
 :END:
 
 *** Requesting components
 :PROPERTIES:
-:org:pin:  t
+:pin:  t
 :ID:       e96ffc7a-0bf4-4152-b602-a4a9b38bae97
 :END:
 **** Suggestions
@@ -280,7 +289,7 @@ Why not give Emacs some big blocky buttons and sliders, so we can use our pervas
 :END:
 ** Related Projects
 :PROPERTIES:
-:org:pin:  -1
+:pin:  -1
 :ID:       60d9ca3c-d01d-4d9c-97e8-7d0f4ede3066
 :END:
  - *Emacs*

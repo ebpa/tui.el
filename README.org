@@ -113,6 +113,9 @@ The verbose equivalent to this syntax explicitly expresses the ~:children~ prope
 #+END_EXAMPLE
 
 *** Lists (and nil)
+:PROPERTIES:
+:ID:       627c7dde-7948-4ce6-80d7-2b728f8ee8d7
+:END:
 
 For convenience, lists may be used to arbitrarily group content.  All lists are converted to ~tui-element~ nodes when the content is mounted.  Null values may also be used arbitrarily.  They are ignored at render time, so conditional code may return ~nil~.  Content is inserted in-order without separation, so while ~(list "foo" "bar" "baz")~ and ~(list (list "foo") nil (list "bar" "baz"))~ result in different content trees, they both render ~"foobarbaz"~.  
 
@@ -132,6 +135,9 @@ To simplify styling, text properties may be applied to elements using the keywor
 #+END_EXAMPLE
 
 *** Comparison with React
+:PROPERTIES:
+:ID:       206d4692-e371-432b-8aee-c413b56ec6bc
+:END:
 
 **** ReactJS equivalents
 :PROPERTIES:
@@ -157,11 +163,17 @@ To simplify styling, text properties may be applied to elements using the keywor
 :END:
 
 *** HTML-like components
+:PROPERTIES:
+:ID:       0cbcd6e4-c0b7-46b0-96b1-1cf773a14854
+:END:
 | (tui-div &key children)     |
 | (tui-heading &key children) |
 | (tui-section &key children) |
 | (tui-span &key children)    |
 *** Other components
+:PROPERTIES:
+:ID:       c16cb7c3-5ef6-4a0a-8aff-b72079287d39
+:END:
 | (tui-link &key target children)                        |
 | (tui-icon &key icon-set icon-name)                     |
 | (tui-buffer &key buffer children)                      |
@@ -188,21 +200,39 @@ Things I'm currently working on:
 If you feel inspired by this little library, contact me on [[https://twitter.com/ebanders][Twitter]] and let me know!  The door is wide open for collaboration!  If you have ideas for components I'd love to hear them.
 
 *** Ideas
+:PROPERTIES:
+:ID:       bebe96a2-0e53-4d65-95d4-25e966f5a300
+:END:
 Here are a few things I have in mind in case you're looking for an excuse to explore Emacs' many features:
 
 **** org-agenda
+:PROPERTIES:
+:ID:       8cd1cff5-fb7d-4b52-92ac-ddba1eb43332
+:END:
 There are a lot of opportunities for customizing the org-mode agenda view that could be made possible with components designed for org-mode.  [[https://github.com/alphapapa/org-super-agenda][Org-super-agenda]] offers striking examples of grouping agenda content into meaningful elements.
 
 **** Structure editors
+:PROPERTIES:
+:ID:       beb31dcd-9119-4be3-97e0-54191021171b
+:END:
 [[https://en.wikipedia.org/wiki/Structure_editor][Structure editors]] are an exciting approach for editing source code and structured data.  Build a set of components for representing and interacting with a syntax conceivably eliminates syntax errors altogether!
 
 **** Charts and graphs
+:PROPERTIES:
+:ID:       d6690ba7-0f06-47c1-bad0-d81c4e126cff
+:END:
 It would be very handy to have a variety of charts and graphs to visualize data within Emacs itself.  Emacs already has a good start with the built-in ~chart.el~ for bar charts ([[http://francismurillo.github.io/2017-04-15-Exploring-Emacs-chart-Library/][examples]]).  This would be a good application for [[https://github.com/josuah/drawille][drawille.el]].  Fancy animated charts like [[https://github.com/yaronn/blessed-contrib][blessed-contrib]] anyone?
 
 **** Virtual windows
+:PROPERTIES:
+:ID:       fdeac707-5fdb-4df9-8eb7-261e825976b2
+:END:
 There are circumstances where it would be useful to create divisions within a buffer/window without the behavior associated with additional windows.  Imagine various tiled/floating window behavior demonstrated by [[https://github.com/chjj/blessed][blessed]] within a single buffer.
 
 **** Touch-based interfaces
+:PROPERTIES:
+:ID:       8d8ec6cc-76ef-4e91-b8eb-3766bf572a82
+:END:
 Why not give Emacs some big blocky buttons and sliders, so we can use our pervasive touchscreens with Emacs too?  Or even: design progressive Emacs apps?
 
 *** Feedback

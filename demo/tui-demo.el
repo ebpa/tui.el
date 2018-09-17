@@ -20,8 +20,9 @@
 
 (defun tui-show-component-demo (content)
   "Display demo CONTENT in a dedicated buffer."
-  (interactive (let* ((component-type (tui-read-component-type)))
-                 (list (funcall (intern component-type)))))
+  (interactive
+   (let* ((component-type (tui-read-component-type)))
+     (list (funcall (intern component-type)))))
   (setq content (tui--normalize-node content))
   (if (eq (tui--object-class content) 'tui-buffer)
       (progn
@@ -35,29 +36,29 @@
                 content))
       (switch-to-buffer buffer))))
 
-(tui-define-component hello
+(tui-define-component my/greeting
+  :get-default-props
+  (lambda ()
+    (list :name "World"))
   :render
   (lambda ()
-    (let ((name (plist-get (tui-get-props) :name)))
-      (list (format "Hello, %s!\n" name)
-            "How are you?"))))
+    (tui-let (&props name)
+      (format "Hello, %s!\n" name))))
 
-(tui-define-component basic-question
-  :render
-  (lambda ()
-    "What do you want to work on today?"))
+(defun my/basic-question ()
+  "What do you want to work on today?")
 
-(tui-define-component my-message
+(tui-define-component my/message
   :documentation
   "Message containing other components"
   :render
   (lambda ()
-    (let ((name (plist-get (tui-get-props) :name)))
-      (list (hello :name name)
+    (tui-let (&props name)
+      (list (my/greeting :name name)
             "\n------------\n"
-            (tui-demo-basic-question)
+            (my/basic-question)
             "\nmake "
-            (basic-counter :start-value 0)
+            (tui-demo-basic-counter :start-value 3)
             " widgets!"))))
 
 ;; (defvar tui-test-keymap

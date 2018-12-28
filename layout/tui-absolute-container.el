@@ -36,6 +36,7 @@ Child elements will be positioned by properties on the child elements themselves
            (tui-buffer
             :ref `(lambda (ref)
                     (puthash ,index ref ,child-buffers))
+            :index index
             child))
          children))
        (tui-canvas
@@ -83,14 +84,14 @@ Child elements will be positioned by properties on the child elements themselves
 ;;            (tui-absolute--paste content x y width height)))))))
 
 (cl-defmethod tui-absolute-container--update ((container tui-absolute-container))
-  "Re-render CANVAS-- replacing its content with its separately rendered children."
+  "Re-render CANVAS - replacing its content with its separately rendered children."
   ;; CLEANUP: split this function
   (message "UPDATE %S (%d)" (tui--type container) (tui-node-id container))
-  (let* ((props (tui--get-props container))
-         (children (plist-get props :children))
-         (state (tui--get-state container))
-         (canvas (tui-ref-element (plist-get state :canvas-ref)))
-         (child-buffers (plist-get state :child-buffers)))
+  (-let* ((props (tui--get-props container))
+          (children (plist-get props :children))
+          (state (tui--get-state container))
+          (canvas (tui-ref-element (plist-get state :canvas-ref)))
+          (child-buffers (plist-get state :child-buffers)))
     (tui-canvas-erase canvas t)
     ;; (let* ((keyed-children (-map-indexed
     ;;                         (lambda (index child)
@@ -99,8 +100,8 @@ Child elements will be positioned by properties on the child elements themselves
     ;;                                           index)))
     ;;                             (cons key child)))
     ;;                         children)))
-    (maphash 
-     (lambda (key child-buffer)
+    (mapc
+     (lambda (child-buffer)
        (-let* ((child-content (tui-buffer--get-content child-buffer))
                ((child) (plist-get (tui--get-props child-buffer) :children));; (child-buffer (gethash key child-buffers))
                ((&plist :x x :y y) (tui--get-props child)))
@@ -112,7 +113,12 @@ Child elements will be positioned by properties on the child elements themselves
          ;;     (puthash key child-buffer child-buffers)
          ;;     (tui-render-element child-buffer))
          (tui-canvas--paste-content-at canvas child-content (or x 0) (or y 0) t)))
-     child-buffers)
+     (-sort 
+      (lambda (child-a child-b)
+        (<
+         (plist-get (tui--get-props child-a) :index)
+         (plist-get (tui--get-props child-b) :index)))
+      (hash-table-values child-buffers)))
     (tui-force-update canvas)))
 
 ;; (defun tui-absolute--paste (content x y width height)
@@ -138,8 +144,9 @@ Child elements will be positioned by properties on the child elements themselves
                 (-when-let* ((buffer-element (buffer-local-value 'tui-buffer--ref buffer)))
                   (tui-parent buffer-element 'tui-absolute-container)))
               (tui--updated-buffers)))))
-          (containers-by-height (seq-sort-by
-                                 #'car #'>
+          (containers-by-height (-sort
+                                 (-lambda ((height-a) (height-b))
+                                   (> height-a height-b))
                                  (mapcar (lambda (container)
                                            (cons (tui-node-height container) container))
                                          containers))))

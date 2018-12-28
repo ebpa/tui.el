@@ -48,6 +48,9 @@
                (target (plist-get (tui--get-props component) :target)))
     (cond
      ((and (stringp target)
+           (s-starts-with-p "chrome://" target))
+      (eww-browse-with-external-browser target))
+     ((and (stringp target)
            (s-starts-with-p "http" target))
       (browse-url target))
      ((markerp target)

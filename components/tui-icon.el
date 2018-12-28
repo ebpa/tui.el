@@ -16,35 +16,52 @@
   (make-hash-table :test #'equal)
   "Icon size data (WIDTH . HEIGHT).  Keys formatted as (FAMILY . ICON-NAME).")
 
-
 (defun tui-build-icon-dimension-data ()
   "Build a database of rendered icon dimensions."
   (interactive)
   (require 'all-the-icons)
+  (or (tui-restore-icon-dimension-data)
+      (save-current-buffer
+        (let ((buffer (get-buffer-create "*icon-indexing*"))
+              (test-scaling-factor 10.0))
+          (switch-to-buffer buffer)
+          (erase-buffer)
+          (let ((line-height (line-pixel-height))
+                (char-width (progn (insert " ")
+                                   (tui-segment-pixel-width (point-min) (point-max)))))
+            (erase-buffer)
+            (mapc
+             (lambda (family)
+               (let ((family-name (funcall (all-the-icons--family-name family)))
+                     (data-alist (funcall (all-the-icons--data-name family))))
+                 (mapcar
+                  (-lambda ((name . icon))
+                    (insert (propertize icon 'font-lock-ignore t 'face (list :height test-scaling-factor)))
+                    (puthash (cons family name)
+                             (cons (/ (tui-segment-pixel-width (point-min) (point-max)) (* char-width test-scaling-factor))
+                                   (/ (line-pixel-height) (* line-height test-scaling-factor)))
+                             tui--all-the-icons-size-data)
+                    (erase-buffer))
+                  data-alist)))
+             all-the-icons-font-families))
+          (tui-save-icon-dimension-data)
+          (kill-buffer buffer)))))
+
+(defvar tui--icon-dimension-path (concat user-emacs-directory "tui-icon-dimensions.el"))
+
+(defun tui-save-icon-dimension-data ()
+  "Persist stored icon dimensions."
   (save-current-buffer
-    (let ((buffer (get-buffer-create "*icon-indexing*"))
-          (test-scaling-factor 10.0))
-      (switch-to-buffer buffer)
+    (with-current-buffer (find-file-noselect tui--icon-dimension-path)
       (erase-buffer)
-      (let ((line-height (line-pixel-height))
-            (char-width (progn (insert " ")
-                               (tui-segment-pixel-width (point-min) (point-max)))))
-        (erase-buffer)
-        (mapc
-         (lambda (family)
-           (let ((family-name (funcall (all-the-icons--family-name family)))
-                 (data-alist (funcall (all-the-icons--data-name family))))
-             (mapcar
-              (-lambda ((name . icon))
-                (insert (propertize icon 'font-lock-ignore t 'face (list :height test-scaling-factor)))
-                (puthash (cons family name)
-                         (cons (/ (tui-segment-pixel-width (point-min) (point-max)) (* char-width test-scaling-factor))
-                               (/ (line-pixel-height) (* line-height test-scaling-factor)))
-                         tui--all-the-icons-size-data)
-                (erase-buffer))
-              data-alist)))
-         all-the-icons-font-families))
-      (kill-buffer buffer))))
+      (print (list 'setq 'tui--all-the-icons-size-data (list 'quote tui--all-the-icons-size-data))
+             (current-buffer))
+      (save-buffer)
+      (kill-buffer))))
+
+(defun tui-restore-icon-dimension-data ()
+  "Load stored icon dimensions."
+  (load tui--icon-dimension-path t))
 
 (tui-define-component tui-icon
   ;; TODO: keep consistent with resized display

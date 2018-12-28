@@ -5,6 +5,7 @@
 
 (eval-when-compile (require 'cl-lib))
 (require 'tui-core)
+(require 'subr-x)
 
 ;;; Code:
 
@@ -12,7 +13,7 @@
 (cl-defstruct (tui-shared-size (:constructor nil)
                             (:constructor tui-shared-size-create (&key size)))
   size
-  element-sizes)
+  (element-sizes (make-hash-table)))
 
 (cl-defmethod tui-size (size)
   ;; TODO: implement as a generic size lookup? (WIDTH . HEIGHT)?
@@ -24,24 +25,25 @@
 
 (cl-defmethod tui-request-size ((shared-size tui-shared-size) size element)
   "Register request by ELEMENT that SHARED-SIZE equal SIZE."
-  (push (cons size element) (tui-shared-size-element-sizes shared-size)))
+  ;; TODO: overload ELEMENT to optionally be a callback
+  (puthash element size (tui-shared-size-element-sizes shared-size)))
 
 (cl-defmethod tui-recalculate-size ((shared-size tui-shared-size))
   "Recalculate SHARED-SIZE based requested sizes by its elements."
   ;; TODO: support complex sizing (ex: based on length distribution  (95th percentile?)
-  (let* ((element-sizes (tui-shared-size-element-sizes shared-size))
-         (pixel-unit (listp (cl-first element-sizes)))
+  ;; TODO: work out behavior of mixed character-pixel sizing (prefer one over the other? merge the two values?)
+  (let* ((element-sizes (hash-table-values (tui-shared-size-element-sizes shared-size)))
+         ;; (pixel-unit (listp (cl-first element-sizes)))
          (new-size (when element-sizes
-                     (apply #'max (if pixel-unit
-                                      (mapcar #'car element-sizes)
-                                    element-sizes))))
-         (callbacks (tui-shared-size-callbacks shared-size)))
+                     (apply #'max element-sizes))))
     (when new-size
-      (setf (tui-shared-size-size shared-size)
-            (if pixel-unit
-                (list new-size)
-              new-size))
-      (mapc #'funcall callbacks))))
+      (setf (tui-shared-size-size shared-size) new-size)
+      (mapcar
+       (lambda (element)
+         (cond
+          ((tui-fixed-width-p element)
+           (tui-fixed-width--update element))))
+       (hash-table-keys (tui-shared-size-element-sizes shared-size))))))
 
 (provide 'tui-shared-size)
 

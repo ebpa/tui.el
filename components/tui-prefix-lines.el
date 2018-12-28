@@ -17,7 +17,7 @@
   :render
   (lambda ()
     (tui-let (&props prefix children)
-      (tui-div
+      (tui-span
        :text-props-safe `(line-prefix ,prefix
                                       wrap-prefix ,prefix)
        :children children))))

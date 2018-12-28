@@ -14,6 +14,10 @@
   (lambda ()
     (tui-run-with-timer component 1 1 t `(lambda ()
                                         (tui-force-update ,component))))
+  :component-will-unmount
+  (lambda ()
+    (tui-let (&state spinner)
+      (spinner-stop spinner)))
   :get-initial-state
   (lambda ()
     (require 'spinner)

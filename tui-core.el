@@ -546,6 +546,24 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
    #'tui-force-update 
    tui--content-trees))
 
+(defmacro tui-render-with-buffer (buffer &rest content)
+  ;; TODO: implicit get-buffer-create for strings?
+  (declare (indent 1))
+  "Render ELEMENT in dedicated BUFFER and switch to that buffer.  Any existing contents of BUFFER will be replaced."
+  `(let* ((render-fn (lambda () ,@content))
+          (buffer ,buffer))
+     (switch-to-buffer buffer)
+     (tui-render-element
+      (tui-buffer
+       :buffer buffer
+       :mode 'special-mode
+       (funcall render-fn)))
+     (set-window-buffer nil buffer)
+     (with-current-buffer buffer
+       (setq-local revert-buffer-function
+                   (lambda (ignore-auto noconfirm)
+                     (tui-render-with-buffer ,buffer ,@content))))))
+
 (defun tui-render-element (node &optional target)
   "Primary function for rendering content to a buffer.
 

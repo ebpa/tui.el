@@ -26,7 +26,7 @@
     (list :mode 'special-mode))
   :mount
   (lambda (component &optional start end parent)
-    (message "MOUNT")
+    ;;(message "MOUNT")
     (let* ((props (tui--plist-merge (tui--funcall #'tui-get-default-props component)
                                  (tui--get-props component)))
            (buffer (or (plist-get props :buffer)

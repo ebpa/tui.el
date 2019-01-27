@@ -4,7 +4,7 @@
 
 (package-file "tui.el")
 
-(files "*.el")
+(files "*.el" "components/*.el" "snippets/*.el" "demo/*.el")
 
 (development
  (depends-on "buttercup")

@@ -582,9 +582,10 @@ tui-element."
           (tui-append-child target node)
         (cond
          ((number-or-marker-p target)
-          (when (markerp target)
-            (set-buffer target))
-          (goto-char target))
+          (with-current-buffer (if (markerp target)
+                                   (marker-buffer target)
+                                 (current-buffer))
+            (goto-char target)))
          ((stringp target)
           (set-buffer (get-buffer-create target)))
          ((bufferp target)

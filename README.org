@@ -32,6 +32,14 @@ This is all currently experimental!  Expect things to change as I get feedback a
 :ID:       21c4d574-5de0-43ac-ae9d-444b2cbc5b86
 :END:
 
+*** Using Straight.el
+#+begin_src emacs-lisp
+(straight-use-package
+ '(tui :type git :host github :repo "ebpa/tui.el" :files ("*.el" "components" "layout" "demo" "snippets")))
+#+end_src
+
+*** Manually
+
 The package hasn't been submitted to Melpa yet.  To install the package manually: clone the repository, add the folder to your load path and install the dependencies with the following:
 
 #+begin_src sh

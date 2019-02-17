@@ -17,8 +17,7 @@
                        (tui-span
                         :x 14 :y 0
                         "baz"))))
-      (tui-with-rendered-element container
-        (expect (buffer-substring-no-properties (point-min) (point-max)) :to-equal "\n foo   bar    baz\n"))))
+      (expect (tui-render-to-string container) :to-equal "\n foo   bar    baz\n")))
   (it "renders components vertically"
     (let* ((container (tui-absolute-container
                        (tui-span
@@ -30,8 +29,7 @@
                        (tui-span
                         :x 0 :y 5
                         "baz"))))
-      (tui-with-rendered-element container
-        (expect (buffer-string) :to-equal "\nfoo\n\nbar\n\n\nbaz\n"))))
+      (expect (tui-render-to-string container) :to-equal "\nfoo\n\nbar\n\n\nbaz\n")))
   (it "renders multiline components horizontally"
     (let* ((rectangle (s-join "\n"
                               (list "+---+"
@@ -44,14 +42,13 @@
                        (tui-span
                         :x 6 :y 0
                         rectangle))))
-      (tui-with-rendered-element container
-        (expect (buffer-string) :to-equal
-                (concat "\n"
-                        (s-join "\n"
-                                (list "+---+ +---+"
-                                      "|   | |   |"
-                                      "+---+ +---+"))
-                        "\n")))))
+      (expect (tui-render-to-string container) :to-equal
+              (concat "\n"
+                      (s-join "\n"
+                              (list "+---+ +---+"
+                                    "|   | |   |"
+                                    "+---+ +---+"))
+                      "\n"))))
   (it "renders overlapping components"
     (let* ((rectangle (s-join "\n"
                               (list "+---+"
@@ -64,12 +61,32 @@
                        (tui-span
                         :x 2 :y 1
                         rectangle))))
-      (tui-with-rendered-element container
-        (expect (buffer-string) :tui/to-equal
-                (concat "\n"
-                        (s-join "\n"
-                                (list "+---+"
-                                      "| +---+"
-                                      "+-|   |"
-                                      "  +---+"))
-                        "\n"))))))
+      (expect (tui-render-to-string container) :to-equal
+              (concat "\n"
+                      (s-join "\n"
+                              (list "+---+"
+                                    "| +---+"
+                                    "+-|   |"
+                                    "  +---+"))
+                      "\n"))))
+  (it "can be nested within other tui-absolute-container elements"
+    (expect (tui-render-to-string (tui-absolute-container
+                                (tui-span
+                                 :x 2
+                                 :y 2
+                                 " "
+                                 (tui-absolute-container
+                                  (tui-span
+                                   :x 1
+                                   :y 1
+                                   "x")))))
+            :to-equal "
+
+
+   
+  
+   x
+  
+"))
+  (it "updates to reflect nested tui-absolute-container elements"
+    ))

@@ -402,6 +402,8 @@ Binds `tui-element' to ELEMENT for evaluation of BODY."
   "Return the string representation of rendered ELEMENT."
   ;; TODO: define side-effects and behavior for mounted elements
   (tui-with-rendered-element element
+    ;; TODO: use a customizable set of properties to include/exclude (keyword arg / defvar?)
+    (remove-list-of-text-properties (point-min) (point-max) '(tui-node front-sticky rear-nonsticky))
     (buffer-string)))
 
 (defun tui-create-element (type &optional props &rest children)

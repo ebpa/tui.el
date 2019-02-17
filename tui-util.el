@@ -275,8 +275,8 @@ For use in any context where `tui-get-props' and `tui-get-state' are defined."
     (while (member (car symbol-args) '(&props &state))
       (let* ((var-count (or (-find-index (lambda (item)
                                            (member item '(&props &state)))
-                                         (rest symbol-args))
-                            (length (rest symbol-args)))))
+                                         (cl-rest symbol-args))
+                            (length (cl-rest symbol-args)))))
         (pcase (pop symbol-args)
           ('&props
            (setq prop-vars (append prop-vars

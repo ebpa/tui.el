@@ -331,7 +331,7 @@ A and B overlap, for example, if one is a parent of the other.  Coincident point
 
 (cl-defmethod tui-index-position ((node tui-node))
   "Return the index position of NODE within its content tree."
-  (rest
+  (cl-rest
    (reverse
     (mapcar
      (lambda (node)

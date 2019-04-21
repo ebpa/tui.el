@@ -135,7 +135,7 @@ Return pair of divisions within ELEMENT at INDEX corresponding to be used for in
   "Get a list of comp elements at POS.  The root element is last.
 
 Filter returned elements according to TYPE.  All ancestors are returned when TYPE is nil."
-  ;; CLEANUP: reconcile tui-ancestor-elements-at and tui-ancestor-elements?
+  ;; CLEANUP: reconcile tui-ancestor-elements-at and tui-ancestor-elements? (confusing otherwise)
   (-when-let* ((element (tui-get-element-at pos)))
     (-filter
      (if type

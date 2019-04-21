@@ -217,6 +217,8 @@
        "woo")
       (expect (get-text-property 1 'foo) :to-equal "bar")))
 
+  (it "text properties are updated even if they are the change between renders")
+
   (describe "tui-put-text-properties"
     (describe "'replace"))
 

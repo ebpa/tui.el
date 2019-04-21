@@ -20,6 +20,7 @@
    :children "Content to display in the buffer."
    :mode "Major mode to set in the buffer."
    :keymap "Local keymap to use in the buffer."
+   :init-fn "Function to call after the buffer has been set up."
    )
   :get-default-props
   (lambda ()

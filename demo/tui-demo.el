@@ -32,8 +32,8 @@
     (let ((buffer (format "*%s Demo*" (symbol-name (tui--object-class content)))))
       (tui-render-element
        (tui-buffer :buffer buffer
-                :mode #'tui-demo-mode
-                content))
+                   :mode #'tui-demo-mode
+                   content))
       (switch-to-buffer buffer))))
 
 (tui-define-component my/greeting
@@ -89,6 +89,56 @@
               (propertize "⏷"
                           'keymap
                           `(keymap (down-mouse-1 . ,#'decr-counter))))))))
+
+(defmacro tui-define-demo (component description &rest body)
+  "Define a demonstration of the use of COMPONENT.  DESCRIPTION is used as a label and BODY returns the content to be rendered."
+  (declare (indent 2))
+  `(let ((render-fn (lambda ()
+                      ,@body))
+         (existing-demos (get ,component 'tui-demos)))
+     (put ',component 'tui-demos (put-alist ,description render-fn existing-demos))))
+
+;; (tui-show-all-component-demos :: void)
+(defun tui-show-all-component-demos ()
+  "Display all defined component demos grouped by component in a dedicated buffer."
+  (interactive)
+  (tui-render-with-buffer "*Tui Demos (all)*"
+    (mapcar
+     (lambda (component)
+       (tui-div
+        (tui-heading (symbol-name component))
+        (tui-component-demos :component component)))
+     (tui-all-component-types))))
+
+;; (tui-show-component-demos String -> void)
+(defun tui-show-component-demos (component)
+  "Show all defined demos for COMPONENT in a single buffer."
+  (interactive (list (tui-read-component-type)))
+  (tui-render-with-buffer (format "*Tui %s Demos*" component)
+    (tui-component-demos
+     :component (intern component))))
+
+;; (tui-component-demos :: Symbol -> List)
+(tui-define-component tui-component-demos
+  :documentation "Render all defined demos for COMPONENT."
+  :render
+  (lambda ()
+    (tui-let (&props component)
+      (-let* ((demos (get component 'tui-demos)))
+        (if (not demos)
+            (tui-div
+             (format "No demos have been defined for %s.  Define one using "
+                     component)
+             (tui-link
+              :target (-partial #'describe-function 'tui-define-demo)
+              "tui-define-demo")
+             ".")
+          (mapcar
+           (-lambda ((description . render-fn))
+             (tui-div
+              (tui-heading description)
+              (funcall render-fn)))
+           demos))))))
 
 (provide 'tui-demo)
 

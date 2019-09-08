@@ -19,8 +19,16 @@
         (define-key map [mouse-1] action)
         (tui-span
          :text-props-replace `(mouse-face highlight
+                                          face button
                                           keymap ,map)
          children)))))
+
+(tui-define-demo tui-button "Basic click action"
+  (tui-button
+   :action (lambda ()
+             (interactive)
+             (message "Click!"))
+   "Click Me"))
 
 (provide 'tui-button)
 

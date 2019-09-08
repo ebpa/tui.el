@@ -50,9 +50,9 @@ It :width value is nil, the component width is variable."
       (cond
        ((tui-shared-size-p desired-width)
         (tui-request-size desired-width
-                       (+ (tui-length (tui-fixed-width--content component))
-                          (or minimum-padding 0))
-                       component))
+                          (+ (tui-length (tui-fixed-width--content component))
+                             (or minimum-padding 0))
+                          component))
        (desired-width
         (tui-fixed-width--update component))))))
 
@@ -90,7 +90,7 @@ It :width value is nil, the component width is variable."
        ;;      (setq overflow-length (tui--overflow-length (tui-start component) (tui-end component) desired-width))
        ;;      (setq padding-width (list (- desired-width (tui-segment-pixel-width (tui-start component) (- (tui-end component) overflow-length)))))))))
        ((numberp desired-width)
-        (let ((content-length (tui-length (tui-fixed-width--content component))))
+        (let* ((content-length (tui-string-width (tui-fixed-width--content component))))
           (tui--truncate-overflow component desired-width)
           (when (< content-length desired-width)
             (tui--set-padding component (- desired-width content-length)))))
@@ -130,8 +130,7 @@ It :width value is nil, the component width is variable."
     (delete-region (tui-start padding-node) (tui-end padding-node))
     (insert (propertize (make-string width ? )
                         'font-lock-ignore t
-                        'cursor-intangible t
-                        ))
+                        'cursor-intangible t))
     (tui--apply-inherited-text-props (tui-start padding-node) (tui-end padding-node) padding-node)))
 
 (provide 'tui-fixed-width)

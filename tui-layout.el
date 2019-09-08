@@ -363,6 +363,10 @@ unit is assumed have a unit of characters.  When a list of length
   (-let* (((start . end) (tui-segment node)))
     (- end start)))
 
+(cl-defmethod tui-string-width ((node tui-node))
+  "Return the display length (number of characters) of NODE including invisible characters."
+  (string-width (tui--get-string node)))
+
 (defun tui--node-height (node)
   "Return the height of NODE in its content tree.  The root element has a height of 1."
   (length (tui-ancestor-elements node)))

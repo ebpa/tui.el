@@ -320,3 +320,4 @@ Why not give Emacs some big blocky buttons and sliders, so we can use our pervas
    - [[https://github.com/Yomguithereal/react-blessed][Yomguithereal/react-blessed: A react renderer for blessed.]]
    - [[https://github.com/manaflair/mylittledom][manaflair/mylittledom: High-level DOM-like terminal interface library]]
    - [[https://github.com/fdehau/tui-rs][fdehau/tui-rs: Build terminal user interfaces and dashboards using Rust]]
+   - [[https://github.com/jtdaugherty/brick/][brick]] - A declarative terminal UI programming library written in Haskell

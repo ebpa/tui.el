@@ -359,7 +359,7 @@ unit is assumed have a unit of characters.  When a list of length
       (error "Unexpected (presumably incompatible) pixel values")))))
 
 (cl-defmethod tui-length ((node tui-node))
-  "Return the length (number of characters) of NODE including invisilbe characters."
+  "Return the length (number of characters) of NODE including invisible characters."
   (-let* (((start . end) (tui-segment node)))
     (- end start)))
 

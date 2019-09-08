@@ -111,10 +111,11 @@
          t)
         ((stringp obj-a)
          (equal obj-a obj-b))
+        ((-cons-pair-p obj-a)
+         (equal obj-a obj-b))
         ((and (listp obj-a)
-              obj-a
               (listp obj-b)
-              obj-b)
+              (not (-cons-pair-p obj-b)))
          (and (eq (length obj-a)
                   (length obj-b))
               (cl-loop for elt-a in obj-a

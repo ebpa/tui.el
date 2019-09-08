@@ -391,8 +391,10 @@ Return t if a component definition exists and was successfully removed and retur
         (push symbol types)))
     types))
 
+;; (tui-read-component-type String -> String)
 (cl-defun tui-read-component-type (&optional (prompt "Component type: "))
   "Return a component type."
+  ;; CLEANUP: this should probably return a symbol
   (completing-read prompt (tui-all-component-types)))
 
 (cl-defun tui-component--docstring (documentation prop-documentation state-documentation)

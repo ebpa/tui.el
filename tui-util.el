@@ -100,7 +100,7 @@ See also: `tui-first-subtree-node'."
                  collect (cons prop value))
         (lambda (a b)
           (tui--symbol< (car a)
-                     (car b)))))
+                        (car b)))))
 
 (defun tui--plist-changes (old-plist new-plist)
   "Return a plist of differences between plists OLD-PLIST and NEW-PLIST."
@@ -110,7 +110,7 @@ See also: `tui-first-subtree-node'."
                         (and (equal (symbol-name (car a))
                                     (symbol-name (car b)))
                              (tui-equal (cdr a)
-                                     (cdr b)))))
+                                        (cdr b)))))
          (difference (-difference new-list old-list)))
     ;;(display-warning 'tui (format "(differences: %S)" (mapcar #'car difference)) :debug tui-log-buffer-name)
     (cl-loop for (key . value) in difference
@@ -226,7 +226,7 @@ Optional argument INVISIBLE-CONTEXT track whether the this node is within an inv
           (or (and (not (tui-element-p child))
                    (tui-node-p child))
               (tui-valid-element-p child (or invisible-context
-                                          (tui-invisible-p element)))))
+                                             (tui-invisible-p element)))))
         (tui-child-nodes element))))
 
 (defun tui-valid-content-tree-p (node)
@@ -285,9 +285,6 @@ For use in any context where `tui-get-props' and `tui-get-state' are defined."
            (setq state-vars (append state-vars
                                     (-take var-count symbol-args)))))
         (setq symbol-args (nthcdr var-count symbol-args))))
-    ;;`(,(length prop-vars) ,(length state-vars))))
-    ;; (when symbol-args
-    ;;   (error "Expecting &props or &state keyword"))
     `(let* ,(append (when prop-vars
                       `((,props (tui-get-props))))
                     (when state-vars

@@ -21,18 +21,18 @@
 ;;;; Text Node
 
 (cl-defstruct (tui-text-node (:include tui-node)
-                          (:constructor nil)
-                          (:constructor tui-text-node-create (&key content
-                                                                &aux (id (tui--new-id)))))
+                             (:constructor nil)
+                             (:constructor tui-text-node-create (&key content
+                                                                      &aux (id (tui--new-id)))))
   nil)
 
 
 ;;;; Element
 
 (cl-defstruct (tui-element (:include tui-node)
-                        (:constructor nil)
-                        (:constructor tui-element-create (&key props invisible
-                                                            &aux (id (tui--new-id)))))
+                           (:constructor nil)
+                           (:constructor tui-element-create (&key props invisible
+                                                                  &aux (id (tui--new-id)))))
   props
   invisible) ;; "Indicates whether the content element should be ignored when rendering."
 
@@ -96,12 +96,12 @@
   "An `equal' function for `tui-node' objects."
   (and (tui-node-p node-b)
        (tui-equal (tui-node-content node-a)
-               (tui-node-content node-b))))
+                  (tui-node-content node-b))))
 
 (cl-defmethod tui-equal ((component-a tui-component) component-b)
   "An `equal' function for `tui-component' objects."
   (not (tui--plist-changes (tui--get-props component-a)
-                        (tui--get-props component-b))))
+                           (tui--get-props component-b))))
 
 (cl-defmethod tui-equal (obj-a obj-b)
   "An `equal' function which handles `tui-*' objects recursively as a special case."

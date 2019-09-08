@@ -1,10 +1,11 @@
 ;;; tui-tic-tac-toe.el --- A demo implementation of Tic-Tac-Toe
-;;; Code:
-
-(eval-when-compile (require 'cl-lib))
 
 ;;; Commentary:
 ;; 
+
+;;; Code:
+
+(eval-when-compile (require 'cl-lib))
 
 (require 'tui-absolute-container)
 (require 'tui-buffer)

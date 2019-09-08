@@ -4,6 +4,7 @@
 ;; 
 
 (require 'tui-core)
+(require 'tui-demo "demo/tui-demo.el")
 
 ;;; Code:
 

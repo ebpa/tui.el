@@ -25,10 +25,12 @@
            (face (if (plist-member props :face)
                      (plist-get props :face)
                    'org-link))
-           (text-props (append `(keymap ,tui-link-keymap
-                                    font-lock-ignore t)
-                           (when face
-                             `(face ,face)))))
+           (text-props (append
+                        `(keymap ,tui-link-keymap
+                                 font-lock-ignore t
+                                 tui-link-target ,(plist-get (tui-get-props) :target))
+                        (when face
+                          `(face ,face)))))
       (tui-span
        :text-props-replace text-props
        :children
@@ -44,8 +46,7 @@
   "Follow link at POS or current point."
   (interactive)
   (unless pos (setq pos (point)))
-  (-when-let* ((component (tui-get-element-at pos 'tui-link))
-               (target (plist-get (tui--get-props component) :target)))
+  (-when-let* ((target (get-text-property pos 'tui-link-target)))
     (cond
      ((and (stringp target)
            (s-starts-with-p "chrome://" target))

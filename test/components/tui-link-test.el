@@ -1,3 +1,4 @@
+(require 'buttercup)
 (require 'tui-test-helper "test/tui-test-helper.el")
 (require 'tui-link "components/tui-link.el")
 

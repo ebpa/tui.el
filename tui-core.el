@@ -25,6 +25,7 @@
 (declare-function tui-marker-list-node-start "tui-marker-list.el")
 (declare-function tui-marker-list-node-end "tui-marker-list.el")
 
+(defvar tui-this-component)
 (defvar tui-error-placeholder-string "�" "Placeholder string to indicate a broken component.")
 (defvar tui--update-queue nil "Queue of updates to be committed.")
 (defvar tui--applying-updates nil "Dynamic scope variable to indicate whether queued updates are being processed.")
@@ -109,26 +110,21 @@ React documentation: https://reactjs.org/docs/react-component.html#componentwill
 
 ;;;; Internal Lifecycle helpers
 
-(defun tui--funcall (func component &rest args)
+(defun tui--lifecycle-funcall (func component &rest args)
   "Internal helper for invoking lifecycle methods.
 
 Calls FUNC for COMPONENT (ARGS are arguments for the lifecycle
 method) and appropriately binds `tui-get-props' and
 `tui-get-state'."
-  (when func
-    (let* ((component component))
-      (cl-letf (((symbol-function 'tui-get-props)
-                 (lambda () (tui--get-props component)))
-                ((symbol-function 'tui-get-state)
-                 (lambda () (tui--get-state component))))
-        (if (member func '(tui-component-did-mount tui-component-did-update tui--mount))
-            (cl-letf (((symbol-function 'tui-set-state)
-                       (lambda (new-state &optional no-update) (tui--set-state component new-state no-update))))
-              (apply func component args))
-          (apply func component args))))))
+  (cl-assert (functionp func))
+  ;; CLEANUP: eliminate `component' reference here in favor of `tui-this-component':
+  (let* ((component component)
+         (tui-this-component component))
+    (tui--easy-going-apply func (apply #'list component args))))
+(defalias 'tui--funcall 'tui--lifecycle-funcall)
 
 (cl-defmethod tui--mount ((node tui-node) start &optional end parent marker-list)
-  "Internal use only.  Mount and insert NODE between START and END divisions."
+  "Internal use only.  Mount and insert NODE between START and END divisions.  Return NODE."
   (when (tui-node-mounted node)
     (error "Component already mounted"))
 
@@ -153,27 +149,34 @@ method) and appropriately binds `tui-get-props' and
           (tui--normalize-content (plist-get (tui--get-props node) :children))))
   ;; (display-warning 'tui-diff (format "MOUNT %S between %S and %S (%s)" (tui--object-class node) start end (unless (eq start end) "eq" "distinct")) :debug tui-log-buffer-name)
   (tui--insert node)
-  (when parent
-    (tui--apply-inherited-text-props (tui-start node) (tui-end node) parent (marker-buffer (tui-start node))))
+  (if parent
+      (tui--apply-inherited-text-props (tui-start node) (tui-end node) parent (marker-buffer (tui-start node)))
+    (-when-let* ((marker (tui-start node))
+                 (buffer (and (markerp start)
+                              (marker-buffer marker))))
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer
+          (unless tui--content-trees
+            (add-hook 'kill-buffer-hook #'tui-unmount-current-buffer-content-trees nil t))
+          (add-to-list 'tui--content-trees component)))))
   (setf (tui-node-mounted node) t)
   ;; (cl-assert (or (< start end)
   ;;               (eq start end)) t "Segment endpoints should be ordered if not represented by the same marker.")
   node)
 
 (cl-defmethod tui--mount ((component tui-component) start &optional end parent marker-list)
-  "Internal use only.  Mount and insert COMPONENT between START and END divisions."
+  "Internal use only.  Mount and insert COMPONENT between START and END divisions.  Return COMPONENT."
   (when (tui-node-mounted component)
     (error "Component already mounted"))
   ;; Build the prop list for this instance
   (setf (tui-component-props component)
-        (tui--plist-merge (tui--funcall #'tui-get-default-props component)
-                       (tui--get-props component)))
+        (tui--plist-merge (tui-get-default-props component)
+                          (tui--get-props component)))
   (let* ((initial-state (tui--funcall #'tui-get-initial-state component))
-         (derived-state (tui-get-derived-state-from-props component
-                                                       (tui-component-props component)
-                                                       initial-state)))
-    ;; (when (eq (tui--type component) 'tui-absolute-container)
-    ;;   (edebug))
+         (derived-state (tui--funcall #'tui-get-derived-state-from-props
+                                      component
+                                      (tui-component-props component)
+                                      initial-state)))
     ;; Set the initial state (w/o forcing an update)
     (tui--set-state component (tui--plist-merge initial-state derived-state) t))
   ;; Call the component render method
@@ -198,21 +201,23 @@ method) and appropriately binds `tui-get-props' and
   ;;(tui--with-open-node text-node
   (save-current-buffer
     (save-excursion
-      (tui--open-segment text-node)
-      (let ((start (tui-start text-node))
-            (end (tui-end text-node))
-            (parent (tui-parent text-node)))
-        (tui--goto start)
-        (delete-region start end)
-        (-when-let* ((content (tui-text-node-content text-node))
-                     (string (tui--get-string content)))
-          ;; (unless (get-text-property 0 'tui-node string)
-          ;;   (put-text-property start end 'tui-node text-node (marker-buffer start)))
-          (insert string))
-        (tui-put-text-property start end 'tui-node text-node (marker-buffer start) nil)
-        (tui--apply-inherited-text-props start end text-node (marker-buffer start)))
-      (cl-incf (tui-node-update-count text-node))
-      (setq tui--buffer-modified-p t))))
+      (save-restriction
+        (widen)
+        (tui--open-segment text-node)
+        (let ((start (tui-start text-node))
+              (end (tui-end text-node))
+              (parent (tui-parent text-node)))
+          (tui--goto start)
+          (delete-region start end)
+          (-when-let* ((content (tui-text-node-content text-node))
+                       (string (tui--get-string content)))
+            ;; (unless (get-text-property 0 'tui-node string)
+            ;;   (put-text-property start end 'tui-node text-node (marker-buffer start)))
+            (insert string))
+          (tui-put-text-property start end 'tui-node text-node (marker-buffer start) nil)
+          (tui--apply-inherited-text-props start end text-node (marker-buffer start)))
+        (cl-incf (tui-node-update-count text-node))
+        (setq tui--buffer-modified-p t)))))
 
 (cl-defmethod tui--insert ((element tui-element))
   "Insert content of ELEMENT."
@@ -321,9 +326,15 @@ Returns COMPONENT."
   (make-hash-table)
   "Default props for component classes.")
 
-(defun tui-get-props ()
-  "Get current component properties from within a lifecycle method of a component."
-  (error "`tui-get-props' must be called from within a component lifecycle method"))
+;; (defun tui-get-props ()
+;;   "Get current component properties from within a lifecycle method of a component."
+;;   (error "`tui-get-props' must be called from within a component lifecycle method"))
+
+(cl-defun tui-get-props (&optional node)
+  "Return a list of NODE's properties."
+  (if node
+      (tui--get-props node)
+    (tui-element-props tui-this-component)))
 
 (cl-defmethod tui--get-props ((element tui-element))
   "Internal use only."
@@ -333,9 +344,16 @@ Returns COMPONENT."
   "Internal use only."
   nil)
 
-(defun tui-get-state ()
-  "Get current component state from within a lifecycle method of a component."
-  (error "`tui-get-state' must be called from within one of `component-did-mount', or `component-did-update' component lifecycle methods"))
+;; (cl-defmethod tui-get-state ()
+;;   "Get current component state from within a lifecycle method of a component."
+;;   (or (tui-get-state component)
+;;       (error "`tui-get-state' must be called from within one of `component-did-mount', or `component-did-update' component lifecycle methods")))
+
+(defun tui-get-state (&optional component)
+  "Get current component state."
+  (if component
+      (tui--get-state component)
+    (tui--get-state tui-this-component)))
 
 (defun tui--get-state (component)
   "Internal function to get COMPONENT state.  Do not call this directly; use `tui-get-state' within one of `component-did-mount', or `component-did-update' component lifecycle methods."
@@ -348,7 +366,7 @@ Returns COMPONENT."
          (next-props (tui--plist-merge prev-props next-props))
          (prev-state (tui--get-state component))
          (next-state (tui--plist-merge (tui--get-state component)
-                                    (tui-get-derived-state-from-props component next-props prev-state))))
+                                       (tui-get-derived-state-from-props component next-props prev-state))))
     (when (tui--funcall #'tui-should-component-update component next-props next-state)
       (cl-call-next-method component next-props))))
 
@@ -363,30 +381,41 @@ Returns COMPONENT."
   ;;   )
   (tui--update element next-props))
 
-(defun tui--set-state (component new-state &optional no-update)
+(cl-defmethod tui-component-set-state ((component tui-component) updater &optional no-update)
   "Internal function to set COMPONENT state.
 
 Do not call this directly; use `tui-set-state'.
 
-Sets the current state of COMPONENT to NEXT-STATE.  Does not
-cause the component to update when NO-UPDATE is truthy."
-  (display-warning
-   'tui
-   (format "SET-STATE %s %S (%d) %S"
-           (if no-update "(no-update)" "")
-           (tui--object-class component)
-           (tui-node-id component)
-           (tui--plist-keys new-state))
-   :debug tui-log-buffer-name)
+Sets the current state of COMPONENT using UPDATER.  UPDATER may
+be a plist containing partial next state or a function that
+returns a partial next state plist.  Does not cause the component
+to update when NO-UPDATE is truthy."
+  ;; TODO: Add defensive check to prevent calling within a render call.
+  ;; TODO: Add defensive check to prevent calling without a component reference.  Make this a method?!
   (let* ((prev-state (tui-component-state component))
+         (new-state (if (functionp updater)
+                        (funcall updater (tui--get-state component))
+                      updater))
          (next-state (tui--plist-merge prev-state new-state)))
+    (display-warning
+     'tui
+     (format "SET-STATE %s %S (%d) %S"
+             (if no-update "(no-update)" "")
+             (tui--object-class component)
+             (tui-node-id component)
+             (tui--plist-keys new-state))
+     :debug tui-log-buffer-name)
     (when (not (equal prev-state next-state)) ;; XXX: remove this check?
       (if no-update
           (setf (tui-component-state component) next-state)
         (tui--update component nil next-state))
       (unless tui--applying-updates
         (tui--process-update-queue)))))
+(defalias 'tui--set-state 'tui-component-set-state)
 
+(cl-defmethod tui-set-state ((component tui-component) new-state)
+  "Syntactic sugar for ``tui-component-set-state.''"
+  (tui--set-state component new-state))
 
 ;;; Composition API
 
@@ -400,9 +429,7 @@ Binds `tui-element' to ELEMENT for evaluation of BODY."
 
 (defun tui-render-to-string (element)
   "Return the string representation of rendered ELEMENT."
-  ;; TODO: define side-effects and behavior for mounted elements
   (tui-with-rendered-element element
-    ;; TODO: use a customizable set of properties to include/exclude (keyword arg / defvar?)
     (remove-list-of-text-properties (point-min) (point-max) '(tui-node front-sticky rear-nonsticky))
     (buffer-string)))
 
@@ -419,18 +446,18 @@ Binds `tui-element' to ELEMENT for evaluation of BODY."
              :invisible invisible)))
 
 (cl-defmacro tui-define-component (name &key
-                                     documentation
-                                     prop-documentation
-                                     state-documentation
-                                     get-default-props
-                                     get-initial-state
-                                     mount
-                                     component-did-mount
-                                     get-derived-state-from-props
-                                     should-component-update
-                                     render
-                                     component-did-update
-                                     component-will-unmount)
+                                        documentation
+                                        prop-documentation
+                                        state-documentation
+                                        get-default-props
+                                        get-initial-state
+                                        mount
+                                        component-did-mount
+                                        get-derived-state-from-props
+                                        should-component-update
+                                        render
+                                        component-did-update
+                                        component-will-unmount)
   "Macro for defining `tui-component' types.
 
 Lifecycle signatures:
@@ -445,7 +472,7 @@ component-did-update (prev-props prev-state)
 component-will-unmount ()
 
 See React's documentation (https://reactjs.org/docs/react-component.html) for a good explanation of how these methods should be used."
-  (declare (indent defun)) ;; TODO: support an optional docstring as the third parameter (as an alternative to the keyword form)
+  (declare (indent defun))
   (tui--check-key-value-documentation prop-documentation)
   (tui--check-key-value-documentation state-documentation)
   (let* ((prop-names (delq nil
@@ -473,35 +500,35 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
        ,(when get-initial-state
           `(cl-defmethod tui-get-initial-state ((component ,name))
              ,method-generated-by
-             (funcall ,get-initial-state)))
+             (tui--lifecycle-funcall ,get-initial-state component)))
        ,(when mount
           `(cl-defmethod tui--mount ((component ,name) start &optional end parent)
              ,method-generated-by
-             (funcall ,mount component start end parent)))
+             (tui--lifecycle-funcall ,mount component start end parent)))
        ,(when component-did-mount
           `(cl-defmethod tui-component-did-mount ((component ,name))
              ,method-generated-by
-             (funcall ,component-did-mount)))
+             (tui--lifecycle-funcall ,component-did-mount component)))
        ,(when get-derived-state-from-props
           `(cl-defmethod tui-get-derived-state-from-props ((component ,name) props state)
              ,method-generated-by
-             (funcall ,get-derived-state-from-props props state)))
+             (tui--lifecycle-funcall ,get-derived-state-from-props component props state)))
        ,(when should-component-update
           `(cl-defmethod tui-should-component-update ((component ,name) next-props next-state)
              ,method-generated-by
-             (funcall ,should-component-update next-props next-state)))
+             (tui--lifecycle-funcall ,should-component-update component next-props next-state)))
        ,(when render
           `(cl-defmethod tui-render ((component ,name))
              ,method-generated-by
-             (funcall ,render)))
+             (tui--lifecycle-funcall ,render component)))
        ,(when component-did-update
           `(cl-defmethod tui-component-did-update ((component ,name) prev-props prev-state)
              ,method-generated-by
-             (funcall ,component-did-update prev-props prev-state)))
+             (tui--lifecycle-funcall ,component-did-update component prev-props prev-state)))
        ,(when component-will-unmount
           `(cl-defmethod tui-component-will-unmount ((component ,name))
              ,method-generated-by
-             (funcall ,component-will-unmount)))
+             (tui--lifecycle-funcall ,component-will-unmount component)))
 
        ;; Constructor function
        (cl-defun ,name ,(append
@@ -533,6 +560,7 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
 
 (defun tui-force-update (component)
   "Force COMPONENT to re-render."
+  (interactive (list (tui-read-element-at-point)))
   (display-warning 'tui (format "FORCE-UPDATE %S %d" (tui--object-class component) (tui-node-id component)) :debug tui-log-buffer-name)
   (let* ((new-props (tui--get-props component))
          (new-state (tui--get-state component)))
@@ -541,30 +569,31 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
     (unless tui--applying-updates
       (tui--process-update-queue))))
 
-(defun tui-force-update-buffer (&optional buffer)
+(cl-defun tui-force-update-buffer (&optional (buffer (current-buffer)))
   "Update all tui components in BUFFER or current buffer."
   (interactive)
-  (mapc
-   #'tui-force-update 
-   tui--content-trees))
+  (with-current-buffer buffer
+    (mapc
+     #'tui-force-update
+     tui--content-trees)))
 
-(defmacro tui-render-with-buffer (buffer &rest content)
-  ;; TODO: implicit get-buffer-create for strings?
+;; (tui-render-with-buffer :: Buffer -> Content... -> Buffer)
+(defmacro tui-render-with-buffer (buffer content)
+  "Render ELEMENT in dedicated BUFFER and switch to that buffer.  Any existing contents of BUFFER will be replaced.
+
+Return buffer."
   (declare (indent 1))
-  "Render ELEMENT in dedicated BUFFER and switch to that buffer.  Any existing contents of BUFFER will be replaced."
-  `(let* ((render-fn (lambda () ,@content))
-          (buffer ,buffer))
-     (switch-to-buffer buffer)
-     (tui-render-element
-      (tui-buffer
-       :buffer buffer
-       :mode 'special-mode
-       (funcall render-fn)))
-     (set-window-buffer nil buffer)
-     (with-current-buffer buffer
-       (setq-local revert-buffer-function
-                   (lambda (ignore-auto noconfirm)
-                     (tui-render-with-buffer ,buffer ,@content))))))
+  (let* ((content-sym (make-symbol "content-sym"))
+         (buffer-sym (make-symbol "buffer"))
+         (buffer-element-sym (make-symbol "buffer-element")))
+    `(-let* ((,content-sym ,content)
+             (,buffer-sym ,buffer))
+       (tui-render-element
+        (tui-buffer
+         :buffer ,buffer-sym
+         ,content-sym))
+       (switch-to-buffer ,buffer-sym)
+       ,buffer-sym)))
 
 (defun tui-render-element (node &optional target)
   "Primary function for rendering content to a buffer.
@@ -575,31 +604,31 @@ Returns a reference to the root node of the rendered content.
 Optionally specify TARGET context for rendering NODE.  TARGET may
 be a character position, marker, buffer name, buffer, or another
 tui-element."
-  ;; FIXME: temporary measure until there's a mechanism for cleaning up the queue after errors
-  ;; (should probably just examine the queue and skip targets that are not live)
   (setq tui--update-queue nil)
-  (save-excursion
-    (save-current-buffer
-      (if (tui-element-p target)
-          (tui-append-child target node)
-        (cond
-         ((number-or-marker-p target)
-          (with-current-buffer (if (markerp target)
-                                   (marker-buffer target)
-                                 (current-buffer))
-            (goto-char target)))
-         ((stringp target)
-          (set-buffer (get-buffer-create target)))
-         ((bufferp target)
-          (set-buffer target)))
-        (let* ((node (tui--make-root-node node))
-               (marker-list (tui-node-marker-list node)))
-          (tui--mount node (tui-marker-list-insert marker-list (point-marker)))
-          (unless (tui-buffer-p node)
-            (push node tui--content-trees))
-          (tui--process-update-queue)
-          ;;(tui-valid-content-tree-p node)
-          node)))))
+  (let* ((inhibit-modification-hooks t))
+    (save-excursion
+      (save-current-buffer
+        (if (tui-element-p target)
+            (tui-append-child target node)
+          (cond
+           ((number-or-marker-p target)
+            (with-current-buffer (if (markerp target)
+                                     (marker-buffer target)
+                                   (current-buffer))
+              (goto-char target)))
+           ((stringp target)
+            (set-buffer (get-buffer-create target)))
+           ((bufferp target)
+            (set-buffer target)))
+          (let* ((node (tui--make-root-node node))
+                 (marker-list (tui-node-marker-list node)))
+            (tui--mount node (tui-marker-list-insert marker-list (point-marker)))
+            (unless (tui-buffer-p node)
+              (push node tui--content-trees))
+            (tui--process-update-queue)
+            ;;(tui-valid-content-tree-p node)
+            node
+            t))))))
 
 (cl-defmethod tui-rendered-p ((node tui-node))
   "Return t if ELEMENT has been rendered."
@@ -618,7 +647,6 @@ tui-element."
 ;;;; Internal
 
 (defun tui--normalize-node (node)
-  ;; TODO: set parent opportunistically?
   "Convert NODE's content tree to normalized form.
 
 A normalized content tree:
@@ -649,8 +677,6 @@ form.
 
 (defun tui--normalize-element (element)
   "Same as `tui-normalize-node'- except that it ensures that ELEMENT is an instance of `tui-element' (content is wrapped with a `tui-element' if necessary)."
-  ;; TODO: remove unnecessary nesting by plain tui-element wrappers?
-  ;; CLEANUP: reconcile with tui--normalize-component as tui--normalize ?
   (unless (tui-element-p element)
     (setq element
           (apply #'tui-create-element 'tui-element nil
@@ -685,10 +711,10 @@ form.
 Very basic now; simply apply updates until the queue is empty."
   (combine-after-change-calls
     (let* ((tui--applying-updates t)
-           (inhibit-read-only t))
+           (inhibit-read-only t)
+           (inhibit-modification-hooks t))
       (while tui--update-queue
         (tui--apply-update (pop tui--update-queue)))
-      ;; (let* ((inhibit-modification-hooks t))
       (run-hooks 'tui-update-hook)
       (while tui--update-queue
         (tui--apply-update (pop tui--update-queue))))))
@@ -702,7 +728,7 @@ Very basic now; simply apply updates until the queue is empty."
                            component)))
      ((tui-ref-p ref-value)
       (setf (tui-ref-element ref-value) (when (not with-nil-p)
-                                       component)))
+                                          component)))
      (ref-value
       (warn "Received an unexpected ref value")))))
 
@@ -726,8 +752,11 @@ Very basic now; simply apply updates until the queue is empty."
     (`(update-content ,node ,update-count ,new-content)
      (let* ((current-update-count (tui-node-update-count node)))
        (if (> current-update-count update-count)
-           (display-warning 'tui-diff (format "UPDATE-CONTENT SKIPPED (OUTDATED) %S (%d) %S" (tui--object-class node) (tui-node-id node) (substring-no-properties new-content)) :debug tui-log-buffer-name)
-         (display-warning 'tui-diff (format "UPDATE-CONTENT %S (%d) %S" (tui--object-class node) (tui-node-id node) (substring-no-properties new-content)) :debug tui-log-buffer-name)
+           (display-warning 'tui-diff (format "UPDATE-CONTENT SKIPPED (OUTDATED) %S (%d) %S" (tui--object-class node) (tui-node-id node)
+                                              new-content)
+                            :debug tui-log-buffer-name)
+         (display-warning 'tui-diff (format "UPDATE-CONTENT %S (%d) %s" (tui--object-class node) (tui-node-id node) new-content)
+                          :debug tui-log-buffer-name)
          (setf (tui-node-content node) new-content)
          (-let* (((start . end) (tui-segment node)))
            (tui--insert node)))))
@@ -761,12 +790,33 @@ Very basic now; simply apply updates until the queue is empty."
 
 (defvar-local tui--content-trees nil "Content trees local to the current buffer")
 
-(defun tui--unmount-buffer-content ()
-  "Unmount all content trees in the current buffer."
-  (mapc #'tui--unmount tui--content-trees)
-  (setq tui--content-trees nil))
+(cl-defun tui-buffer-content-trees (&optional (buffer (current-buffer)))
+  "Return a list of the root nodes of content trees mounted within BUFFER."
+  (buffer-local-value 'tui--content-trees buffer))
 
-(add-hook 'kill-buffer-hook #'tui--unmount-buffer-content)
+(defun tui-unmount-buffer-content-tree (tree)
+  "Unmount content TREE within the current buffer.  TREE is represented by the root node."
+  (interactive (list (tui-dev-read-buffer-content-tree (current-buffer))))
+  (tui--unmount tree))
+
+(defun tui-unmount-all-buffer-content-trees (buffer)
+  "Unmount all content trees within BUFFER or `(current-buffer)'."
+  (interactive (list (read-buffer "Unmount all tui content trees in buffer: ")))
+  (let* ((trees (tui-buffer-content-trees buffer)))
+    (when (or (not (called-interactively-p 'interactive))
+              (and (> (length trees) 0)
+                   (y-or-n-p
+                    (format "Unmount %d content trees in %s? "
+                            (length trees)
+                            (buffer-name buffer)))))
+      (mapcar #'tui-unmount-buffer-content-tree trees)
+      (setq tui--content-trees nil)
+      t)))
+
+(defun tui-unmount-current-buffer-content-trees ()
+  "Unmount all content trees in the current buffer."
+  (interactive)
+  (tui-unmount-all-buffer-content-trees (current-buffer)))
 
 (defun tui--updated-buffers ()
   "Return a list of buffers that have been marked as modified."
@@ -775,9 +825,9 @@ Very basic now; simply apply updates until the queue is empty."
      (buffer-local-value 'tui--buffer-modified-p buffer))
    (buffer-list)))
 
-(defun tui--mark-buffer-clean (buffer)
+(cl-defun tui--mark-buffer-clean (&optional (buffer (current-buffer)))
   "Reset the `tui--buffer-modified-p' flag on BUFFER."
-  (setf (buffer-local-value 'tui--buffer-modified-p (current-buffer)) nil))
+  (setf (buffer-local-value 'tui--buffer-modified-p buffer) nil))
 
 ;; (cl-defmethod tui--mark-subtree-dirty ((node tui-node))
 ;;   ""
@@ -799,5 +849,4 @@ Very basic now; simply apply updates until the queue is empty."
 ;;   )
 
 (provide 'tui-core)
-
 ;;; tui-core.el ends here

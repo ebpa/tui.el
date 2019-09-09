@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 (require 'tui-test-helper "test/tui-test-helper.el")
 (require 'buttercup)
 (require 's)
@@ -26,6 +27,11 @@
     ;; TODO: Raise an error when no method is supplied? (or is it not required?)
     ;; (expect (tui-define-component tui-test-component-c))
     ))
+
+(describe "Re-renders"
+  (it "should preserve point when possible")
+  (it "should preserve mark whenever possible")
+  (it "should preserve region whenever possible"))
 
 (describe "tui-component"
   (describe "lifecycle"
@@ -114,7 +120,7 @@
             (expect 'my/get-derived-state-from-props :not :to-have-been-called)
             (tui--set-props tui-element '(:a 70))
             (expect 'my/get-derived-state-from-props :to-have-been-called)))
-        (it "is is not called when component state is updated"
+        (it "is not called when component state is updated"
           (tui-with-rendered-element (my/test-component)
             (spy-on 'my/get-derived-state-from-props)
             (tui--set-state tui-element '(:b 0))
@@ -268,7 +274,7 @@
     (it "is not rendered when :invisible is truthy"
       (tui-with-rendered-element
         (tui-span :invisible t
-              :children "foo")
+                  :children "foo")
         (expect (buffer-string) :to-equal ""))))
 
   (it "hides only invisibile elements when intermixed with visible elements")
@@ -431,5 +437,19 @@
 (describe "tui--set-state"
   (it "causes an update when NO-UPDATE is nil")
   (it "does not update when NO-UPDATE is truthy"))
+
+(describe "tui-render-with-buffer"
+  (it "accepts a single content item"
+    (with-current-buffer
+        (tui-render-with-buffer "*test1*"
+          "foo")
+      (expect (buffer-substring-no-properties (point-min) (point-max))
+              :to-equal "foo")))
+  (it "accepts multiple content items"
+    (with-current-buffer
+        (tui-render-with-buffer "*test2*"
+          "a" "b" "c")
+      (expect (buffer-substring-no-properties (point-min) (point-max))
+              :to-equal "abc"))))
 
 (describe "tui-component")

@@ -6,6 +6,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
+(require 'tui-dom)
 
 (defun tui-get-node-at (&optional pos type)
   "Get the `tui-node' at POS.  Search ancestors for a node of type TYPE when TYPE is non-nil."
@@ -22,7 +23,7 @@
     (tui-parent (get-text-property pos 'tui-node))))
 
 (cl-defmethod tui--get-string ((node tui-node))
-  "Return the string representation of ELEMENT's content tree.  Returns nil if ELEMENT is not mounted."
+  "Return the string representation of NODE's content tree.  Return nil if NODE is not mounted."
   (-when-let* ((start (tui-start node))
                (end (tui-end node)))
     (with-current-buffer (marker-buffer start)
@@ -40,7 +41,7 @@
      ((tui--image-p content)
       (propertize "[image]" 'display content))
      ((numberp content)
-      (format "%d" content))
+      (format "%s" content))
      (t
       tui-error-placeholder-string))))
 
@@ -443,8 +444,8 @@ Returns a negative or zero number of there is no overflow."
 
 (defun tui-hide-element (element)
   "Hide ELEMENT and its subtree."
+  (interactive (list (tui-read-element-at-point "Hide element: ")))
   ;; OPTIMIZE: can preserve (cache) the content of the segment to potentially avoid re-render when made visible
-  (interactive)
   (display-warning 'tui-diff (format "HIDE %S" (tui--object-class element)) :debug tui-log-buffer-name)
   (setf (tui-element-invisible element) t)
   (-when-let* ((mounted (tui-element-mounted element))

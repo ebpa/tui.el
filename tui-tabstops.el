@@ -57,5 +57,4 @@ See also: `tui-forward-tabstop'."
     ))
 
 (provide 'tui-tabstops)
-
 ;;; tui-tabstops.el ends here

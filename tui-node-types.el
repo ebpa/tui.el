@@ -11,11 +11,11 @@
   ""
   start ;; "Start of segment"
   end ;; "End of segment"
-  content
-  mounted
+  content ;; "Current content of the node"
+  mounted ;; "t if node is mounted in some buffer"
   relative-index ;; "Index position of node within parent (cached value)"
   marker-list ;; "Reference to the containing content tree's ordered marker list."
-  id
+  id ;; "Unique identifier"
   (update-count 0))
 
 ;;;; Text Node
@@ -34,7 +34,8 @@
                            (:constructor tui-element-create (&key props invisible
                                                                   &aux (id (tui--new-id)))))
   props
-  invisible) ;; "Indicates whether the content element should be ignored when rendering."
+  invisible ;; "Indicates whether the content element should be ignored when rendering."
+  )
 
 ;;;; Component
 
@@ -124,5 +125,4 @@
                        (tui-equal elt-a elt-b)))))))
 
 (provide 'tui-node-types)
-
 ;;; tui-node-types.el ends here

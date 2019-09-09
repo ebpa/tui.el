@@ -24,21 +24,21 @@ It :width value is nil, the component width is variable."
   :prop-documentation
   (:minimum-padding "Minimum padding"
                     :align "One of: `left', `center', `right'.  (**not yet implemented**)"
-                    :width "Width (in characters) or a shared width object.")
+                    :width "Width (integer count of characters) or a shared width object.")
   :get-default-props
   (lambda ()
     (list :minimum-padding 0
           :align 'left))
   :render
-  (lambda ()
+  (lambda (_)
     (tui-let (&props children align)
       (list "" children "")))
   :component-did-mount
-  (lambda ()
+  (lambda (_)
     (unless tui-fixed-width--suppress-recalculation
       (tui-fixed-width--request-width component)))
   :component-did-update
-  (lambda (pref-props prev-state)
+  (lambda (_ pref-props prev-state)
     (tui-fixed-width--request-width component)))
 
 (defun tui-fixed-width--request-width (component)
@@ -57,9 +57,6 @@ It :width value is nil, the component width is variable."
         (tui-fixed-width--update component))))))
 
 (defun tui-fixed-width--update (component)
-  ;; TODO: callback?
-  ;; TODO: max-width and min-width
-  ;; TODO: clean up size calculations involving padding
   "Update COMPONENT width."
   (-let* ((inhibit-read-only t)
           ((&plist :padding-node padding-node)
@@ -134,5 +131,4 @@ It :width value is nil, the component width is variable."
     (tui--apply-inherited-text-props (tui-start padding-node) (tui-end padding-node) padding-node)))
 
 (provide 'tui-fixed-width)
-
 ;;; tui-fixed-width.el ends here

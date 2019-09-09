@@ -24,14 +24,13 @@
   ;; add and then remove box face
   )
 
-(tui-define-component tui-element-outline
-  :render
-  (lambda ()
-    ;; TODO
-    ))
+(tui-defun tui-element-outline (element)
+  "Structure outline of ELEMENT and its children."
+  ;; TODO: use tree component
+  (tui-element-outline-string element))
 
 (cl-defun tui-element-outline-string (element &optional (depth 0))
-  ""
+  "Return a string describing the structure of ELEMENT.  Indent string according to DEPTH."
   (interactive)
   (let ((prefix (make-string (* 2 depth) ? )))
     (if (null element)
@@ -68,10 +67,9 @@
                   start
                   end)))))))
 
-(defun tui-show-basic-element-outline (&optional node)
+(cl-defun tui-show-basic-element-outline ((node (tui-root-node (point))))
   "Show an outline representation of NODE for debugging purposes."
   (interactive)
-  (unless node (setq node (tui-root-node (point))))
   (let ((buffer (get-buffer-create "*Tui Tree*")))
     (save-current-buffer
       (with-current-buffer buffer
@@ -81,22 +79,32 @@
 
 (defun tui-show-element-outline (&optional node)
   "Show a an interactive outline representation of NODE."
-  ;; TODO: tree view
-  ;; TODO: links to navigate directly to items
   (interactive)
-  (tui-popup
-   (tui-element-outline
-    :element node)))
+  (tui-render-with-buffer "*tui-show-element-outline*"
+   (tui-element-outline-string node)))
 
-(defun tui-find-definition (&optional type)
-  "Find the definition of TYPE or an element at POINT."
-  (interactive)
-  (unless type (setq type (completing-read "Type: " (mapcar (lambda (element)
-                                                              (tui--object-class element))
-                                                            (tui-ancestor-elements-at (point)))
-                                           nil t)))
-  (when type
-    (find-function (intern (s-chop-prefix "cl-struct-" type)))))
+(cl-defun tui-read-type (&optional (prompt "Type: ") (options (tui-all-component-types)))
+  "Return a user-selected type as a symbol.
+
+Optionally override PROMPT string.
+Optionally limit types to OPTIONS."
+  (intern (completing-read "Type: " options nil t)))
+
+(defun tui-find-definition (type)
+  "Find the definition of tui component TYPE or an element at point."
+  (interactive (list (tui-read-type
+                      "Type: "
+                      (or (mapcar (lambda (element)
+                                    (tui--object-class element))
+                                  (tui-ancestor-elements-at (point)))
+                          (tui-all-component-types)))))
+  (tui-find-component type))
+
+(defun tui-find-component (type)
+  "Find the definition of tui component TYPE."
+  (interactive (list (tui-read-type)))
+  (let* ((type-name (symbol-name type)))
+    (find-function (intern (s-chop-prefix "cl-struct-" type-name)))))
 
 (put 'tui-wip 'invisible t)
 
@@ -107,6 +115,43 @@
       (put 'tui-wip 'invisible nil)
     (put 'tui-wip 'invisible t)))
 
-(provide 'tui-dev)
+(defun tui-dev-reset ()
+  "Try resetting some things in case the tui engine is behaving badly."
+  (interactive)
+  ;; In case of user tampering:
+  (setq tui--applying-updates nil)
+  ;; Disregard unprocessed updates
+  (setq tui--update-queue nil)
+  (mapcar #'tui--mark-buffer-clean (tui--updated-buffers)))
 
+(tui-defun tui-dev-content-tree-short-summary (tree)
+  "Single-line summary describing content TREE."
+  (list
+   (tui-node-label tree)
+   (if (tui-mounted-p tree)
+       (list " at "
+             (tui-link
+              :target (tui-start tree)
+              (prin1-to-string (tui-start tree))))
+     " not mounted")))
+
+(cl-defun tui-dev-list-content-trees (&optional (buffer (current-buffer)))
+  "Return a list of all content trees in BUFFER."
+  (interactive)
+  (tui-render-with-buffer "*tui-dev-list-content-trees*"
+    (--map
+     (tui-line (tui-dev-content-tree-short-summary :tree it))
+     (tui-buffer-content-trees))))
+
+(cl-defun tui-read-buffer-content-tree (&optional (buffer (current-buffer)) (prompt "Content Tree: "))
+  "Return a user-selected content tree within BUFFER.
+
+Optionally override PROMPT string."
+  (let* ((options (--map
+                   (cons (tui-render-to-string (tui-dev-content-tree-short-summary :tree it)) it)
+                   (tui-buffer-content-trees buffer))))
+    (assoc-default (completing-read prompt options)
+                   options)))
+
+(provide 'tui-dev)
 ;;; tui-dev.el ends here

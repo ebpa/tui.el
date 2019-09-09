@@ -26,7 +26,7 @@ This includes inherited text properties."
         (let* ((parent (tui-parent element)))
           (puthash element
                    (tui--extend-text-props (when parent (tui--get-merged-text-props parent))
-                                        (tui--get-grouped-text-props element))
+                                           (tui--get-grouped-text-props element))
                    tui--text-props))
       cached-props)))
 
@@ -103,7 +103,7 @@ Merge GROUPED-PROPS text property descriptions structured as `(replace push appe
                (puthash key value prop-table))
               ((listp existing-value)
                (puthash key (append existing-value
-                                    (list value))
+                                    value)
                         prop-table))
               (t
                (puthash key (cons existing-value (list value))
@@ -191,5 +191,4 @@ Optional argument OBJECT is a string to which the properties be applied.  START 
 
 
 (provide 'tui-text-props)
-
 ;;; tui-text-props.el ends here

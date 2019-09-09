@@ -31,5 +31,4 @@
       (spinner-print spinner))))
 
 (provide 'tui-spinner)
-
 ;;; tui-spinner.el ends here

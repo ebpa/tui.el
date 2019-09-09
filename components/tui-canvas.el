@@ -47,5 +47,4 @@
       (tui--set-state canvas `(:canvas-content ,(buffer-string)) no-update))))
 
 (provide 'tui-canvas)
-
 ;;; tui-canvas.el ends here

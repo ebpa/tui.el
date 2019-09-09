@@ -4,6 +4,7 @@
 ;; 
 
 (eval-when-compile (require 'cl-lib))
+(require 'tui-node-types)
 
 ;;; Code:
 
@@ -26,8 +27,7 @@ This is in contrast to merely setting it to 0.
 (defun tui--plist-merge (a b &rest rest)
   "Merge plists A, B, and REST into a new list.
 
-Ex: If a property is found in plists A and B, the returned list will contain the value from B."
-  ;; CLEANUP: Phrase this more clearly
+Values for keys in successive list will override those preceding it.  Ex: If a property key is found in plists A and B, the returned list will contain the value from B."
   (let* ((merged (cl-copy-seq a)))
     (cl-loop for (key val) on b by 'cddr
              do (setq merged (plist-put merged key val)))
@@ -107,10 +107,13 @@ See also: `tui-first-subtree-node'."
   (let* ((old-list (tui--plist-to-sorted-alist old-plist))
          (new-list (tui--plist-to-sorted-alist new-plist))
          (-compare-fn (lambda (a b)
-                        (and (equal (symbol-name (car a))
-                                    (symbol-name (car b)))
-                             (tui-equal (cdr a)
-                                        (cdr b)))))
+                        (and
+                         ;; TODO: confirm #'eq is adequate and use that instead of the test immediately below
+                         ;; (eq (car a) (car b))
+                         (equal (symbol-name (car a))
+                                (symbol-name (car b)))
+                         (tui-equal (cdr a)
+                                    (cdr b)))))
          (difference (-difference new-list old-list)))
     ;;(display-warning 'tui (format "(differences: %S)" (mapcar #'car difference)) :debug tui-log-buffer-name)
     (cl-loop for (key . value) in difference
@@ -130,7 +133,6 @@ See also: `tui-first-subtree-node'."
   "Same as `tui-put-text-properties', but only set a single key-value pair."
   (tui-put-text-properties start end (list key value) object replace-behavior))
 
-;; TODO: use (if (eq key 'face) (add-face-text-property start end value)
 (defun tui-put-text-properties (start end properties &optional object replace-behavior)
   "Apply text properties to region between START and END.
 
@@ -230,8 +232,7 @@ Optional argument INVISIBLE-CONTEXT track whether the this node is within an inv
         (tui-child-nodes element))))
 
 (defun tui-valid-content-tree-p (node)
-  "Return t if NODE belongs to a valid content tree (it calls `tui-valid-element-p' on the root element)."
-  ;; CLEANUP: better method for recursive assertions?
+  "Return t if NODE belongs to a valid content tree (call `tui-valid-element-p' on the root element)."
   (tui-valid-element-p (tui-root-node node)))
 
 (defun tui--clean-plist (plist)
@@ -261,17 +262,29 @@ Optional argument INVISIBLE-CONTEXT track whether the this node is within an inv
         (% target-index num-columns)
       (+ num-columns (% target-index num-columns)))))
 
-(defmacro tui-let (symbol-args &rest body)
-  "Convenience form for destructuring state and prop values.
+(defmacro tui-let (bindings &rest body)
+  "Convenience form for binding state and prop values of BINDINGS for evaluation of BODY.
 
-For use in any context where `tui-get-props' and `tui-get-state' are defined."
-  ;; TODO: add an informative error message when used outside an appropriate component lifecycle method
+For use in any context where `tui-get-props' and `tui-get-state' are defined.
+See: `tui-let*'."
   (declare (debug ((&rest symbolp)
                    body))
            (indent 1))
-  (let ((props (make-symbol "props"))
-        (state (make-symbol "state"))
-        prop-vars state-vars)
+  `(tui-let* (,bindings tui-this-component)
+     ,@body))
+
+(defmacro tui-let* (bindings &rest body)
+  "Convenience form for binding state and prop values from a component reference for the execution of BODY.
+
+BINDINGS should be a list of the form (&props PROP-A PROP-B ... &state STATE-VAR-A ...)."
+  (declare (debug ((&rest symbolp)
+                   body))
+           (indent 1))
+  (-let* (((symbol-args this-ref) bindings)
+          (this-sym (make-symbol "this"))
+          (prop-sym (make-symbol "prop"))
+          (state-sym (make-symbol "state"))
+          prop-vars state-vars)
     (while (member (car symbol-args) '(&props &state))
       (let* ((var-count (or (-find-index (lambda (item)
                                            (member item '(&props &state)))
@@ -285,15 +298,16 @@ For use in any context where `tui-get-props' and `tui-get-state' are defined."
            (setq state-vars (append state-vars
                                     (-take var-count symbol-args)))))
         (setq symbol-args (nthcdr var-count symbol-args))))
-    `(let* ,(append (when prop-vars
-                      `((,props (tui-get-props))))
+    `(let* ,(append `((,this-sym ,this-ref))
+                    (when prop-vars
+                      `((,prop-sym (tui-get-props ,this-sym))))
                     (when state-vars
-                      `((,state (tui-get-state))))
+                      `((,state-sym (tui-get-state ,this-sym))))
                     (mapcar (lambda (var)
-                              `(,var (plist-get ,props ,(intern (concat ":" (symbol-name var))))))
+                              `(,var (plist-get ,prop-sym ,(intern (concat ":" (symbol-name var))))))
                             prop-vars)
                     (mapcar (lambda (var)
-                              `(,var (plist-get ,state ,(intern (concat ":" (symbol-name var))))))
+                              `(,var (plist-get ,state-sym ,(intern (concat ":" (symbol-name var))))))
                             state-vars))
        ,@body)))
 
@@ -381,8 +395,7 @@ Return t if a component definition exists and was successfully removed and retur
   "Return a list of symbols for all tui components that have been defined."
   (let* (types)
     (do-symbols (symbol)
-      (when (and (s-matches-p "^tui" (symbol-name symbol))
-                 (symbol-function symbol)
+      (when (and (symbol-function symbol)
                  (when (cl--find-class symbol)
                    (member 'tui-component
                            (mapcar
@@ -391,11 +404,18 @@ Return t if a component definition exists and was successfully removed and retur
         (push symbol types)))
     types))
 
-;; (tui-read-component-type String -> String)
+(defun tui-all-builtin-component-types ()
+  "Return a list of all ``built-in'' component types (``tui-'')."
+  (--filter
+   (s-matches-p "^tui" (symbol-name it))
+   (tui-all-component-types)))
+
+;; (tui-read-component-type String -> Symbol)
 (cl-defun tui-read-component-type (&optional (prompt "Component type: "))
-  "Return a component type."
-  ;; CLEANUP: this should probably return a symbol
-  (completing-read prompt (tui-all-component-types)))
+  "Return a component type.
+
+Optionally override PROMPT string."
+  (intern (completing-read prompt (tui-all-component-types))))
 
 (cl-defun tui-component--docstring (documentation prop-documentation state-documentation)
   "Internal function for building component docstrings."
@@ -421,6 +441,71 @@ Return t if a component definition exists and was successfully removed and retur
   (cl-loop for (key value) on plist by #'cddr
            collect key))
 
-(provide 'tui-util)
+(defun tui-describe-element (element)
+  "Show information about ELEMENT."
+  (interactive (list (tui-read-element-at-point)))
+  (list
+   (tui-heading (symbol-name element))
+   (tui-line "instances: " "[not indexed]")))
 
+(defun tui-element-summary-show (element)
+  "Render RENDER-FN-SYMBOL to a dedicated buffer and return that buffer."
+  (interactive (list (tui-read-element-at-point)))
+  (lexical-let* ((buffer-name (format "*tui-element-summary: %s*" (cl-prin1-to-string element))))
+    (tui-render-with-buffer buffer-name
+      (tui-element-summary :element element))))
+
+(defun tui-node-label (node)
+  "Return a terse (human) label string for NODE."
+  (format "%s (%s)" (tui--type node) (tui-node-id node)))
+;; TODO: eliminate?
+(defalias 'tui-element-label 'tui-node-label)
+
+(cl-defun tui-read-element-at-point (&optional (prompt "Element: "))
+  "Return a user-selected element at point.
+
+Optionally override PROMPT string."
+  (let* ((elements (tui-ancestor-elements-at (point)))
+         (options (--map
+                   (cons (tui-element-label it) it)
+                   elements)))
+    (assoc-default (completing-read prompt options)
+                   options)))
+
+(defun tui--abbreviate-string (length string)
+  ""
+  (if (<= (length string) length)
+      string
+    (propertize
+     (s-truncate length string "…")
+     'help-echo string)))
+
+(defmacro tui-with-content-reported-error (body)
+  "Helper for trapping and reporting errors inline as an element."
+  `(condition-case err
+       ,body
+     (t (tui-span
+         :text-props-push `(help-echo ,(prin1-to-string err))
+         "(error)"))))
+
+(defun tui-util--shr-render-html-to-string (html-string)
+  "Render HTML-STRING to a string."
+  (let* ((html-dom (with-temp-buffer
+                     (insert html-string)
+                     (libxml-parse-html-region (point-min) (point-max)))))
+    (with-temp-buffer
+      (shr-insert-document html-dom)
+      (buffer-string))))
+
+(defun tui--easy-going-apply (fn &rest arguments)
+  "Make an ``easy-going'' funcall to FN with args- tolerating FN definitions with arity of four fewer than the length of arguments.  The last value of ARGUMENTS is treated as a list of args (the same way as `apply')."
+  (-let* ((args (apply #'apply #'list arguments))
+          (max-arity (cdr (func-arity fn))))
+    (apply fn (if (eq max-arity 'many)
+                  args
+                (seq-take args max-arity)))))
+
+;; (tui--easy-going-apply (lambda (x y z) (list x y z)) 1 2 '(3 4 5))
+
+(provide 'tui-util)
 ;;; tui-util.el ends here

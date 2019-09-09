@@ -1,4 +1,4 @@
-;;; tui-tic-tac-toe.el --- A demo implementation of Tic-Tac-Toe
+;;; tui-tic-tac-toe.el --- A demo implementation of Tic-Tac-Toe  -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; 
@@ -13,7 +13,7 @@
 (require 'tui-div)
 (require 'tui-ol)
 
-;; Design (for monospaced fonts)
+;; Design reference (for monospaced fonts)
 
 ;;  ⌜ ⌝ ⌜ ⌝ ⌜ ⌝
 ;;   X   O   X    Next player: X
@@ -26,13 +26,12 @@
 ;;  ⌞ ⌟ ⌞ ⌟ ⌞ ⌟
 
 
-(defun tui-tic-tac-toe--square (value i)
-  "Build a tic-tac-toe cell from SQUARES for cell I."
+(tui-defun-2 tui-tic-tac-toe-cell (value i)
+  "Build a tic-tac-toe cell containing VALUE for cell I with appropriate absolute x,y positioning."
   (tui-button
-   :x (* (% i 3) 4)
-   :y (* (/ i 3) 3)
    :max-width 3
    :max-height 3
+   :face nil
    :action `(lambda (event)
               (interactive "e")
               (-when-let* ((game (tui-get-element-at (posn-point (event-start event)) 'tui-tic-tac-toe-game)))
@@ -42,20 +41,16 @@
     (format " %s \n" (or value " "))
     "⌞ ⌟\n")))
 
-(tui-define-component tui-tic-tac-toe-board
-  :render
-  (lambda ()
-    (let ((squares (plist-get (tui-get-props) :squares)))
-      (tui-absolute-container
-       (tui-tic-tac-toe--square (nth 0 squares) 0)
-       (tui-tic-tac-toe--square (nth 1 squares) 1)
-       (tui-tic-tac-toe--square (nth 2 squares) 2)
-       (tui-tic-tac-toe--square (nth 3 squares) 3)
-       (tui-tic-tac-toe--square (nth 4 squares) 4)
-       (tui-tic-tac-toe--square (nth 5 squares) 5)
-       (tui-tic-tac-toe--square (nth 6 squares) 6)
-       (tui-tic-tac-toe--square (nth 7 squares) 7)
-       (tui-tic-tac-toe--square (nth 8 squares) 8)))))
+(tui-defun-2 tui-tic-tac-toe-board (squares &this this)
+  "Render Tic-Tac-Toe board."
+  (tui-absolute-container
+   :children
+   (cl-loop for i from 0 to 8
+            collect
+            (tui-tic-tac-toe-cell
+             :x (* (% i 3) 4)
+             :y (* (/ i 3) 3)
+             :value (nth i squares) :i i))))
 
 (tui-define-component tui-tic-tac-toe-game
   :documentation "A demo implementation of Tic-Tac-Toe.
@@ -65,11 +60,11 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
   (:history "Representation of the current board state and the board state of all previous turns in the current game."
             :x-is-next "Truthy if 'X' is the next player to play.")
   :get-initial-state
-  (lambda ()
+  (lambda (_)
     (list :history (list (make-list 9 nil))
           :x-is-next t))
   :render
-  (lambda ()
+  (lambda (this)
     (tui-let (&state history x-is-next)
       (let* ((step-number (- (length history) 1))
              (current (nth step-number history))
@@ -80,7 +75,7 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
           :y 3
           :width 11
           :height 9
-          :squares current)
+          :squares (copy-list current))
          (tui-div
           :x 17
           :y 2
@@ -89,9 +84,9 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
           (if winner
               (tui-div (concat "Winner: " winner))
             (tui-div (concat
-                   "Next player: "
-                   (if x-is-next "X" "O")
-                   "        ")))
+                      "Next player: "
+                      (if x-is-next "X" "O")
+                      "        ")))
           "\n"
           (tui-ol
            :children
@@ -133,8 +128,8 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
          (history (plist-get state :history)))
     (tui--save-point-row-column
      (tui--set-state game
-                  (list :history (cl-subseq history 0 (+ 1 turn-number))
-                        :x-is-next (= (% turn-number 2) 0))))))
+                     (list :history (cl-subseq history 0 (+ 1 turn-number))
+                           :x-is-next (= (% turn-number 2) 0))))))
 
 ;;;###autoload
 (defun tui-tic-tac-toe-insert-game ()
@@ -145,7 +140,7 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
 
 ;;;###autoload
 (defun tui-play-tic-tac-toe ()
-  ""
+  "Play a game of Tic Tac Toe."
   (interactive)
   (let* ((buffer (get-buffer-create "*Tic Tac Toe*")))
     (tui-render-element
@@ -173,5 +168,4 @@ Basedon on Dan Abramov's Tic-Tac-Toe tutorial for React at https://codepen.io/ga
              return (nth a squares))))
 
 (provide 'tui-tic-tac-toe)
-
 ;;; tui-tic-tac-toe.el ends here

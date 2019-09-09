@@ -21,5 +21,4 @@
   '(tui-snippets-initialize))
 
 (provide 'tui-snippets)
-
 ;;; tui-snippets.el ends here

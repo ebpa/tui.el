@@ -31,8 +31,8 @@
         (when (tui--plist-changes old-props new-props)
           (list (list 'update-props old-node new-props)))))
      ((tui-text-node-p old-node)
-      (when (not (equal (tui-node-content old-node)
-                        (tui-node-content new-node)))
+      (when (not (equal-including-properties (tui-node-content old-node)
+                                             (tui-node-content new-node)))
         (list (list 'update-content old-node (tui-node-update-count old-node) (tui-node-content new-node)))))))
    (t
     (list (list 'replace old-node new-node)))))

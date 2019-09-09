@@ -21,12 +21,12 @@ Child elements will be positioned by properties on the child elements themselves
 :max-width - Maximum width of the copied content.
 :max-height - Maximum height of the copied content."
   :get-initial-state
-  (lambda ()
+  (lambda (this)
     (list :canvas-ref (tui-create-ref)
           ;; :buffer (get-buffer-create (format " *tui-absolute-container-%d*" (tui-node-id component)))
           :child-buffers (make-hash-table :test #'equal)))
   :render
-  (lambda ()
+  (lambda (this)
     (tui-let (&props children &state canvas-content canvas-ref child-buffers)
       (tui-div
        (tui-span
@@ -42,14 +42,14 @@ Child elements will be positioned by properties on the child elements themselves
        (tui-canvas
         :ref canvas-ref))))
   :component-did-mount
-  (lambda ()
+  (lambda (this)
     (tui-absolute-container--update component))
-  ;; :component-did-update
-  ;; (lambda (next-props next-state)
-  ;;   (when (or (not (eq next-props (tui-get-props)))
-  ;;             (not (tui--plist-equal (tui--plist-delete next-state :canvas-content) (tui--plist-delete (tui-get-state) :canvas-content))))
-  ;;     (tui-absolute-container--update component)))
-  )
+  :component-did-update
+  (lambda (this next-props next-state)
+    ;; (when (or (not (eq next-props (tui-get-props)))
+    ;;           (not (tui--plist-equal (tui--plist-delete next-state :canvas-content) (tui--plist-delete (tui-get-state) :canvas-content))))
+    ;;   (tui-absolute-container--update this))
+    ))
 
 (defun tui-absolute-container--update-parent (&rest ignore)
   "Helper to update the parent container."
@@ -148,7 +148,7 @@ Child elements will be positioned by properties on the child elements themselves
                                  (-lambda ((height-a) (height-b))
                                    (> height-a height-b))
                                  (mapcar (lambda (container)
-                                           (cons (tui-node-height container) container))
+                                           (cons (tui--node-height container) container))
                                          containers))))
     (mapcar #'cdr containers-by-height)))
 
@@ -160,7 +160,7 @@ Child elements will be positioned by properties on the child elements themselves
       (display-warning 'tui-absolute-container (format "UPDATING %S" (mapcar #'tui-node-id containers)) :debug tui-log-buffer-name))
     (mapc #'tui-absolute-container--update containers)))
 
-;;(add-hook 'tui-update-hook #'tui-absolute-container--update-all)
+(add-hook 'tui-update-hook #'tui-absolute-container--update-all)
 
 (defmacro tui--save-point-row-column (&rest body)
   "Utility macro to restore point based on the row and column."
@@ -180,9 +180,7 @@ Child elements will be positioned by properties on the child elements themselves
 
 (defun tui--show-indirect-buffer (element)
   "Show indirect buffer in a separate window."
-  (interactive)
-  ;; (unless element
-  ;;   (setq element (tui-get-element-at (point) 'tui-absolute-container)))
+  (interactive (list (tui-get-element-at (point) 'tui-absolute-container)))
   (-when-let* ((buffer-name (plist-get (tui--get-state element) :buffer-ref)))
     (switch-to-buffer-other-window buffer-name)))
 
@@ -201,5 +199,4 @@ Child elements will be positioned by properties on the child elements themselves
 ;;   (kill-matching-buffers "\\ \\*Tui-"))
 
 (provide 'tui-absolute-container)
-
 ;;; tui-absolute-container.el ends here

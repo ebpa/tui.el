@@ -7,21 +7,12 @@
 
 ;;; Code:
 
-(tui-define-component tui-prefix-lines
-  :documentation
-  "Prefix all lines rendered by :content child elements with :prefix."
-  :prop-documentation
-  (
-   :prefix "String to display at the beginning of each line."
-   )
-  :render
-  (lambda ()
-    (tui-let (&props prefix children)
-      (tui-span
-       :text-props-safe `(line-prefix ,prefix
-                                      wrap-prefix ,prefix)
-       :children children))))
+(tui-defun-2 tui-prefix-lines (prefix children)
+  "Prefix all lines rendered by child elements with PREFIX."
+  (tui-span
+   :text-props-merge `(line-prefix ,prefix
+                                   wrap-prefix ,prefix)
+   :children children))
 
 (provide 'tui-prefix-lines)
-
 ;;; tui-prefix-lines.el ends here

@@ -1,4 +1,4 @@
-;;; tui-demo.el --- Demo-related logic
+;;; tui-demo.el --- Demo-related logic  -*- lexical-binding: t; -*-
 
 
 ;;; Commentary:
@@ -6,6 +6,7 @@
 
 (eval-when-compile (require 'cl))
 (require 'tui-core)
+(require 'tui-defun)
 
 ;;; Code:
 
@@ -17,31 +18,31 @@
 
 (put 'tui-demo-mode 'mode-class 'special)
 
-(defun tui-show-component-demo (content)
+(defun tui-show-component-demo (component demo-name)
+  "Display demo content with DEMO-NAME for COMPONENT in a dedicated buffer."
+  (interactive (let* ((component (tui-read-component-type)))
+                 (list component
+                       (completing-read "Demo: " (mapcar #'car (get component 'tui-demos))))))
+  (-when-let* ((demo-fn (assoc-default demo-name
+                                       (get component 'tui-demos))))
+    (tui-show-demo-content
+     (list
+      (tui-heading (symbol-name component))
+      (tui-line demo-name)
+      (funcall demo-fn)))))
+
+(defun tui-show-demo-content (content)
   "Display demo CONTENT in a dedicated buffer."
-  (interactive
-   (let* ((component-type (tui-read-component-type)))
-     (list (funcall (intern component-type)))))
-  (setq content (tui--normalize-node content))
-  (if (eq (tui--object-class content) 'tui-buffer)
-      (progn
-        (tui-render-element content)
-        (switch-to-buffer
-         (plist-get (tui--get-props content) :buffer)))
-    (let ((buffer (format "*%s Demo*" (symbol-name (tui--object-class content)))))
-      (tui-render-element
-       (tui-buffer :buffer buffer
-                   :mode #'tui-demo-mode
-                   content))
-      (switch-to-buffer buffer))))
+  (with-current-buffer (tui-render-with-buffer "*Tui Demo*" content)
+    (tui-demo-mode)))
 
 (tui-define-component my/greeting
   :get-default-props
   (lambda ()
     (list :name "World"))
   :render
-  (lambda ()
-    (tui-let (&props name)
+  (lambda (this)
+    (tui-let* ((&props name) this)
       (format "Hello, %s!\n" name))))
 
 (defun my/basic-question ()
@@ -66,36 +67,35 @@
 ;;     (define-key map [mouse-1] #'tui-confirmation)
 ;;     map))
 
-(tui-define-component tui-demo-basic-counter
-  :documentation
+(tui-defun-2 tui-demo-basic-counter (start-value &this counter &state (or start-value 0))
   "Basic counter control"
-  :get-initial-state
-  (lambda ()
-    (or (plist-get (tui-get-props) :start-value)
-        0))
-  :render
-  (lambda ()
-    (lexical-let ((counter (tui-get-state))
-                  (component component))
-      (cl-flet ((incr-counter () (interactive) (tui--set-state component (+ 1 counter)))
-                (decr-counter () (interactive) (tui--set-state component (- counter 1))))
-        (list counter
-              " "
-              (propertize "⏶"
-                          'keymap
-                          ;;`(keymap (down-mouse-1 . ,(lambda () (interactive) (tui-set-state 5)))))
-                          `(keymap (down-mouse-1 . ,#'incr-counter)))
-              (propertize "⏷"
-                          'keymap
-                          `(keymap (down-mouse-1 . ,#'decr-counter))))))))
+  (let* ((keymap (make-sparse-keymap)))
+    (define-key keymap [down-mouse-1] (lambda ()
+                                        (interactive)
+                                        (tui-set-state (-lambda ((&plist :count count))
+                                                         (list :count (+ 1 count))))))
+    ;; (cl-flet ((incr-counter () (interactive) (tui-set-state `(:count ,(+ 1 count))))
+    ;;           (decr-counter () (interactive) (tui-set-state `(:count ,(- count 1)))))
+    (list count
+          " > "
+          (propertize "⏶"
+                      'keymap keymap
+                      ;;`(keymap (down-mouse-1 . ,(lambda () (interactive) (tui-set-state 5)))))
+                      ;; `(keymap (down-mouse-1 . ,))
+                      )
+          (propertize "⏷"
+                      ;; 'keymap
+                      ;; `(keymap (down-mouse-1 . ,#'decr-counter))
+                      ))))
 
 (defmacro tui-define-demo (component description &rest body)
   "Define a demonstration of the use of COMPONENT.  DESCRIPTION is used as a label and BODY returns the content to be rendered."
   (declare (indent 2))
   `(let ((render-fn (lambda ()
                       ,@body))
-         (existing-demos (get ,component 'tui-demos)))
-     (put ',component 'tui-demos (put-alist ,description render-fn existing-demos))))
+         (existing-demos (get ',component 'tui-demos)))
+     (put ',component 'tui-demos (cons (cons ,description render-fn)
+                                       (cl-remove ,description existing-demos :test #'equal :key #'car)))))
 
 ;; (tui-show-all-component-demos :: void)
 (defun tui-show-all-component-demos ()
@@ -104,10 +104,14 @@
   (tui-render-with-buffer "*Tui Demos (all)*"
     (mapcar
      (lambda (component)
-       (tui-div
-        (tui-heading (symbol-name component))
+       (tui-expander
+        :header (tui-heading (symbol-name component))
+        :expanded-glyph "⏶"
+        :collapsed-glyph "⏷"
         (tui-component-demos :component component)))
-     (tui-all-component-types))))
+     (--filter
+      (get it 'tui-demos)
+      (tui-all-component-types)))))
 
 ;; (tui-show-component-demos String -> void)
 (defun tui-show-component-demos (component)

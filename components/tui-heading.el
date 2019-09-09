@@ -20,5 +20,4 @@
         children)))))
 
 (provide 'tui-heading)
-
 ;;; tui-heading.el ends here

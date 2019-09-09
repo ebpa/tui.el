@@ -101,21 +101,20 @@ Optional argument COLLAPSE-GLYPH - glyph to show when expanded."
   (lambda ()
     (list :initially-expanded t))
   :get-initial-state
-  (lambda ()
+  (lambda (_)
     nil)
   :get-derived-state-from-props
-  (lambda (props state)
+  (lambda (_ props state)
     (when (not (plist-member state :expanded))
       (list :expanded (plist-get props :initially-expanded))))
   :render
-  (lambda ()
+  (lambda (_)
     (tui-let (&props header children collapsed-glyph expanded-glyph &state expanded)
-      (tui-div
+      (tui-span
        :text-props `(keymap ,tui-expander-keymap)
        :replace-behavior nil
        (tui-span
         :text-props-replace `(font-lock-ignore t
-                                       face (:background "blue")
                                        keymap ,tui-expander-glyph-keymap)
         (if expanded
             (or expanded-glyph "⊟")

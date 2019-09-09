@@ -14,32 +14,25 @@
     (define-key map [mouse-1] 'tui-link-follow-link-click)
     map))
 
-(tui-define-component tui-link
-  :documentation
-  "A basic link control"
-  :prop-documentation
-  (:target "Marker, function, or filename.")
-  :render
-  (lambda ()
-    (let* ((props (tui-get-props))
-           (face (if (plist-member props :face)
-                     (plist-get props :face)
-                   'org-link))
-           (text-props (append
-                        `(keymap ,tui-link-keymap
-                                 font-lock-ignore t
-                                 tui-link-target ,(plist-get (tui-get-props) :target))
-                        (when face
-                          `(face ,face)))))
-      (tui-span
-       :text-props-replace text-props
-       :children
-       (plist-get (tui-get-props) :children)))))
+(tui-defun-2 tui-link ((face 'button) target children &this this)
+  "A basic link control.  TARGET may be a Marker, function, or filename."
+  (let* ((text-props (append
+                      `(keymap ,tui-link-keymap
+                               font-lock-ignore t
+                               tui-link-target ,target)
+                      (when face
+                        `(font-lock-face ,face
+                                 face ,face)))))
+    (tui-span
+     :text-props-replace text-props
+     :children children)))
+
+
+
 
 (defun tui-link-follow-link-click (event)
   "Handle click EVENT for following link."
   (interactive "e")
-  ;; TODO: reconcile this function with tui-link-follow-link ?
   (tui-link-follow-link (posn-point (event-end event))))
 
 (defun tui-link-follow-link (&optional pos)

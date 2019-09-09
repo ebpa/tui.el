@@ -7,13 +7,9 @@
 
 ;;; Code:
 
-(tui-define-component tui-span
-  :documentation "HTML 'span'-like compnent for grouping content."
-  :render
-  (lambda ()
-    (tui-let (&props children)
-      children)))
+(tui-defun tui-span (children)
+  "HTML 'span'-like compnent for grouping content."
+  children)
 
 (provide 'tui-span)
-
 ;;; tui-span.el ends here

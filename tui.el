@@ -5,8 +5,8 @@
 ;; Author: Erik Anderson <erik@ebpa.link>
 ;; Homepage: https://github.com/ebpa/tui.el
 ;; Keywords: maint
-;; Version: 0.0.2
-;; Package-Requires: ((emacs "26.1") (cl-lib "0.6.1") (s "1.12.0") (dash "2.12.0") (dash-functional "1.2.0")  (elsa "20190211.1921"))
+;; Version: 0.0.3
+;; Package-Requires: ((emacs "26.1") (cl-lib "0.6.1") (s "1.12.0") (dash "2.12.0") (dash-functional "1.2.0") (elsa "20190211.1921"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -49,13 +49,14 @@
 
 (require 'tui-demo "demo/tui-demo.el")
 (require 'tui-dev)
+(require 'tui-defun)
 (require 'tui-reconciler)
 (require 'tui-shared-size)
 (require 'tui-snippets)
 (require 'tui-tabstops)
 (require 'tui-util)
+(require 'tui-util-ui)
 
 (provide 'tui)
-
 ;;; tui.el ends here
- 
+

@@ -88,3 +88,9 @@
     (expect (tui--plist-changes '(:a (1 2 3)) '(:a (1 2 3)))
             :to-equal '(:a (1 2 3)))
     (expect 'tui-equal :to-have-been-called)))
+
+(describe "tui--type"
+  (it "returns nil for an unknown object type"
+    (expect (tui--type nil) :to-be nil)
+    (expect (tui--type '(1)) :to-be nil)
+    (expect (tui--type [1]) :to-be nil)))

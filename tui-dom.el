@@ -27,7 +27,7 @@ Returns NODE."
     (-let* ((content (tui-element-content parent))
             (target-division (car (tui--separating-divisions parent index)))
             ((target-start target-end) (cl-rest (tui-marker-list-split-node (tui-node-marker-list parent)
-                                                                         target-division 2))))
+                                                                            target-division 2))))
       ;; (if (eq node node-after-target)
       ;;     (display-warning 'tui (format "Node %S already at index %d" (tui--object-class node) index) :debug tui-log-buffer-name)
       (cl-assert (not (null target-division)) t "Target marker for insertion not found.")
@@ -42,7 +42,6 @@ Returns NODE."
   "Internal function.
 
 Return pair of divisions within ELEMENT at INDEX corresponding to be used for inserting content at INDEX."
-  ;; TODO: no endpoints available in an unmounted element
   (let* ((content (tui-element-content element))
          (content-length (length content)))
     (cond
@@ -84,16 +83,19 @@ Return pair of divisions within ELEMENT at INDEX corresponding to be used for in
 
 (defun tui-root-node (&optional thing)
   "Return the root node of the tree that THING is part of."
-  ;; CLEANUP
-  (unless thing (setq thing (tui-get-element-at (point))))
-  (if (tui-node-p thing)
-      (or (-last-item (tui-ancestor-elements thing))
-          thing)
-    (-last-item (tui-ancestor-elements-at thing))))
+  (unless (tui-node-p thing)
+    (setq thing (tui-get-node-at (point))))
+  (if (tui-root-node-p thing)
+      thing
+    (-last-item (tui-ancestor-elements thing))))
 
 (defun tui-root-node-p (node)
   "Return t if NODE is the root element of its content tree."
   (not (tui-parent node)))
+
+(cl-defmethod tui-child-nodes (obj)
+  "Return nil.  List of child nodes of OBJ (a non-tui object) is nil."
+  nil)
 
 (cl-defmethod tui-child-nodes ((node tui-node))
   "Return a list of child nodes of NODE."
@@ -145,7 +147,7 @@ Filter returned elements according to TYPE.  All ancestors are returned when TYP
            (tui-ancestor-elements element)))))
 
 (defun tui-ancestor-elements (node &optional type)
-  "Return ancestor elements of NODE with the root node is last.
+  "Return ancestor elements of NODE with the root node last.
 
 Filter returned elements according to TYPE.  All ancestors are returned when TYPE is nil."
   (when node
@@ -172,7 +174,7 @@ MARKER-LIST may be passed when mounting child elements in an alternate buffer."
          (ancestry (gethash node tui--element-parent-table)))
     (when (or parent marker-list)
       (setf (tui-node-marker-list node) (or marker-list
-                                         (tui-element-marker-list parent))))
+                                            (tui-element-marker-list parent))))
     (if ancestry
         (setcdr ancestry parent-ancestry)
       (puthash node (cons node parent-ancestry) tui--element-parent-table))))
@@ -182,10 +184,6 @@ MARKER-LIST may be passed when mounting child elements in an alternate buffer."
   "Move subtree rooted at NODE to INDEX position within PARENT.
 
 Returns NODE."
-  ;; TODO: must be within the same content tree?
-  ;; TODO: ensure proper behavior for unmounted nodes (combinations of unmounted source and target)
-  ;; TODO: test that this works for movement within an invisible section (edge case with same markers everywhere)
-  ;; TODO: handle special case of movement of a zero-length node (ex: invisible)
   (display-warning 'tui (format "MOVE-SUBTREE %S to position %d in %S" (tui--object-class node) index (tui--object-class parent)) :debug tui-log-buffer-name)
   (-let* ((current-parent (tui-parent node))
           (current-index (tui-node-relative-index node))
@@ -212,7 +210,9 @@ Returns NODE."
         (tui--update-node-index-positions (tui-child-nodes new-parent))
         ;; Move node markers
         (tui-marker-list-move-segment marker-list source-start source-end target-start target-end)
-        (tui--apply-inherited-text-props (tui-start node) (tui-end node) parent)))
+        ;; TODO: restore this
+        ;; (tui--apply-inherited-text-props (tui-start node) (tui-end node) parent)
+        ))
     node))
 
 (defun tui--update-node-index-positions (nodes)
@@ -235,7 +235,7 @@ if one is a parent of the other.
 
 Signals an error if A and B are not in the same content tree."
   (tui--relative-position (tui-index-position a)
-                       (tui-index-position b)))
+                          (tui-index-position b)))
 
 (defun tui-lowest-common-ancestor (node-a node-b)
   "Return the lowest common ancestor node of NODE-A and NODE-B.
@@ -257,7 +257,7 @@ elements."
   (or (< (tui-end a) (tui-start b))
       (and (= (tui-end a) (tui-start b))
            (tui--position-precedes (tui-index-position a)
-                                (tui-index-position b)))))
+                                   (tui-index-position b)))))
 
 (defun tui--position-precedes (position-a position-b)
   "Return t if POSITION-A precedes POSITION-B."
@@ -319,7 +319,7 @@ A and B overlap, for example, if one is a parent of the other.  Coincident point
   (or (< (tui-end a) (tui-start b))
       (and (= (tui-end a) (tui-start b))
            (tui--position-coincides (tui-index-position a)
-                                 (tui-index-position b)))))
+                                    (tui-index-position b)))))
 
 (defun tui--position-coincides (position-a position-b)
   "Return t if POSITION-A coincides with POSITION-B (one is a parent of the other)."

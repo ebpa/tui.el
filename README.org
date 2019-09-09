@@ -33,12 +33,18 @@ This is all currently experimental!  Expect things to change as I get feedback a
 :END:
 
 *** Using Straight.el
+:PROPERTIES:
+:ID:       b106a1f4-3817-4ab8-b3f8-0e8b2d09a4b6
+:END:
 #+begin_src emacs-lisp
 (straight-use-package
  '(tui :type git :host github :repo "ebpa/tui.el" :files ("*.el" "components" "layout" "demo" "snippets")))
 #+end_src
 
 *** Manually
+:PROPERTIES:
+:ID:       5fde6a5c-ba8b-42de-898c-95c03d4af06a
+:END:
 
 The package hasn't been submitted to Melpa yet.  To install the package manually: clone the repository, add the folder to your load path and install the dependencies with the following:
 
@@ -68,25 +74,31 @@ git clone git@github.com:ebpa/tui.el.git
 :END:
 
 **** Tic Tac Toe
+:PROPERTIES:
+:ID:       cd178658-1421-4a82-abaa-f7d73659bdd6
+:END:
 
 Tui contains a tic tac toe game as a demonstration component.  You can play the game with `M-x tui-play-tic-tac-toe`.  Check out the source code with `M-x find-function "tui-play-tic-tac-toe"`.
 
 **** Rendering content
+:PROPERTIES:
+:ID:       8e45f5bf-b357-4491-aff3-0117080f8dff
+:END:
 
 If all goes well you should be able to require the library and render something to the buffer.  The following will render a greeting at the point.
 
 #+begin_src emacs-lisp
-(require 'tui)
-(progn
-  (tui-render-element "Hello world!")
-  nil)
+(tui-render-element "Hello world!")
 #+end_src
 
-**Note: The `(progn ... nil)` wrapper is a recommended measure to avoid printing the value returned by `tui-render-element` when calling it using `eval-last-sexp` or `eval-expression`.  Printing the complex object can cause Emacs hang badly.**
+# **Note: The `(progn ... nil)` wrapper is a recommended measure to avoid printing the value returned by `tui-render-element` when calling it using `eval-last-sexp` or `eval-expression`.  Printing the complex object can cause Emacs hang badly.**
 
 **** Defining a component
+:PROPERTIES:
+:ID:       1f39155a-2c9a-4688-a24c-7c6c4b3e2c9d
+:END:
 
-Tui components are defined using `tui-define-component`.  
+Tui components are defined using `tui-define-component`.
 
 ** Overview
 :PROPERTIES:
@@ -252,6 +264,16 @@ There are circumstances where it would be useful to create divisions within a bu
 :END:
 Why not give Emacs some big blocky buttons and sliders, so we can use our pervasive touchscreens with Emacs too?  Or even: design progressive Emacs apps?
 
+*** Running Tests
+:PROPERTIES:
+:ID:       51d57590-60fb-4e42-bdaa-cc4660331d5d
+:pin:      t
+:END:
+
+#+begin_src emacs-lisp
+cask exec buttercup -L
+#+end_src
+
 *** Feedback
 :PROPERTIES:
 :pin:  t
@@ -303,7 +325,7 @@ Why not give Emacs some big blocky buttons and sliders, so we can use our pervas
  - *Emacs*
    - shr.el / eww
    - [[https://github.com/alezost/bui.el][bui.el: Buffer interface library for Emacs]]
-   - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Abstract-Display.html#Abstract-Display][ewoc: “Emacs's Widget for Object Collections”]]
+   - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Abstract-Display.html#Abstract-Display][ewoc: "Emacs's Widget for Object Collections"]]
  - *Non-Emacs*
    - [[https://en.wikipedia.org/wiki/Ncurses][ncurses]]
    - A good list: [[https://appliedgo.net/tui/][Text-Based User Interfaces · Applied Go]]
@@ -321,3 +343,4 @@ Why not give Emacs some big blocky buttons and sliders, so we can use our pervas
    - [[https://github.com/manaflair/mylittledom][manaflair/mylittledom: High-level DOM-like terminal interface library]]
    - [[https://github.com/fdehau/tui-rs][fdehau/tui-rs: Build terminal user interfaces and dashboards using Rust]]
    - [[https://github.com/jtdaugherty/brick/][brick]] - A declarative terminal UI programming library written in Haskell
+   - [[https://github.com/ceccopierangiolieugenio/pyTermTk][ceccopierangiolieugenio/pyTermTk: Python Terminal Toolkit]]

@@ -7,11 +7,8 @@
 
 (eval-when-compile (require 'cl-lib))
 
-(require 'tui-absolute-container)
-(require 'tui-buffer)
-(require 'tui-button)
-(require 'tui-div)
-(require 'tui-ol)
+(require 'tui-components)
+(require 'tui-defun)
 
 ;; Design reference (for monospaced fonts)
 

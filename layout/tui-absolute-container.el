@@ -5,6 +5,7 @@
 
 ;; TODO: eliminate artist dependency
 (require 'artist)
+(require 'tui-core)
 (require 'tui-canvas "components/tui-canvas.el")
 (require 'tui-buffer "components/tui-buffer.el")
 (require 'subr-x)

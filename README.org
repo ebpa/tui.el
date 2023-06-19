@@ -73,6 +73,8 @@ git clone git@github.com:ebpa/tui.el.git
 :ID:       2ed4f7e4-4982-429c-974d-c07ce9cc5d3b
 :END:
 
+#+HTML: <video src="https://video.twimg.com/tweet_video/DLv5mX4W4AAlvK9.mp4" width="320" />
+
 **** Tic Tac Toe
 :PROPERTIES:
 :ID:       cd178658-1421-4a82-abaa-f7d73659bdd6

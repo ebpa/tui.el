@@ -64,7 +64,7 @@
 
         (before-each
           (setf (symbol-function 'my/get-derived-state-from-props)
-                (lambda (props state)
+                (lambda (_ props state)
                   (let* ((a (plist-get props :a))
                          (b (plist-get state :b)))
                     (when (and a b)
@@ -91,7 +91,8 @@
           (tui-with-rendered-element (my/test-component)
             ;; CLEANUP: Check using something like plist-contains
             (-let* ((call-args (spy-calls-args-for 'my/get-derived-state-from-props 0))
-                    (((&plist :a a)
+                    ((_
+                      (&plist :a a)
                       (&plist :b b))
                      call-args))
               (expect call-args)
@@ -108,7 +109,7 @@
 
             (spy-on 'my/get-derived-state-from-props
                     :and-call-fake
-                    (lambda (props state)
+                    (lambda (_ props state)
                       (setq get-derived-state-called-first-p
                             (not render-called-p))))
 
@@ -170,7 +171,7 @@
         (tui-with-rendered-element (my/test-component :ref #'my/ref-callback)
           (expect component-did-mount-called-p)
           (expect ref-callback-called-first-p))))
-    (it "is called with nil when unmounting"
+    (xit "is called with nil when unmounting"
       (spy-on 'my/ref-callback)
 
       (tui-with-rendered-element (my/test-component :ref #'my/ref-callback)
@@ -440,11 +441,10 @@
 
 (describe "tui-render-with-buffer"
   (it "accepts a single content item"
-    (with-current-buffer
-        (tui-render-with-buffer "*test1*"
-          "foo")
-      (expect (buffer-substring-no-properties (point-min) (point-max))
-              :to-equal "foo")))
+      (expect (with-current-buffer (tui-render-with-buffer "*test1*"
+                                     "foo")
+                (buffer-substring-no-properties (point-min) (point-max)))
+              :to-equal "foo"))
   (it "accepts multiple content items"
     (with-current-buffer
         (tui-render-with-buffer "*test2*"

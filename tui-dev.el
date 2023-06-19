@@ -1,9 +1,10 @@
 ;;; tui-dev.el --- Developer helper functions       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; 
+;;
 
 (require 'tui-core)
+(require 'tui-defun)
 
 ;;; Code:
 
@@ -81,23 +82,38 @@
   "Show a an interactive outline representation of NODE."
   (interactive)
   (tui-render-with-buffer "*tui-show-element-outline*"
-   (tui-element-outline-string node)))
+    (tui-element-outline-string node)))
 
-(cl-defun tui-read-type (&optional (prompt "Type: ") (options (tui-all-component-types)))
+
+
+(cl-defun tui-read-type (&optional (prompt "Type: ") (options (tui-all-component-types)) &key hide-tui-builtins)
   "Return a user-selected type as a symbol.
 
 Optionally override PROMPT string.
 Optionally limit types to OPTIONS."
+  (declare (wip TODO "Enable toggling of builtin filtering"
+                TODO "Refine mechanism of tracking 'builtin'"))
+  (when hide-tui-builtins
+    (setq options (--filter
+                   (not (tui-builtin-component-type-p it))
+                   options)))
   (intern (completing-read "Type: " options nil t)))
+
+(cl-defun tui-read-type-at-point (&key (prompt "Type: ") (hide-tui-builtins t))
+  "Return a component type present at point.
+
+Optionally hide built-in tui.el types when HIDE-TUI-BUILTINS is non-nil (the default)."
+  (tui-read-type
+   prompt
+   (or (mapcar (lambda (element)
+                 (tui--object-class element))
+               (tui-ancestor-elements-at (point)))
+       (tui-all-component-types))
+   :hide-tui-builtins hide-tui-builtins))
 
 (defun tui-find-definition (type)
   "Find the definition of tui component TYPE or an element at point."
-  (interactive (list (tui-read-type
-                      "Type: "
-                      (or (mapcar (lambda (element)
-                                    (tui--object-class element))
-                                  (tui-ancestor-elements-at (point)))
-                          (tui-all-component-types)))))
+  (interactive (list (tui-read-type-at-point)))
   (tui-find-component type))
 
 (defun tui-find-component (type)

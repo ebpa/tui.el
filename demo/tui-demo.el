@@ -4,8 +4,8 @@
 ;;; Commentary:
 ;; 
 
-(eval-when-compile (require 'cl))
-(require 'tui-core)
+(eval-when-compile (require 'cl-lib))
+(require 'tui-components)
 (require 'tui-defun)
 
 ;;; Code:
@@ -14,7 +14,7 @@
   "Major mode for viewing tui component previews."
   (setq-local buffer-read-only t)
   (setq-local revert-buffer-function
-              (lambda (ignore-auto noconfirm) (tui-force-update (tui-root-node)))))
+              (lambda (_ignore-auto _noconfirm) (tui-force-update (tui-root-node)))))
 
 (put 'tui-demo-mode 'mode-class 'special)
 
@@ -144,5 +144,4 @@
            demos))))))
 
 (provide 'tui-demo)
-
 ;;; tui-demo.el ends here

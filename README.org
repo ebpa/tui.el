@@ -6,7 +6,7 @@
 :keywords: ui-framework emacs
 :END:
 
-[[file:images/tui-bird.png]]
+#+HTML: <img src="images/tui-bird.png" align="right">
 
 #+COMMENT: Badges
 [[http://www.gnu.org/licenses/gpl-3.0.txt][file:https://img.shields.io/badge/license-GPL_3-green.svg]]
@@ -63,8 +63,8 @@ git clone git@github.com:ebpa/tui.el.git
 (package-refresh-contents)
 
 ;; Manually install package dependencies
+(package-install 'dash)
 (package-install 's)
-(package-install 'dash-functional)
 #+end_src
 
 ** Getting started

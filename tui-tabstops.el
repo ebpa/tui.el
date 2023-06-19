@@ -1,7 +1,12 @@
 ;;; tui-tabstops.el ---       -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; 
+;;
+
+(eval-when-compile
+  (require 'cl-lib))
+(require 'dash)
+(require 'tui-traversal)
 
 (defvar tui-cycle-tabstops t
   "Whether tabstops should loop around (i.e. go back to the beginning once you've reached the end).")

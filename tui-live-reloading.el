@@ -5,6 +5,11 @@
 
 ;;; Code:
 
+(require 'dash)
+(require 'subr-x)
+
+(require 'tui-core)
+
 (defvar tui-live-reloading t
   "Update components whenever their definitions are updated.")
 
@@ -18,7 +23,14 @@
          (instances (or (gethash class tui--component-instance-table)
                         (puthash class (make-hash-table :weakness 'key)
                                  tui--component-instance-table))))
-    (puthash instance nil instances)))
+    (puthash instance nil instances)
+    instance))
+
+(defun tui-live-reloading--update-instances (component)
+  ""
+  (when (and tui-live-reloading
+             (tui-component-symbol-p component))
+    (tui-force-update-component-instances component)))
 
 (defun tui-component-instances (class)
   "Return a list of live instances of CLASS."
@@ -28,10 +40,24 @@
      (hash-table-keys instance-table))))
 
 (defun tui-force-update-component-instances (class)
-  "Force instances of CLASS to update.  Updated rendering lifecycle logic is applied."
+  "Force instances of CLASS to update.
+
+Updated rendering lifecycle logic is applied."
+  (interactive (list (tui-read-component-type)))
   (remhash class tui--default-props-table)
-  (mapc #'tui-force-update (tui-component-instances class)))
+  (--map
+   (when (tui-mounted-p it)
+     (tui-force-update it))
+   (tui-component-instances class)))
+
+(advice-add
+ #'tui-create-element
+ :filter-return #'tui--register-instance)
+;; (advice-remove #'tui-create-element #'tui--register-instance)
+
+(advice-add
+ #'eval-defun
+ :filter-return #'tui-live-reloading--update-instances)
 
 (provide 'tui-live-reloading)
-
 ;;; tui-live-reloading.el ends here

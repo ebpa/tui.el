@@ -3,12 +3,15 @@
 ;;; Commentary:
 ;; 
 
+(require 'dash)
 (require 'tui-core)
 
 ;;; Code:
 
-(defvar tui-link-keymap
+(defun tui-link-keymap ()
+  ""
   (let ((map (make-sparse-keymap)))
+    (define-key map "w" 'tui-link-copy-target)
     (define-key map [space] 'tui-link-follow-link)
     (define-key map [return] 'tui-link-follow-link)
     (define-key map [mouse-1] 'tui-link-follow-link-click)
@@ -16,19 +19,19 @@
 
 (tui-defun-2 tui-link ((face 'button) target children &this this)
   "A basic link control.  TARGET may be a Marker, function, or filename."
+  (declare (wip TODO "handle file:/// targets"))
   (let* ((text-props (append
-                      `(keymap ,tui-link-keymap
+                      `(keymap ,(tui-link-keymap)
                                font-lock-ignore t
-                               tui-link-target ,target)
+                               tui-link-target ,target
+                               help-echo ,(prin1-to-string target))
                       (when face
                         `(font-lock-face ,face
                                  face ,face)))))
     (tui-span
      :text-props-replace text-props
-     :children children)))
-
-
-
+     :children (or children
+                   (format "%s" target)))))
 
 (defun tui-link-follow-link-click (event)
   "Handle click EVENT for following link."
@@ -46,7 +49,7 @@
       (eww-browse-with-external-browser target))
      ((and (stringp target)
            (s-starts-with-p "http" target))
-      (browse-url target))
+      (browse-url-xdg-open target))
      ((and (stringp target)
            (f-exists-p target))
       (find-file target))
@@ -61,6 +64,11 @@
            (eq (car target) 'file))
       (find-file (cdr target))))))
 
-(provide 'tui-link)
+(defun tui-link-copy-target (&optional pos)
+  ""
+  (interactive)
+  (unless pos (setq pos (point)))
+  (kill-new (get-text-property pos 'tui-link-target)))
 
+(provide 'tui-link)
 ;;; tui-link.el ends here

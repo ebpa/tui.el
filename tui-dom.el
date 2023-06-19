@@ -5,6 +5,9 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'cl-lib))
+(require 'dash)
 (require 'tui-node-types)
 
 (cl-defmethod tui-append-child ((parent tui-element) child)

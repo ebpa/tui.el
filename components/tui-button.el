@@ -4,15 +4,15 @@
 ;; 
 
 (require 'tui-core)
-(require 'tui-demo "demo/tui-demo.el")
+(require 'tui-defun)
 
 ;;; Code:
 
-(tui-defun-2 tui-button (children action (face 'button))
+(tui-defun-2 tui-button (children action (face 'custom-button))
   "A basic button control.
 
 ACTION is a function to bind to [mouse-1]."
-  ;; TODO: or mouse-2/multiple?
+  (declare (wip TODO "or mouse-2/multiple?"))
   (let* ((map (make-sparse-keymap))
          ;; Interactive command necessary for keymap binding
          (interactive-action (if (interactive-form action)
@@ -26,15 +26,16 @@ ACTION is a function to bind to [mouse-1]."
                                     font-lock-face ,face
                                     face ,face
                                     mouse-face highlight
-                                      keymap ,map)
+                                    keymap ,map)
      children)))
 
-;; (tui-define-demo tui-button "Basic click action"
-;;   (tui-button
-;;    :action (lambda ()
-;;              (interactive)
-;;              (message "Click!"))
-;;    "Click Me"))
+(with-eval-after-load 'tui-demo
+  (tui-define-demo tui-button "Basic click action"
+    (tui-button
+     :action (lambda ()
+               (interactive)
+               (message "Click!"))
+     "Click Me")))
 
 (provide 'tui-button)
 ;;; tui-button.el ends here

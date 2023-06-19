@@ -3,7 +3,9 @@
 ;;; Commentary:
 ;;
 
-(require 'tui-util)
+(eval-when-compile
+  (require 'cl-lib))
+(require 'dash)
 
 (defvar tui--text-props
   (make-hash-table :weakness 'key)
@@ -103,7 +105,7 @@ Merge GROUPED-PROPS text property descriptions structured as `(replace push appe
                (puthash key value prop-table))
               ((listp existing-value)
                (puthash key (append existing-value
-                                    value)
+                                    (list value))
                         prop-table))
               (t
                (puthash key (cons existing-value (list value))
@@ -158,6 +160,81 @@ Merge GROUPED-PROPS text property descriptions structured as `(replace push appe
 ;;       (tui-put-text-properties start end append buffer 'append))
 ;;     (when safe
 ;;       (tui-put-text-properties start end safe buffer nil))))
+
+(defun tui--text-prop-changes (old-props new-props)
+  "Return :text-props* values that are different between old-props and new-props."
+  (cl-loop for (key _value) on (tui--plist-changes old-props new-props) by #'cddr
+           if (member key '(:text-props
+                            :text-props-push
+                            :text-props-append
+                            :text-props-replace
+                            :text-props-safe))
+           collect key))
+
+(defun tui-put-text-property (start end key value &optional object replace-behavior)
+  "Same as `tui-put-text-properties', but only set a single key-value pair."
+  (tui-put-text-properties start end (list key value) object replace-behavior))
+
+(defun tui-put-text-properties (start end properties &optional object replace-behavior)
+  "Apply text properties to region between START and END.
+
+Like `put-text-property, but PROPERTIES is a list of properties
+and has controllable REPLACE-BEHAVIOR.  Unlike
+`put-text-property` the default behavior is to not replace
+existing property values.
+
+When REPLACE-BEHAVIOR is t existing values for properties are
+replaced with the new value from PROPERTIES.  When
+REPLACE-BEHAVIOR is nil, existing values are not replaced; the
+value from PROPERTIES is not applied.  When REPLACE-BEHAVIOR is
+'push, a new value is added to the front of a list of existing
+values.  When REPLACE-BEHAVIOR is 'append, a new value is added
+in the manner of 'push, but at the end of the list.
+
+If the optional OBJECT is a buffer, START and END are buffer
+positions.  If OBJECT is a string, START and END are 0-based
+indices into it.  When OBJECT is nil, properties are applied to
+the current buffer."
+  (when (and (not object)
+             (markerp start))
+    (setq object (marker-buffer start)))
+  (let (prop-end prop-start)
+    ;; (message "-safe-propertize\n")
+    (cl-loop for (key value) on properties by #'cddr
+             do
+             (setq prop-start nil
+                   prop-end nil)
+             (if (eq replace-behavior t)
+                 (progn
+                   ;;(message "putting property %S at %S-%S" key start end)
+                   (put-text-property start end key value object))
+               (while (and (< (setq prop-start (if prop-start
+                                                   (next-single-property-change prop-end key object end)
+                                                 start))
+                              end)
+                           (setq prop-end (next-single-property-change prop-start key object end)))
+                 (let ((existing-value (get-text-property prop-start key object)))
+                   (when (or replace-behavior
+                             (not existing-value))
+                     ;;(message "putting property %S at %S-%S" key prop-start prop-end)
+                     (put-text-property
+                      prop-start
+                      prop-end
+                      key
+                      (pcase replace-behavior
+                        ('push
+                         (append (list value)
+                                 (if (listp existing-value)
+                                     existing-value
+                                   (list existing-value))))
+                        ('append
+                         (append (if (listp existing-value)
+                                     existing-value
+                                   (list existing-value))
+                                 (list value)))
+                        (_
+                         value))
+                      object))))))))
 
 (defun tui--apply-inherited-text-props (start end element &optional object)
   ;; CLEANUP: bad function signature

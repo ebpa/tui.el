@@ -6,6 +6,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
+(require 'dash)
 (require 'tui-dom)
 
 (defun tui-get-node-at (&optional pos type)
@@ -210,6 +211,12 @@
   (-let* (((start . end) (tui-segment element)))
     (when (and start end)
       (tui-segment-pixel-width start end))))
+
+(defun tui-rendered-visible-character-width ()
+  "Width of visible characters according to `char-width'."
+  (char-width )
+
+  )
 
 (cl-defmethod tui-visible-width ((element tui-element))
   ;; CLEANUP: Rename as "length"?
@@ -487,20 +494,25 @@ Returns nil if NODE is not mounted or is not an ancestor element."
                (<= (point) end))
       (- (point) start))))
 
-(cl-defun tui-next-element (&optional pos (predicate #'identity))
+(cl-defmethod tui-next-element (&optional pos (predicate #'identity))
   "Return the nearest `tui-element' that starts after POS or point.
 Returns nil if there are no elements following POS in the content tree.
 
 See also `tui-previous-element'."
+  (declare (wip TODO "Revise nomenclature to be consistent with tui node types.  (``tui-next-node'' instead?)"))
   (unless pos (setq pos (point)))
-  (let* ((target-node (tui-get-node-at pos))
+  (tui-next-element (tui-get-node-at pos) predicate))
+
+(cl-defmethod tui-next-element ((node tui-node) &optional (predicate #'identity))
+  ""
+  (let* ((target-node node)
          (current-node target-node)
          current-node-index parent following-siblings next-element intermediate-element)
     (while (and (setq parent (tui-parent current-node))
                 (setq current-node-index (tui-node-relative-index current-node))
                 (progn (setq following-siblings (-slice (tui-child-nodes parent) (+ 1 current-node-index)))
                        (not (setq next-element
-                                  (some (-partial #'tui-first-subtree-node predicate)
+                                  (cl-some (-partial #'tui-first-subtree-node predicate)
                                         following-siblings)))))
       (setq current-node parent))
     (or next-element

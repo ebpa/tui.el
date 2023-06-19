@@ -2,3 +2,4 @@
 *.elc
 *-pkg.el
 .yas-compiled-snippets.el
+.flycheck_*.el

@@ -10,7 +10,7 @@
 (tui-defun-2 tui-prefix-lines (prefix children)
   "Prefix all lines rendered by child elements with PREFIX."
   (tui-span
-   :text-props-merge `(line-prefix ,prefix
+   :text-props `(line-prefix ,prefix
                                    wrap-prefix ,prefix)
    :children children))
 

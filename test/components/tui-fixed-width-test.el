@@ -35,7 +35,32 @@
                 (tui-segment-pixel-width (point-min) (point-max)))
               :to-equal 20)))
 
-  (describe "nested fixed-width elements")
+  (describe "nested fixed-width elements"
+    (describe "...with children shorter than the parent"
+      (expect (tui-with-rendered-element
+                (tui-fixed-width
+                 :width 20
+                 (tui-fixed-width
+                  :width 5
+                  "foo")
+                 (tui-fixed-width
+                  :width 5
+                  "bar"))
+                (- (point-max) (point-min)))
+              :to-equal 20))
+
+    (describe "...with children longer than the parent"
+      (expect (tui-with-rendered-element
+                (tui-fixed-width
+                 :width 10
+                 (tui-fixed-width
+                  :width 10
+                  "foo")
+                 (tui-fixed-width
+                  :width 10
+                  "bar"))
+                (- (point-max) (point-min)))
+              :to-equal 10)))
 
   (describe "searching hidden values")
 

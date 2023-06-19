@@ -3,7 +3,10 @@
 ;;; Commentary:
 ;; 
 
-(eval-when-compile (require 'cl-lib))
+(eval-when-compile
+  (require 'cl-lib))
+(require 'dash)
+
 (require 'tui-node-types)
 
 ;;; Code:

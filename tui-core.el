@@ -5,18 +5,16 @@
 
 (eval-when-compile (require 'cl-lib))
 (require 'dash)
-(require 'dash-functional)
 (require 's)
+
 (require 'tui-dom)
 (require 'tui-reconciler)
 (require 'tui-layout)
-(require 'tui-live-reloading)
 (require 'tui-log)
 (require 'tui-marker-list)
 (require 'tui-node-types)
 (require 'tui-ref)
 (require 'tui-text-props)
-(require 'tui-util)
 
 ;;; Content constants
 
@@ -39,7 +37,7 @@
 
 Equivalent to React's createReactClass form: https://reactjs.org/docs/react-without-es6.html#declaring-default-props"))
 
-(cl-defmethod tui-get-default-props ((component tui-component))
+(cl-defmethod tui-get-default-props ((_component tui-component))
   "Empty default method"
   nil)
 
@@ -48,7 +46,7 @@ Equivalent to React's createReactClass form: https://reactjs.org/docs/react-with
 
 Equivalent to React's createReactClass form: https://reactjs.org/docs/react-without-es6.html#setting-the-initial-state"))
 
-(cl-defmethod tui-get-initial-state ((component tui-component))
+(cl-defmethod tui-get-initial-state ((_component tui-component))
   "Empty default method"
   nil)
 
@@ -57,7 +55,7 @@ Equivalent to React's createReactClass form: https://reactjs.org/docs/react-with
 
 React documentation: https://reactjs.org/docs/react-component.html#componentdidmount"))
 
-(cl-defmethod tui-component-did-mount ((component tui-component))
+(cl-defmethod tui-component-did-mount ((_component tui-component))
   "Empty default method"
   nil)
 
@@ -66,7 +64,7 @@ React documentation: https://reactjs.org/docs/react-component.html#componentdidm
 
 React documentation: https://reactjs.org/docs/react-component.html#static-getderivedstatefromprops"))
 
-(cl-defmethod tui-get-derived-state-from-props ((component tui-component) props state)
+(cl-defmethod tui-get-derived-state-from-props ((_component tui-component) _props _state)
   "Empty default method"
   nil)
 
@@ -77,7 +75,7 @@ Return nil to indicate that the component's output is not affected by the curren
 
 React documentation: https://reactjs.org/docs/react-component.html#shouldcomponentupdate"))
 
-(cl-defmethod tui-should-component-update ((component tui-component) next-props next-state)
+(cl-defmethod tui-should-component-update ((_component tui-component) _next-props _next-state)
   "Empty default method"
   t)
 
@@ -86,7 +84,7 @@ React documentation: https://reactjs.org/docs/react-component.html#shouldcompone
 
 React documentation: https://reactjs.org/docs/react-component.html#render"))
 
-(cl-defmethod tui-render ((component tui-component))
+(cl-defmethod tui-render ((_component tui-component))
   "Empty default method"
   nil)
 
@@ -95,7 +93,7 @@ React documentation: https://reactjs.org/docs/react-component.html#render"))
 
 React documentation: https://reactjs.org/docs/react-component.html#componentdidupdate"))
 
-(cl-defmethod tui-component-did-update ((component tui-component) next-props next-state)
+(cl-defmethod tui-component-did-update ((_component tui-component) _next-props _next-state)
   "Empty default method"
   nil)
 
@@ -104,7 +102,7 @@ React documentation: https://reactjs.org/docs/react-component.html#componentdidu
 
 React documentation: https://reactjs.org/docs/react-component.html#componentwillunmount"))
 
-(cl-defmethod tui-component-will-unmount ((component tui-component))
+(cl-defmethod tui-component-will-unmount ((_component tui-component))
   "Empty default method"
   nil)
 
@@ -554,8 +552,6 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
            (unless (listp children)
              (setq children (list children))) ;; TODO: also issue a warning?
            (let ((component (funcall #'tui-create-element ',name props children)))
-             (when tui-live-reloading
-               (tui--register-instance component))
              component))))))
 
 (defun tui-force-update (component)
@@ -578,7 +574,7 @@ See React's documentation (https://reactjs.org/docs/react-component.html) for a 
      tui--content-trees)))
 
 ;; (tui-render-with-buffer :: Buffer -> Content... -> Buffer)
-(defmacro tui-render-with-buffer (buffer content)
+(cl-defmacro tui-render-with-buffer (buffer &rest content)
   "Render ELEMENT in dedicated BUFFER and switch to that buffer.  Any existing contents of BUFFER will be replaced.
 
 Return buffer."
@@ -586,12 +582,12 @@ Return buffer."
   (let* ((content-sym (make-symbol "content-sym"))
          (buffer-sym (make-symbol "buffer"))
          (buffer-element-sym (make-symbol "buffer-element")))
-    `(-let* ((,content-sym ,content)
+    `(-let* ((,content-sym ,(macroexp-quote content))
              (,buffer-sym ,buffer))
        (tui-render-element
         (tui-buffer
          :buffer ,buffer-sym
-         ,content-sym))
+         :children ,content-sym))
        (switch-to-buffer ,buffer-sym)
        ,buffer-sym)))
 
@@ -627,8 +623,7 @@ tui-element."
               (push node tui--content-trees))
             (tui--process-update-queue)
             ;;(tui-valid-content-tree-p node)
-            node
-            t))))))
+            node))))))
 
 (cl-defmethod tui-rendered-p ((node tui-node))
   "Return t if ELEMENT has been rendered."
@@ -641,7 +636,9 @@ tui-element."
        (not (eq (tui-node-mounted node) 'pending))
        (let* ((start (tui-start node)))
          (and start
-              (marker-buffer start)))
+              (marker-buffer start)
+              ;; (buffer-live-p (marker-buffer start))
+              ))
        t))
 
 ;;;; Internal
@@ -685,7 +682,9 @@ form.
   element)
 
 (defun tui--normalize-content (content)
-  "Complementary method to `tui-normalize-element' that normalizes CONTENT for `tui-element's :content slot (see `tui-normalize-element').  Return value is always a list."
+  "Complementary method to `tui-normalize-element' that normalizes CONTENT for `tui-element's :content slot (see `tui-normalize-element').
+
+Return value is always a list."
   (-non-nil
    (cond
     ((tui--list-content-p content)
@@ -847,6 +846,12 @@ Very basic now; simply apply updates until the queue is empty."
 ;;   "Return a list of descendents of NODE that require re-rendering."
 
 ;;   )
+
+(defun tui--check-key-value-documentation (documentation)
+  "Internal function to check the form of DOCUMENTATION."
+  (cl-loop for (prop-keyword docstring) on documentation by #'cddr
+           if (not (keywordp prop-keyword))
+           do (warn "Malformed documentation list")))
 
 (provide 'tui-core)
 ;;; tui-core.el ends here

@@ -29,19 +29,19 @@
 
 (cl-defmethod tui-recalculate-size ((shared-size tui-shared-size))
   "Recalculate SHARED-SIZE based requested sizes by its elements."
-  (when (not (tui-shared-size-override-p shared-size))
-    (let* ((element-sizes (hash-table-values (tui-shared-size-element-sizes shared-size)))
-           ;; (pixel-unit (listp (cl-first element-sizes)))
-           (new-size (when element-sizes
-                       (apply #'max element-sizes))))
-      (when new-size
-        (setf (tui-shared-size-size shared-size) new-size)
-        (mapcar
-         (lambda (element)
-           (cond
-            ((tui-fixed-width-p element)
-             (tui-fixed-width--update element))))
-         (hash-table-keys (tui-shared-size-element-sizes shared-size)))))))
+  (let* ((element-sizes (hash-table-values (tui-shared-size-element-sizes shared-size)))
+         ;; (pixel-unit (listp (cl-first element-sizes)))
+         (new-size (if (tui-shared-size-override-p shared-size)
+                       (tui-shared-size-size shared-size)
+                     (apply #'max (cons 1 element-sizes)))))
+    (when new-size
+      (setf (tui-shared-size-size shared-size) new-size)
+      (mapcar
+       (lambda (element)
+         (cond
+          ((tui-fixed-width-p element)
+           (tui-fixed-width--update element))))
+       (hash-table-keys (tui-shared-size-element-sizes shared-size))))))
 
 (provide 'tui-shared-size)
 ;;; tui-shared-size.el ends here

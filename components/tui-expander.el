@@ -30,12 +30,12 @@
 (defvar tui-default-expander-expand-glyph "▲" "Default glyph to use for displaying expander buttons.")
 (defvar tui-default-expander-collapse-glyph "▼" "Default glyph to use for displaying collapse buttons.")
 
-;; TODO: revise definition to easily substitute "+/-" glyphs
 (defun tui--expander-glyph (expanded &optional expand-glyph collapse-glyph)
   "Internal helper to render a group's expander glyph button.
 Argument EXPANDED - whether the expander is expanded.
 Optional argument EXPAND-GLYPH - glyph to show when collapsed.
 Optional argument COLLAPSE-GLYPH - glyph to show when expanded."
+  (declare (wip TODO "revise definition to easily substitute \"+/-\" glyphs"))
   (if expanded
       (tui-span
        :text-props `(help-echo "click to collapse"

@@ -1,4 +1,5 @@
-(require 'cl-lib)
+(eval-when-compile
+  (require 'cl-lib))
 (require 'dash)
 (require 'tui-core)
 
@@ -60,7 +61,8 @@
 
 BODY is evaluated on each render.
 Documentation string DOCSTRING."
-  (declare (indent defun))
+  (declare (indent defun)
+           (wip TODO "Clarify behavior of initial prop values vs get default props w/terse defaults signature"))
   (cl-flet ((normalize-varlists (varlist) (--map (if (consp it) it (list it nil)) varlist)))
     (-let* (((this props state) (tui-defun-2--group-arguments arguments))
             (this-sym (or (car this) (make-symbol "this")))

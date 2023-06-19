@@ -1,3 +1,7 @@
+(eval-when-compile
+  (require 'cl-lib))
+(require 'edebug)
+(require 'tui-defun)
 (require 'tui-util)
 
 (defun tui-element-label (element)
@@ -26,6 +30,8 @@
 
 (tui-defun tui-element-summary (element)
   "Information summary about ELEMENT."
+  (declare (wip TODO "abbreviate state and prop values"
+                TODO "put props and state in expanders"))
   (let* ((props (tui-element-props element))
          (state (tui-component-state element)))
     (list
@@ -43,5 +49,14 @@
      (tui-prefix-lines
       :prefix "  "
       (tui--plist-summary :plist state)))))
+
+(cl-defmacro tui-with-feature (feature &rest body)
+  "Evaluate BODY if FEATURE is available.  Otherwise display an error indicating FEATURE is not available."
+  (declare (indent 1))
+  `(or (condition-case with-feature-err
+           (not (require ,feature))
+         (t (format "Error requiring feature '%s': %s" ,feature with-feature-err)))
+       (list
+        ,@body)))
 
 (provide 'tui-util-ui)

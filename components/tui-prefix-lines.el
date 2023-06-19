@@ -3,7 +3,7 @@
 ;;; Commentary:
 ;; 
 
-(require 'tui-core)
+(require 'tui-defun)
 
 ;;; Code:
 

@@ -4,7 +4,7 @@
 ;; 
 
 (require 'dash)
-(require 'tui-core)
+(require 'tui-defun)
 
 ;;; Code:
 

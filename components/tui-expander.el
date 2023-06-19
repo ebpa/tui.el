@@ -5,6 +5,7 @@
 
 (require 'dash)
 (require 'tui-core)
+
 (require 'tui-span "components/tui-span.el")
 (require 'tui-prefix-lines "components/tui-prefix-lines.el")
 

@@ -68,7 +68,9 @@
   ""
   (interactive)
   (unless pos (setq pos (point)))
-  (kill-new (get-text-property pos 'tui-link-target)))
+  (let* ((url (get-text-property pos 'tui-link-target)))
+    (kill-new url)
+    (message "Copied <%s>!" url)))
 
 (provide 'tui-link)
 ;;; tui-link.el ends here

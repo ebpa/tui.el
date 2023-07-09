@@ -582,7 +582,7 @@ Return buffer."
   (let* ((content-sym (make-symbol "content-sym"))
          (buffer-sym (make-symbol "buffer"))
          (buffer-element-sym (make-symbol "buffer-element")))
-    `(-let* ((,content-sym ,(macroexp-quote content))
+    `(-let* ((,content-sym (list ,@content))
              (,buffer-sym ,buffer))
        (tui-render-element
         (tui-buffer

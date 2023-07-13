@@ -724,7 +724,7 @@ Very basic now; simply apply updates until the queue is empty."
           (tui--apply-update (pop tui--update-queue))))))
   (when (input-pending-p) ;; tui-interrupt-update-queue
    (message "tui-interrupt-update-queue!")
-   (run-with-timer 0.2 nil #'tui--process-update-queue)))
+   (run-with-timer 0.1 nil #'tui--process-update-queue)))
 
 (defun tui--make-ref-callback (component &optional with-nil-p)
   "Call COMPONENT :ref callback (if defined).  When WITH-NIL-P is truthy, make callback with nil as the argument rather than the component reference."

@@ -1,0 +1,22 @@
+* Components
+
+| Tui Component    | Emacs Widget | HTML Element |
+|------------------+--------------+--------------|
+| tui-buffer       |              |              |
+| tui-button       |              | button       |
+| tui-canvas       |              |              |
+| tui-div          |              | div          |
+| tui-expander     |              | n/a          |
+| tui-fixed-width  |              |              |
+| tui-heading      |              | h1           |
+| tui-icon         |              |              |
+| tui-line         |              |              |
+| tui-link         |              | a            |
+| tui-ol           |              | ol           |
+| tui-prefix-lines |              | n/a          |
+| tui-section      |              | section      |
+| tui-span         |              | span         |
+| tui-spinner      |              |              |
+| tui-timer        |              |              |
+| tui-ul           |              | ul           |
+

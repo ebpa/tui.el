@@ -709,14 +709,22 @@ Return value is always a list."
 
 Very basic now; simply apply updates until the queue is empty."
   (combine-after-change-calls
-    (let* ((tui--applying-updates t)
-           (inhibit-read-only t)
-           (inhibit-modification-hooks t))
-      (while tui--update-queue
-        (tui--apply-update (pop tui--update-queue)))
-      (run-hooks 'tui-update-hook)
-      (while tui--update-queue
-        (tui--apply-update (pop tui--update-queue))))))
+    (catch 'tui-interrupt-update-queue
+      (let* ((tui--applying-updates t)
+             (inhibit-read-only t)
+             (inhibit-modification-hooks t))
+        (while tui--update-queue
+          (when (input-pending-p)
+            (throw 'tui-interrupt-update-queue nil))
+          (tui--apply-update (pop tui--update-queue)))
+        (run-hooks 'tui-update-hook)
+        (while tui--update-queue
+          (when (input-pending-p)
+            (throw 'tui-interrupt-update-queue nil))
+          (tui--apply-update (pop tui--update-queue))))))
+  (when (input-pending-p) ;; tui-interrupt-update-queue
+   (message "tui-interrupt-update-queue!")
+   (run-with-timer 0.2 nil #'tui--process-update-queue)))
 
 (defun tui--make-ref-callback (component &optional with-nil-p)
   "Call COMPONENT :ref callback (if defined).  When WITH-NIL-P is truthy, make callback with nil as the argument rather than the component reference."

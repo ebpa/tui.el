@@ -67,7 +67,8 @@
 (defun tui-use-callback ())
 
 (cl-defgeneric tui-hooks-advance (component)
-  "Statefully return the current tui-hooks--state for the component. Hooks _must_ call this _exactly_ once")
+  "Statefully return the current tui-hooks--state for the component.
+Hooks _must_ call this _exactly_ once")
 
 (cl-defgeneric tui-hooks-get (state)
   "Return the current reference")
@@ -145,7 +146,7 @@
 (cl-defmethod tui-render :before ((component tui-component))
   (tui--set-state component
                   (lambda (prev-component-state)
-                    (let ((prev-hook-state (plist-get (tui-get-state component)
+                    (let ((prev-hook-state (plist-get prev-component-state
                                                       :tui-hooks--state)))
                       (list :tui-hooks--state
                             (tui-hooks--state-create

@@ -60,15 +60,28 @@
                      next-state-or-updater)))
               (tui-hooks-set hook-state next-state))))))
 
-(defun tui-use-ref ())
+(defun tui-use-ref (component ref-or-ref-producer)
+  (let* ((hook-state (tui-hooks-advance component))
+         (curr-state (tui-hooks-get hook-state)))
+    (or curr-state
+        (let ((ref (tui-hooks--ref-or-ref-producer ref-or-ref-producer)))
+          (tui-hooks-set curr-state ref)
+          ref))))
 
-(defun tui-use-memo ())
+(defun tui-use-memo (component ref-or-ref-producer))
 
 (defun tui-use-callback ())
 
+(defun tui-hooks--ref-or-ref-producer (ref-or-ref-producer)
+  (if (and (functionp ref-or-ref-producer)
+           (eq 0 (cdr (func-arity ref-or-ref-producer))))
+      (funcall ref-or-ref-producer)
+    ref-or-ref-producer))
+
 (cl-defgeneric tui-hooks-advance (component)
   "Statefully return the current tui-hooks--state for the component.
-Hooks _must_ call this _exactly_ once")
+Hooks _must_ call this _exactly_ once. This is a stable cursor that can be
+used to get and set references at any point during the lifetime of the component")
 
 (cl-defgeneric tui-hooks-get (state)
   "Return the current reference")

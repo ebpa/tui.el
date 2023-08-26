@@ -23,7 +23,7 @@
   references)
 
 ;; in the future we could change this to be a macro that infers dependencies
-(defun tui-use-effect (component effect dependencies)
+(defun tui-use-effect (component dependencies effect)
   "Executes the effect, deferring clean up until dependencies change or the component is unmounted"
   (let* ((hook-state (tui-hooks-advance component))
          (prev-state (tui-hooks-get hook-state))

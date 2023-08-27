@@ -68,9 +68,20 @@
           (tui-hooks-set curr-state ref)
           ref))))
 
-(defun tui-use-memo (component ref-or-ref-producer))
+(defun tui-use-memo (component dependencies ref-or-ref-producer)
+  (let* ((hook-state (tui-hooks-advance component))
+         (curr-reference (tui-hooks-get hook-state)))
+    (if (or (not curr-reference)
+            (not (equal (tui-hooks--dependencies-reference-dependencies curr-reference)
+                        dependencies)))
+        (let ((next-reference (tui-hooks--ref-or-ref-producer ref-or-ref-producer)))
+          ;; don't update: we're returning the value synchronously
+          (tui-hooks-set hook-state next-reference t)
+          next-reference)
+      curr-reference)))
 
-(defun tui-use-callback ())
+(defun tui-use-callback (component dependencies callback)
+  (tui-use-memo component dependencies (lambda () callback)))
 
 (defun tui-hooks--ref-or-ref-producer (ref-or-ref-producer)
   (if (and (functionp ref-or-ref-producer)

@@ -51,14 +51,17 @@
   (let* ((hook-state (tui-hooks-advance component))
          (curr-state (or
                       (tui-hooks-get hook-state)
-                      state)))
-    (list curr-state
-          (lambda (next-state-or-updater)
-            (let ((next-state
-                   (if (functionp next-state-or-updater)
-                       (funcall next-state-or-updater curr-state)
-                     next-state-or-updater)))
-              (tui-hooks-set hook-state next-state))))))
+                      state))
+         (state-updater (tui-use-callback
+                         component
+                         (list hook-state curr-state)
+                         (lambda (next-state-or-updater)
+                           (let ((next-state
+                                  (if (functionp next-state-or-updater)
+                                      (funcall next-state-or-updater curr-state)
+                                    next-state-or-updater)))
+                             (tui-hooks-set hook-state next-state))))))
+    (list curr-state state-updater)))
 
 (defun tui-use-ref (component ref-or-ref-producer)
   (let* ((hook-state (tui-hooks-advance component))
@@ -75,8 +78,12 @@
             (not (equal (tui-hooks--dependencies-reference-dependencies curr-reference)
                         dependencies)))
         (let ((next-reference (tui-hooks--ref-or-ref-producer ref-or-ref-producer)))
-          ;; don't update: we're returning the value synchronously
-          (tui-hooks-set hook-state next-reference t)
+          ;; don't update: no need for a re-render we're returning the new value synchronously
+          (tui-hooks-set hook-state
+                         (tui-hooks--dependencies-reference-create
+                          :current next-reference
+                          :dependencies dependencies)
+                         t)
           next-reference)
       curr-reference)))
 

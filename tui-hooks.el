@@ -51,14 +51,16 @@
   (let* ((hook-state (tui-hooks-advance component))
          (curr-state (or
                       (tui-hooks-get hook-state)
-                      state))
+                      (progn
+                        (tui-hooks-set hook-state state t)
+                        state)))
          (state-updater (tui-use-callback
                          component
-                         (list hook-state curr-state)
+                         hook-state
                          (lambda (next-state-or-updater)
                            (let ((next-state
                                   (if (functionp next-state-or-updater)
-                                      (funcall next-state-or-updater curr-state)
+                                      (funcall next-state-or-updater (tui-hooks-get hook-state))
                                     next-state-or-updater)))
                              (tui-hooks-set hook-state next-state))))))
     (list curr-state state-updater)))

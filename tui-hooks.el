@@ -43,7 +43,9 @@
 ;; restart hook state before render
 (cl-defmethod tui-render :before ((component tui-component))
   (tui--set-state component
-                  (list :tui-hooks--cursor 0)
+                  (list :tui-hooks--cursor (tui-hooks--cursor-create
+                                            :component component
+                                            :index 0))
                   t))
 
 ;; teardown for effects
@@ -66,7 +68,7 @@ used to get and set references at any point during the lifetime of the component
                       :index 0)))
          (next-cursor (tui-hooks--cursor-create
                        :component component
-                       :index (tui-hooks-cursor-index cursor))))
+                       :index (1+ (tui-hooks--cursor-index cursor)))))
     (tui--set-state component
                     (list :tui-hooks--cursor next-cursor) t)
     cursor))
@@ -74,6 +76,7 @@ used to get and set references at any point during the lifetime of the component
 (defun tui-hooks--get (cursor)
   "Return the current reference"
   (let* ((cursor-idx (tui-hooks--cursor-index cursor))
+         (component (tui-hooks--cursor-component cursor))
          (references (plist-get (tui-get-state component) :tui-hooks--references))
          ;; we assign these in reverse order
          ;; 0 is first added, so last in list
@@ -93,7 +96,7 @@ used to get and set references at any point during the lifetime of the component
              (lambda (prev-component-state)
                (let* ((prev-references (plist-get prev-component-state :tui-hooks--references))
                       (updated-references
-                       (tui-hooks--replace-and-pad-if-needed idx reference prev-references)))
+                       (tui-hooks--replace-and-pad-if-needed cursor-idx reference prev-references)))
                  (list :tui-hooks--references updated-references)))
              no-update))))
     (if no-update
@@ -131,21 +134,21 @@ used to get and set references at any point during the lifetime of the component
           (funcall invoke-and-update))))))
 
 (defun tui-use-state (component state)
-  (let* ((hook-state (tui-hooks--advance component))
+  (let* ((cursor (tui-hooks--advance component))
          (curr-state (or
-                      (tui-hooks--get hook-state)
+                      (tui-hooks--get cursor)
                       (progn
-                        (tui-hooks--set hook-state state t)
+                        (tui-hooks--set cursor state t)
                         state)))
          (state-updater (tui-use-callback
                          component
-                         hook-state
+                         cursor
                          (lambda (next-state-or-updater)
                            (let ((next-state
                                   (if (functionp next-state-or-updater)
-                                      (funcall next-state-or-updater (tui-hooks--get hook-state))
+                                      (funcall next-state-or-updater (tui-hooks--get cursor))
                                     next-state-or-updater)))
-                             (tui-hooks--set hook-state next-state))))))
+                             (tui-hooks--set cursor next-state))))))
     (list curr-state state-updater)))
 
 (defun tui-use-ref (component ref-or-ref-producer)
@@ -170,7 +173,7 @@ used to get and set references at any point during the lifetime of the component
                           :dependencies dependencies)
                          t)
           next-reference)
-      curr-reference)))
+      (tui-hooks--dependencies-reference-current curr-reference))))
 
 (defun tui-use-callback (component dependencies callback)
   (tui-use-memo component dependencies (lambda () callback)))

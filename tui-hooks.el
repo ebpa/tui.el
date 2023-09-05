@@ -105,10 +105,8 @@ used to get and set references at any point during the lifetime of the component
       ;; so that the reconciler has the opportunity to diff
       (run-at-time 0 nil update-state))))
 
-
 ;; public API below
 
-;; in the future we could change this to be a macro that infers dependencies
 (defun tui-use-effect (component dependencies effect)
   "Executes the effect, deferring clean up until dependencies change or the component is unmounted"
   (let* ((hook-state (tui-hooks--cursor-advance component))

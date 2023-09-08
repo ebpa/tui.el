@@ -16,4 +16,8 @@
   (let ((dependencies `(tui-hooks-x--infer-dependencies ,compute)))
     `(tui-use-memo ,component ,dependencies (lambda () ,@compute))))
 
-(defalias 'tui-use-inferred-callback 'tui-use-inferred-memo)
+(defmacro tui-use-inferred-callback (component callback)
+  (let ((dependencies `(tui-hooks-x--infer-dependencies ,callback)))
+    `(tui-use-callback ,component ,dependencies ,callback)))
+
+(provide 'tui-hooks-x)
